@@ -1,0 +1,6 @@
+{
+  "name": "INTEGRITAS360",
+  "description": "Sistem Whistleblowing Independen Terintegrasi untuk Perusahaan, Auditor, dan Owner",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
