@@ -304,7 +304,7 @@ export const LoginPage: React.FC = () => {
       console.error('Google Sign In error:', err);
       if (err.code === 'auth/unauthorized-domain') {
         setShowDomainModal(true);
-        setErrorMsg('Alur akses domain diarahkan melalui Cloudflare. Silakan gunakan login Email & Kata Sandi di atas (100% aktif), atau klik "Panduan Alur Cloudflare".');
+        setErrorMsg('Login Google belum diizinkan untuk domain ini. Gunakan Email & Kata Sandi yang dibuat oleh Owner / Super Admin perusahaan.');
       } else if (err.code === 'auth/popup-closed-by-user') {
         setErrorMsg('Proses login Google dibatalkan.');
       } else if (err.code === 'auth/cancelled-popup-request') {
@@ -362,7 +362,7 @@ export const LoginPage: React.FC = () => {
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Masuk ke Sistem</h2>
           <p className="text-xs text-slate-400">
-            Gunakan akun email terdaftar atau akun Google Anda untuk mengakses portal.
+            Gunakan email dan kata sandi akun yang diterbitkan oleh Owner / Super Admin.
           </p>
         </div>
 
@@ -373,14 +373,14 @@ export const LoginPage: React.FC = () => {
               <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
-            {(errorMsg.includes('Cloudflare') || errorMsg.includes('unauthorized-domain')) && (
+            {errorMsg.includes('Login Google belum diizinkan') && (
               <button
                 type="button"
                 onClick={() => setShowDomainModal(true)}
-                className="w-full mt-1 py-1.5 px-3 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full mt-1 py-1.5 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Cloud className="w-3.5 h-3.5 text-orange-400" />
-                Buka Panduan Alur Cloudflare & Salin Domain Web
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                Lihat Alur Akun Perusahaan
               </button>
             )}
           </div>
