@@ -11,6 +11,8 @@ export const db = { __cloudflareD1: true } as any;
 export const collection = (_db: any, name: string): Ref => ({ collection: name });
 export const query = (ref: Ref, ...constraints: any[]): Ref => ({ ...ref, where: constraints.find(c => c?.__where) });
 export const where = (field: string, _op: '==' | '!=', value: any) => ({ __where: true, field, value });
+export const orderBy = (field: string, direction: 'asc' | 'desc' = 'asc') => ({ __orderBy: true, field, direction });
+export const limit = (value: number) => ({ __limit: true, value });
 export const doc = (_db: any, collectionName: string, id: string): Ref => ({ collection: collectionName, id });
 export const serverTimestamp = () => new Date().toISOString();
 export const increment = (value: number) => ({ __op: 'increment', value });
@@ -20,6 +22,14 @@ const snapshot = (items: any[]) => ({
   docs: items.map(item => ({ id: item.id || item.uid, data: () => item })),
   forEach: (cb: (d: any) => void) => items.forEach(item => cb({ id: item.id || item.uid, data: () => item }))
 });
+
+export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (error: any) => void) {
+  let stopped = false;
+  const run = async () => { try { if (!stopped) next(await getDocs(ref)); } catch (e) { if (!stopped) error?.(e); } };
+  void run();
+  const timer = window.setInterval(run, 15000);
+  return () => { stopped = true; window.clearInterval(timer); };
+}
 
 export async function getDocs(ref: Ref) {
   const p = new URLSearchParams({ collection: ref.collection });
