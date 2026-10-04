@@ -8,8 +8,8 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp
-} from 'firebase/firestore';
-import { db, createFirebaseAuthUser, logAuditEvent, sendPasswordReset } from '../../lib/firebase';
+} from '../../lib/publicApi';
+import { db, createFirebaseAuthUser, logAuditEvent, sendPasswordReset } from '../../lib/publicApi';
 import { CompanyUser } from '../../types';
 import {
   Users,
