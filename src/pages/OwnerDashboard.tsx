@@ -10,9 +10,7 @@ import {
   addDoc,
   setDoc,
   increment,
-  serverTimestamp
-} from 'firebase/firestore';
-import {
+  serverTimestamp,
   db,
   OWNER_EMAIL,
   isOwnerEmail,
