@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from '../lib/publicApi';
+import { db } from '../lib/publicApi';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 import {
