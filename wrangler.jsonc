@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "integritas360",
+  "compatibility_date": "2026-10-04",
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "integritas360",
+      "database_id": "0c97aee4-abc2-4a67-9c66-297769a1a74d",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
