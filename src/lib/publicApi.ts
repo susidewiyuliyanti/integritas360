@@ -44,6 +44,6 @@ export async function addDoc(ref: Ref, data: any) {
   throw new Error(`Collection tidak didukung: ${ref.collection}`);
 }
 
-export async function updateDoc(_ref: Ref, _data: any) {
-  throw new Error('Pembaruan langsung dari form publik tidak didukung oleh API D1.');
+export async function updateDoc(ref: Ref, data: any) {
+  return api('/api/public/data', { method: 'POST', body: JSON.stringify({ operation: 'update', collection: ref.collection, id: ref.id, data }) });
 }
