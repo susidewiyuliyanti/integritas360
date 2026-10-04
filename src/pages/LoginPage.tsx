@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigation } from '../context/NavigationContext';
 import {
   ShieldCheck, Eye, EyeOff, ArrowRight, Loader2, AlertCircle,
-  HelpCircle, KeyRound, CheckCircle2, UserCheck, MessageCircle, Cloud
+  KeyRound, CheckCircle2, MessageCircle
 } from 'lucide-react';
 import { BrandLogo } from '../components/BrandLogo';
 
@@ -102,17 +102,7 @@ export const LoginPage: React.FC = () => {
               <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
-            {errorMsg.includes('Login Google belum diizinkan') && (
-              <button
-                type="button"
-                onClick={() => setShowDomainModal(true)}
-                className="w-full mt-1 py-1.5 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                Lihat Alur Akun Perusahaan
-              </button>
-            )}
-          </div>
+                  </div>
         )}
 
         {/* Success Notification */}
@@ -197,6 +187,7 @@ export const LoginPage: React.FC = () => {
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-400 text-center">
             Login menggunakan email dan kata sandi akun Cloudflare yang diterbitkan Owner / Super Admin.
           </div>
+        </div>
 
         {/* Hubungi Kami WhatsApp (Tombol Daftar di-hide sementara) */}
         <div className="text-center text-xs text-slate-400 space-y-2">
@@ -212,15 +203,6 @@ export const LoginPage: React.FC = () => {
           </a>
         </div>
 
-        {/* Unauthorized Domain Modal */}
-        <UnauthorizedDomainModal
-          isOpen={showDomainModal}
-          onClose={() => setShowDomainModal(false)}
-          onUseEmailAuth={() => {
-            const submitBtn = document.getElementById('btn-login-submit');
-            submitBtn?.scrollIntoView({ behavior: 'smooth' });
-          }}
-        />
 
         {/* Password Reset Modal */}
         {resetModalOpen && (
