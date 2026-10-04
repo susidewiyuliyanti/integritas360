@@ -83,8 +83,9 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
       if(exists) return json({error:`Email "${email}" sudah terdaftar di sistem.`},409);
       const hp=await hashPassword(password);
       const uid=randomId('usr');
+      const safeData={...data}; delete safeData.password;
       await env.DB.prepare('INSERT INTO users(id,email,password_hash,password_salt,role,company_id,status,full_name,phone,metadata_json) VALUES(?,?,?,?,?,?,?,?,?,?)')
-        .bind(uid,email,hp.hash,hp.salt,data.role||'admin_perusahaan',data.company_id||null,data.status||'ACTIVE',data.full_name||null,data.phone||null,JSON.stringify(data)).run();
+        .bind(uid,email,hp.hash,hp.salt,data.role||'admin_perusahaan',data.company_id||null,data.status||'ACTIVE',data.full_name||null,data.phone||null,JSON.stringify(safeData)).run();
       if(data.company_id){
         await env.DB.prepare('INSERT OR REPLACE INTO company_users(id,user_id,company_id,role,is_primary_company_account,status,metadata_json) VALUES(?,?,?,?,?,?,?)')
           .bind(randomId('cu'),uid,data.company_id,data.company_user_role||'company_admin',data.is_primary_company_account?1:0,data.status||'ACTIVE',JSON.stringify(data)).run();
