@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { collection, addDoc, updateDoc, serverTimestamp, query, where, getDocs, doc, getDoc, increment } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { collection, addDoc, updateDoc, serverTimestamp, query, where, getDocs, doc, getDoc, increment, db } from '../lib/publicApi';
 import {
   ShieldCheck,
   Building2,
