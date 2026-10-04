@@ -4,7 +4,15 @@ export const onRequestPost: PagesFunction<Env> = async ({request,env}) => {
   let stage = 'start';
   try {
     stage = 'parse';
-    const body = await request.json<{email?:string;password?:string}>();
+    const raw = await request.text();
+    let body: {email?:string;password?:string};
+    try {
+      body = JSON.parse(raw || '{}');
+    } catch (parseError) {
+      console.error('AUTH_LOGIN_PARSE_ERROR', parseError);
+      return json({error:'Format data login tidak valid.',code:'AUTH_LOGIN_PARSE_ERROR'},400);
+    }
+
     const email = String(body.email || '').trim().toLowerCase();
     const password = String(body.password || '');
     if (!email || !password) return json({error:'Email dan kata sandi wajib diisi.'},400);
