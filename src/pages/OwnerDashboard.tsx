@@ -538,6 +538,44 @@ export const OwnerDashboard: React.FC = () => {
         updated_at: serverTimestamp()
       });
 
+      // Profil tenant perusahaan tetap disimpan di users/{companyId} agar tabel Owner,
+      // saldo, laporan, dan modul lama tetap mengenali entitas perusahaan.
+      await setDoc(doc(db, 'users', generatedCompanyId), {
+        uid: generatedCompanyId,
+        company_id: generatedCompanyId,
+        company_code: compCode,
+        company_name: compName,
+        role: 'perusahaan',
+        email: compEmail,
+        namaPT: compName,
+        sektor: data.sektor || 'Umum',
+        alamat: compAddress,
+        telepon: compPhone,
+        picName: picName,
+        picPosition: picPosition,
+        picPhone: picPhone,
+        picEmail: picEmail,
+        npwp: data.npwp || '',
+        deskripsi: `Entitas perusahaan ${compName} terdaftar manual oleh Owner / Super Admin.`,
+        danaTersedia: data.danaTersedia || 0,
+        saldo: (data.danaTersedia || 0) + (data.danaTerkunci || 0),
+        danaTerkunci: data.danaTerkunci || 0,
+        isLocked: compStatus === 'SUSPENDED' || Boolean(data.danaTerkunci && !data.danaTersedia),
+        status: compStatus,
+        statusAkun: compStatus === 'ACTIVE' ? 'aktif' : 'nonaktif',
+        statusVerifikasiDokumen: data.statusVerifikasiDokumen || 'terverifikasi',
+        namaBank: data.namaBank || '',
+        nomorRekening: data.nomorRekening || '',
+        pemilikRekening: data.pemilikRekening || '',
+        rekeningBank: {
+          bankName: data.namaBank || '',
+          accountNumber: data.nomorRekening || '',
+          holderName: data.pemilikRekening || ''
+        },
+        kebijakanReward: data.kebijakanReward || { rewardKasusEtik: 100000, persenFinansial: 2, minPersenFinansial: 2 },
+        createdAt: serverTimestamp()
+      });
+
       await setDoc(doc(db, 'company_users', authUid), {
         user_id: authUid,
         company_id: generatedCompanyId,
