@@ -19,5 +19,12 @@ export async function hashPassword(password:string,salt=crypto.randomUUID()) {
 }
 
 export async function verifyPassword(password:string,salt:string,expected:string) {
-  return (await hashPassword(password,salt)).hash===expected;
+  try {
+    if (!password || !salt || !expected) return false;
+    const result = await hashPassword(password,salt);
+    return result.hash === expected;
+  } catch (error) {
+    console.error('AUTH_PASSWORD_VERIFY_ERROR', error);
+    return false;
+  }
 }
