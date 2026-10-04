@@ -4,7 +4,7 @@ export function cookie(name:string,value:string,maxAge:number,secure=true) { ret
 export function getCookie(request:Request,name:string) { const raw=request.headers.get('Cookie')||''; const item=raw.split(';').map(v=>v.trim()).find(v=>v.startsWith(name+'=')); return item?decodeURIComponent(item.slice(name.length+1)):null; }
 export function randomId(prefix='id') { return prefix+'_'+crypto.randomUUID(); }
 
-const PASSWORD_ITERATIONS = 100000;
+const PASSWORD_ITERATIONS = 10000;
 
 export async function hashPassword(password:string,salt=crypto.randomUUID()) {
   const enc=new TextEncoder();
