@@ -489,6 +489,7 @@ export const OwnerDashboard: React.FC = () => {
       const compCode = data.company_code?.trim() || generatedCompanyId;
       const compName = (data.namaPT || data.company_name || 'PT Baru').trim();
       const compEmail = (data.email || '').trim().toLowerCase();
+      const compPassword = (data.password || '').trim();
       const compPhone = (data.telepon || data.company_phone || '').trim();
       const compAddress = (data.alamat || data.company_address || '-').trim();
       const picName = (data.picName || '').trim();
@@ -497,7 +498,15 @@ export const OwnerDashboard: React.FC = () => {
       const picEmail = (data.picEmail || data.pic_email || compEmail).trim();
       const compStatus = data.status || 'ACTIVE';
 
-      // 1. Simpan entitas ke collection 'companies' (Level 2)
+      if (!compEmail || !compEmail.includes('@')) {
+        throw new Error('Email akun perusahaan wajib valid.');
+      }
+      if (!compPassword || compPassword.length < 6) {
+        throw new Error('Password akun perusahaan wajib minimal 6 karakter.');
+      }
+
+      const authUid = await createFirebaseAuthUser(compEmail, compPassword);
+
       await setDoc(doc(db, 'companies', generatedCompanyId), {
         company_id: generatedCompanyId,
         company_code: compCode,
@@ -509,6 +518,7 @@ export const OwnerDashboard: React.FC = () => {
         pic_position: picPosition,
         pic_phone: picPhone,
         pic_email: picEmail,
+        primary_user_id: authUid,
         status: compStatus,
         danaTersedia: data.danaTersedia || 0,
         danaTerkunci: data.danaTerkunci || 0,
@@ -528,45 +538,44 @@ export const OwnerDashboard: React.FC = () => {
         updated_at: serverTimestamp()
       });
 
-      // 2. Sinkronkan ke collection 'users' dengan ID sama agar modul laporan & transaksi eksisting tetap sinkron
-      // PENTING: TIDAK MEMBUAT PASSWORD / AKUN LOGIN (Entity Perusahaan murni terpisah dari Entity User)
-      await setDoc(doc(db, 'users', generatedCompanyId), {
-        uid: generatedCompanyId,
+      await setDoc(doc(db, 'company_users', authUid), {
+        user_id: authUid,
         company_id: generatedCompanyId,
-        company_code: compCode,
         company_name: compName,
-        role: 'perusahaan',
+        full_name: picName || compName,
         email: compEmail,
+        phone: compPhone,
+        role: 'company_admin',
+        status: compStatus === 'ACTIVE' ? 'ACTIVE' : compStatus,
+        is_primary_company_account: true,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp()
+      });
+
+      await setDoc(doc(db, 'users', authUid), {
+        uid: authUid,
+        email: compEmail,
+        role: 'admin_perusahaan',
+        company_id: generatedCompanyId,
+        company_name: compName,
         namaPT: compName,
+        picName: picName || compName,
+        perusahaanId: generatedCompanyId,
+        perusahaanName: compName,
+        jabatan: 'Company Admin',
+        departemen: 'Kepatuhan Internal',
+        telepon: compPhone,
+        statusAkun: compStatus === 'ACTIVE' ? 'aktif' : 'nonaktif',
+        status: compStatus,
+        isLocked: compStatus === 'SUSPENDED',
         sektor: data.sektor || 'Umum',
         alamat: compAddress,
-        telepon: compPhone,
-        picName: picName,
-        picPosition: picPosition,
-        picPhone: picPhone,
-        picEmail: picEmail,
-        npwp: data.npwp || '',
-        deskripsi: `Entitas perusahaan ${compName} (${generatedCompanyId}) terdaftar secara manual oleh Super Admin.`,
-        danaTersedia: data.danaTersedia || 0,
-        saldo: (data.danaTersedia || 0) + (data.danaTerkunci || 0),
-        danaTerkunci: data.danaTerkunci || 0,
-        isLocked: compStatus === 'SUSPENDED' || Boolean(data.danaTerkunci && !data.danaTersedia),
-        status: compStatus,
-        statusAkun: compStatus === 'ACTIVE' ? 'aktif' : 'nonaktif',
-        statusVerifikasiDokumen: data.statusVerifikasiDokumen || 'terverifikasi',
-        namaBank: data.namaBank || '',
-        nomorRekening: data.nomorRekening || '',
-        pemilikRekening: data.pemilikRekening || '',
-        rekeningBank: {
-          bankName: data.namaBank || '',
-          accountNumber: data.nomorRekening || '',
-          holderName: data.pemilikRekening || ''
-        },
-        kebijakanReward: data.kebijakanReward || { rewardKasusEtik: 100000, persenFinansial: 2, minPersenFinansial: 2 },
+        deskripsi: `Akun utama perusahaan ${compName} dibuat oleh Owner / Super Admin.`,
+        danaTersedia: 0,
+        saldo: 0,
         createdAt: serverTimestamp()
       });
 
-      // Catat mutasi kas awal jika ada saldo
       if ((data.danaTersedia || 0) > 0 || (data.danaTerkunci || 0) > 0) {
         await addDoc(collection(db, 'transactions'), {
           userId: generatedCompanyId,
@@ -581,7 +590,6 @@ export const OwnerDashboard: React.FC = () => {
         });
       }
 
-      // Catat Audit Trail
       logAuditEvent({
         actor_user_id: user?.uid || 'superadmin',
         actor_email: user?.email || OWNER_EMAIL,
@@ -593,13 +601,15 @@ export const OwnerDashboard: React.FC = () => {
         entity_id: generatedCompanyId,
         metadata: {
           company_code: compCode,
+          primary_user_id: authUid,
+          primary_user_email: compEmail,
           pic_name: picName,
           status: compStatus,
-          note: 'Company berhasil dibuat tanpa akun login (Sesuai arsitektur 3 level)'
+          note: 'Company dan akun login utama dibuat oleh Owner / Super Admin'
         }
       });
 
-      showToast(`Perusahaan "${compName}" (${generatedCompanyId}) berhasil dibuat! Untuk membuat akun login, buka menu "Company Users".`);
+      showToast(`Perusahaan "${compName}" berhasil dibuat beserta akun login utama. Email: ${compEmail}`);
     } catch (err: any) {
       console.error('Error adding company:', err);
       showToast('Gagal menambahkan perusahaan: ' + err.message, 'error');
