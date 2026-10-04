@@ -33,7 +33,7 @@ export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (err
 
 export async function getDocs(ref: Ref) {
   const p = new URLSearchParams({ collection: ref.collection });
-  if (ref.where) { p.set('whereField', ref.where.field); p.set('whereValue', String(ref.where.value)); }
+  if (ref.where) { if (ref.where.field === 'id') p.set('idValue', String(ref.where.value)); else { p.set('whereField', ref.where.field); p.set('whereValue', String(ref.where.value)); } }
   const data = await api('/api/public/data?' + p.toString());
   return snapshot(data.items || []);
 }
