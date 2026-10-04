@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   increment
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../lib/publicApi';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 import {
