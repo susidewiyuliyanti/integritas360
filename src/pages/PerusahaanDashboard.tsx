@@ -9,8 +9,8 @@ import {
   addDoc,
   increment,
   serverTimestamp
-} from 'firebase/firestore';
-import { db } from '../lib/firebase';
+} from '../lib/publicApi';
+
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 import {
