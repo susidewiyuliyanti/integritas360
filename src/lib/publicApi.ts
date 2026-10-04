@@ -57,3 +57,17 @@ export async function addDoc(ref: Ref, data: any) {
 export async function updateDoc(ref: Ref, data: any) {
   return api('/api/public/data', { method: 'POST', body: JSON.stringify({ operation: 'update', collection: ref.collection, id: ref.id, data }) });
 }
+
+
+export async function createFirebaseAuthUser(email: string, password: string, profile: any = {}) {
+  return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'create-user', data: { email, password, ...profile } }) });
+}
+export async function logAuditEvent(data: any) {
+  return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'audit', data }) });
+}
+export async function sendPasswordReset(email: string) {
+  return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'password-reset', email }) });
+}
+export async function setDoc(ref: Ref, data: any) {
+  return updateDoc(ref, data);
+}
