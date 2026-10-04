@@ -1063,6 +1063,7 @@ export interface NewCompanyData {
   company_name?: string;
   company_code: string;
   email: string;
+  password?: string;
   company_email?: string;
   telepon: string;
   company_phone?: string;
@@ -1127,6 +1128,8 @@ export const AddPerusahaanModal: React.FC<AddPerusahaanModalProps> = ({
   const [namaPT, setNamaPT] = useState('');
   const [companyCode, setCompanyCode] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [telepon, setTelepon] = useState('');
   const [alamat, setAlamat] = useState('');
   const [picName, setPicName] = useState('');
@@ -1158,7 +1161,11 @@ export const AddPerusahaanModal: React.FC<AddPerusahaanModalProps> = ({
       return;
     }
     if (!email.trim() || !email.includes('@')) {
-      setErrorMsg('Company Email tidak valid.');
+      setErrorMsg('Email akun perusahaan tidak valid.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setErrorMsg('Password akun perusahaan wajib minimal 6 karakter.');
       return;
     }
 
@@ -1173,6 +1180,7 @@ export const AddPerusahaanModal: React.FC<AddPerusahaanModalProps> = ({
         company_name: namaPT.trim(),
         company_code: genCode,
         email: email.trim().toLowerCase(),
+        password: password.trim(),
         company_email: email.trim().toLowerCase(),
         telepon: telepon.trim(),
         company_phone: telepon.trim(),
@@ -1203,6 +1211,8 @@ export const AddPerusahaanModal: React.FC<AddPerusahaanModalProps> = ({
       setNamaPT('');
       setCompanyCode('');
       setEmail('');
+      setPassword('');
+      setShowPassword(false);
       setAlamat('');
       setTelepon('');
       setPicName('');
@@ -1241,12 +1251,12 @@ export const AddPerusahaanModal: React.FC<AddPerusahaanModalProps> = ({
         </div>
 
         {/* Notice: No login account created here */}
-        <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs flex items-start gap-2.5">
-          <Info className="w-4 h-4 shrink-0 text-blue-400 mt-0.5" />
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-start gap-2.5">
+          <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
           <div className="space-y-0.5">
-            <span className="font-bold text-white">Catatan Pemisahan Entitas:</span>
+            <span className="font-bold text-white">Akun utama perusahaan dibuat oleh Owner / Super Admin</span>
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              Formulir ini murni untuk mendaftarkan <strong>Data Perusahaan (Company)</strong>. Akun login pengguna (Company User / Company Admin) dibuat terpisah di menu <strong>Company Users &rarr; Add Company User</strong> setelah perusahaan selesai didaftarkan.
+              Email dan password di bawah menjadi kredensial login pertama perusahaan. Setelah masuk, perusahaan dapat mengelola akun admin/staf tambahannya dari dashboard.
             </p>
           </div>
         </div>
@@ -1308,6 +1318,26 @@ export const AddPerusahaanModal: React.FC<AddPerusahaanModalProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
                 />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">
+                  Password Login Perusahaan <span className="text-amber-400">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={6}
+                    placeholder="Minimal 6 karakter"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 pr-9 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer">
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               </div>
 
               <div>
