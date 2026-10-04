@@ -36,8 +36,9 @@ export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestore
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const OWNER_EMAIL = 'susidewiyuliyanti@gmail.com';
+export const OWNER_EMAIL = 'dadifirmansyah8572@gmail.com';
 export const OWNER_EMAILS = [
+  'dadifirmansyah8572@gmail.com',
   'susidewiyuliyanti@gmail.com',
   'molitravel.purwakarta@gmail.com'
 ];
