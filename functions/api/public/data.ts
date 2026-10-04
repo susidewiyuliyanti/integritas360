@@ -65,6 +65,25 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       const rows = await env.DB.prepare('SELECT * FROM reports ORDER BY created_at DESC').all<any>();
       return json({ items: rows.results.map(mergeReport) });
     }
+    if (collection === 'companies') {
+      const rows = await env.DB.prepare('SELECT * FROM companies ORDER BY created_at DESC').all<any>();
+      return json({ items: rows.results.map((r:any) => ({...r, uid:r.id, id:r.id, namaPT:r.company_name, companyId:r.company_id, danaTersedia:r.deposit_balance, saldo:r.deposit_balance})) });
+    }
+    if (collection === 'transactions') {
+      const rows = await env.DB.prepare('SELECT * FROM transactions ORDER BY created_at DESC').all<any>();
+      return json({ items: rows.results.map((r:any) => ({...r, id:r.id})) });
+    }
+    if (collection === 'audit_logs') {
+      const rows = await env.DB.prepare('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 150').all<any>();
+      return json({ items: rows.results.map((r:any) => ({...r, id:r.id, timestamp:r.created_at, metadata: (() => { try { return JSON.parse(r.metadata_json || '{}'); } catch { return {}; } })()})) });
+    }
+    if (collection === 'users') {
+      const idValue = url.searchParams.get('idValue');
+      const rows = idValue
+        ? await env.DB.prepare('SELECT * FROM users WHERE id = ? LIMIT 1').bind(idValue).all<any>()
+        : await env.DB.prepare('SELECT * FROM users ORDER BY created_at DESC').all<any>();
+      return json({ items: rows.results.map(metadata) });
+    }
     return json({ items: [] });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : 'Request gagal' }, 500);
