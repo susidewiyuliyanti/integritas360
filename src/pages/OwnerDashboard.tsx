@@ -18,7 +18,7 @@ import {
   generateCompanyId,
   logAuditEvent,
   sendPasswordReset
-} from '../lib/firebase';
+} from '../lib/ownerApi';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 import {
