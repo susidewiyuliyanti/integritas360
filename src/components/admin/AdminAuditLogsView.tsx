@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '../../lib/publicApi';
 import { AuditLog } from '../../types';
 import {
   FileText,
