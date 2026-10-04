@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="shieldGold" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B" />
+      <stop offset="0.5" stop-color="#FCD34D" />
+      <stop offset="1" stop-color="#D97706" />
+    </linearGradient>
+    <linearGradient id="shieldBg" x1="12" y1="8" x2="36" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A" />
+      <stop offset="1" stop-color="#020617" />
+    </linearGradient>
+  </defs>
+  <!-- Outer subtle circular orbit representing 360 -->
+  <circle cx="24" cy="24" r="22" stroke="url(#shieldGold)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6" />
+  <!-- Shield Background -->
+  <path d="M24 6L38 12V23C38 31.5 32 39 24 42C16 39 10 31.5 10 23V12L24 6Z" fill="url(#shieldBg)" stroke="url(#shieldGold)" stroke-width="2.5" stroke-linejoin="round" />
+  <!-- Inner Shield Glow Accent -->
+  <path d="M24 9.5L35 14.5V23C35 29.8 30.2 35.8 24 38.2C17.8 35.8 13 29.8 13 23V14.5L24 9.5Z" stroke="url(#shieldGold)" stroke-width="1" opacity="0.4" />
+  <!-- Integrity Verified Checkmark -->
+  <path d="M18 23.5L22 27.5L30 18.5" stroke="url(#shieldGold)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

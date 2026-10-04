@@ -1,0 +1,324 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role (owner, perusahaan, auditor) and financial wallets",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Email address of the user"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "perusahaan", "auditor"],
+          "description": "Role of the user in Integritas360"
+        },
+        "namaPT": {
+          "type": "string",
+          "description": "Company name or Auditor name"
+        },
+        "sektor": {
+          "type": "string",
+          "description": "Industry sector or audit specialization"
+        },
+        "alamat": {
+          "type": "string",
+          "description": "Address"
+        },
+        "deskripsi": {
+          "type": "string",
+          "description": "Brief description of company or auditor credentials"
+        },
+        "telepon": {
+          "type": "string",
+          "description": "Official contact phone number"
+        },
+        "npwp": {
+          "type": "string",
+          "description": "Tax Identification Number (NPWP) or Business License (NIB)"
+        },
+        "picName": {
+          "type": "string",
+          "description": "Compliance Officer or Person in Charge"
+        },
+        "danaTersedia": {
+          "type": "number",
+          "description": "Available funds allocated for whistleblowing management and displayed on poster"
+        },
+        "saldo": {
+          "type": "number",
+          "description": "Active free wallet balance for deposit and withdrawal"
+        },
+        "danaTerkunci": {
+          "type": "number",
+          "description": "Locked integrity compliance funds"
+        },
+        "biayaJasaPerKasus": {
+          "type": "number",
+          "description": "Auditor investigation fee per case (min 100000, default 150000)"
+        },
+        "isLocked": {
+          "type": "boolean",
+          "description": "Whether the company funds or account are locked by administrator"
+        },
+        "lockReason": {
+          "type": "string",
+          "description": "Reason for fund lock set by administrator"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Whistleblowing report submitted by public or employee",
+      "type": "object",
+      "properties": {
+        "companyId": {
+          "type": "string",
+          "description": "Target company UID"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Target company name"
+        },
+        "judul": {
+          "type": "string",
+          "description": "Report title / headline"
+        },
+        "kategori": {
+          "type": "string",
+          "description": "Category of incident: Korupsi, Pelecehan, Fraud, dll"
+        },
+        "deskripsi": {
+          "type": "string",
+          "description": "Detailed incident report"
+        },
+        "tanggalKejadian": {
+          "type": "string",
+          "description": "Date when incident occurred"
+        },
+        "lokasi": {
+          "type": "string",
+          "description": "Location of incident"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["baru", "proses", "valid", "selesai", "ditolak"],
+          "description": "Investigation status"
+        },
+        "tokenAkses": {
+          "type": "string",
+          "description": "Secret token for reporter to track status anonymously"
+        },
+        "biayaAuditor": {
+          "type": "number",
+          "description": "Auditor fee per report"
+        },
+        "companyCaseStatus": {
+          "type": "string",
+          "enum": ["menunggu_ambil", "kasus_diambil", "sanksi_ditetapkan", "selesai"],
+          "description": "Company workflow status for report"
+        },
+        "rewardReleased": {
+          "type": "boolean",
+          "description": "Whether reward is released and company lock balance deducted"
+        },
+        "catatanAuditor": {
+          "type": "string",
+          "description": "Auditor investigation notes"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["companyId", "judul", "deskripsi"]
+    },
+    "WalletTransaction": {
+      "title": "WalletTransaction",
+      "description": "Financial ledger transactions including deposit, withdrawal, lock, and unlock",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID of the user performing the transaction"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["deposit", "withdrawal", "lock", "unlock"],
+          "description": "Type of transaction"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Transaction nominal in Rupiah"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["selesai", "pending", "dibatalkan"],
+          "description": "Execution status"
+        },
+        "keterangan": {
+          "type": "string",
+          "description": "Transaction notes or bank destination details"
+        },
+        "metode": {
+          "type": "string",
+          "description": "Payment method used (e.g. Virtual Account, Bank Transfer)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "type", "amount"]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Enterprise tenant entity with unique company_id, legal profile, and balances",
+      "type": "object",
+      "properties": {
+        "company_id": {
+          "type": "string",
+          "description": "Unique company / tenant identifier (e.g. CMP-000001)"
+        },
+        "company_code": {
+          "type": "string",
+          "description": "Short code or acronym for the company"
+        },
+        "company_name": {
+          "type": "string",
+          "description": "Official legal name of the company"
+        },
+        "company_email": {
+          "type": "string"
+        },
+        "company_phone": {
+          "type": "string"
+        },
+        "company_address": {
+          "type": "string"
+        },
+        "pic_name": {
+          "type": "string"
+        },
+        "pic_position": {
+          "type": "string"
+        },
+        "pic_phone": {
+          "type": "string"
+        },
+        "pic_email": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "SUSPENDED", "INACTIVE"]
+        },
+        "deposit_balance": {
+          "type": "number"
+        },
+        "available_balance": {
+          "type": "number"
+        },
+        "locked_balance": {
+          "type": "number"
+        }
+      },
+      "required": ["company_id", "company_name", "status"]
+    },
+    "CompanyUser": {
+      "title": "CompanyUser",
+      "description": "Company users and administrators belonging to a specific company_id",
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "company_id": {
+          "type": "string",
+          "description": "Foreign key referencing Company.company_id"
+        },
+        "company_name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["company_admin", "finance", "hr", "company_user"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "SUSPENDED", "INVITED", "INACTIVE"]
+        }
+      },
+      "required": ["user_id", "company_id", "email", "role", "status"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable audit trail of actions performed in the platform",
+      "type": "object",
+      "properties": {
+        "audit_log_id": {
+          "type": "string"
+        },
+        "actor_user_id": {
+          "type": "string"
+        },
+        "actor_role": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "entity_type": {
+          "type": "string"
+        },
+        "entity_id": {
+          "type": "string"
+        }
+      },
+      "required": ["audit_log_id", "actor_user_id", "action"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Users collection with owner, perusahaan, and auditor profiles and balances"
+    },
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Multi-tenant company collection"
+    },
+    "/company_users/{companyUserId}": {
+      "schema": "CompanyUser",
+      "description": "Company user accounts linked to specific company_id"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Whistleblowing reports collection"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "WalletTransaction",
+      "description": "Ledger of deposits, withdrawals, and lock/unlock actions"
+    },
+    "/audit_logs/{auditLogId}": {
+      "schema": "AuditLog",
+      "description": "Audit trail log records"
+    }
+  }
+}
