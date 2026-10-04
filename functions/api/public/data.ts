@@ -92,6 +92,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           Number(data.rewardAmount || 0), Number(data.rewardMinAmount || 0), 'none', evidence, JSON.stringify(meta)).run();
       return json({ id: reportId, tokenAkses: reporterCode, reportCode });
     }
+    if (op === 'update') {
+      if (body.collection !== 'users') return json({ error: 'Pembaruan tidak didukung' }, 400);
+      const row = await env.DB.prepare('SELECT * FROM users WHERE id = ? LIMIT 1').bind(String(body.id || '')).first<any>();
+      if (!row) return json({ error: 'User tidak ditemukan' }, 404);
+      let current: any = {};
+      try { current = row.metadata_json ? JSON.parse(row.metadata_json) : {}; } catch {}
+      const next = { ...current, ...data };
+      await env.DB.prepare('UPDATE users SET metadata_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        .bind(JSON.stringify(next), row.id).run();
+      return json({ ok: true });
+    }
     if (op === 'create-claim') {
       const report = await env.DB.prepare('SELECT * FROM reports WHERE id = ? OR reporter_code = ? LIMIT 1').bind(String(data.reportId || ''), String(data.claimReportToken || '')).first<any>();
       if (!report) return json({ error: 'Laporan tidak ditemukan' }, 404);
