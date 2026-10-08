@@ -219,14 +219,34 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       try {
         setLoadingCompanies(true);
         if (initialCompanyId) {
-          const snap = await getDoc(doc(db, 'users', initialCompanyId));
-          if (snap.exists()) {
-            const data = snap.data();
+          // QR selalu membawa canonical company_id tenant, bukan user document id.
+          const companySnap = await getDoc(doc(db, 'companies', initialCompanyId));
+          if (companySnap.exists()) {
+            const data = companySnap.data();
+            const canonicalId = String(data.companyId || data.company_id || data.uid || data.id || initialCompanyId);
             const co: CompanyOption = {
-              uid: snap.id,
+              uid: canonicalId,
+              namaPT: data.namaPT || data.company_name || 'Perusahaan Terkait',
+              sektor: data.sektor || 'Kepatuhan & Integritas',
+              danaTersedia: Number(data.danaTersedia ?? data.deposit_balance ?? data.saldo ?? 0)
+            };
+            setCompanies([co]);
+            setSelectedCompanyId(co.uid);
+            setTargetCompanyData(co);
+            setLoadingCompanies(false);
+            return;
+          }
+
+          // Backward compatibility untuk tenant lama yang ID-nya masih user.id.
+          const userSnap = await getDoc(doc(db, 'users', initialCompanyId));
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            const canonicalId = String(data.company_id || data.companyId || userSnap.id);
+            const co: CompanyOption = {
+              uid: canonicalId,
               namaPT: data.namaPT || 'Perusahaan Terkait',
               sektor: data.sektor || 'Kepatuhan & Integritas',
-              danaTersedia: data.danaTersedia || 0
+              danaTersedia: Number(data.danaTersedia || data.saldo || 0)
             };
             setCompanies([co]);
             setSelectedCompanyId(co.uid);
@@ -236,16 +256,25 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
           }
         }
 
+        // Public SaaS form tidak boleh mengunduh daftar seluruh tenant.
+        // Tanpa tenant di URL, form tidak dibuka pada mode produksi.
+        if (!initialCompanyId && !isContohMode) {
+          setCompanies([]);
+          setSelectedCompanyId('');
+          setTargetCompanyData(null);
+          return;
+        }
+
         const q = query(collection(db, 'users'), where('role', '==', 'perusahaan'));
         const snap = await getDocs(q);
         const list: CompanyOption[] = [];
         snap.forEach((d) => {
           const data = d.data();
           list.push({
-            uid: d.id,
+            uid: String(data.company_id || data.companyId || d.id),
             namaPT: data.namaPT || 'PT Tanpa Nama',
             sektor: data.sektor || 'Umum',
-            danaTersedia: data.danaTersedia || 0
+            danaTersedia: Number(data.danaTersedia || data.saldo || 0)
           });
         });
         setCompanies(list);
