@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Download, QrCode, CheckCircle2, Copy, ExternalLink, Loader2, ShieldCheck } from 'lucide-react';
-import { generateQrCodeDataUrl, renderPosterToCanvas, downloadPoster, PosterOptions } from '../utils/posterGenerator';
+import { generateQrCodeDataUrl, renderPosterToCanvas, downloadPoster, resolveCompanyId, resolvePublicReportUrl, PosterOptions } from '../utils/posterGenerator';
 
 interface PosterModalProps {
   isOpen: boolean;
@@ -12,16 +12,18 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [previewDataUrl, setPreviewDataUrl] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
   const [downloading, setDownloading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://integritas360.web.app';
-  const laporUrl = `${origin}/lapor/${company.uid}`;
+  const companyId = resolveCompanyId(company);
+  const laporUrl = companyId ? resolvePublicReportUrl(companyId, company.customUrl) : '';
 
   useEffect(() => {
     if (!isOpen) {
       setQrDataUrl('');
       setPreviewDataUrl('');
+      setError('');
       setLoading(true);
       return;
     }
@@ -30,17 +32,19 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     async function preparePoster() {
       try {
         setLoading(true);
-        // 1. Generate QR Code directly as base64 data URL
-        const qrUrl = await generateQrCodeDataUrl(company.uid);
+        setError('');
+        if (!companyId) throw new Error('ID perusahaan tidak tersedia. QR Code tidak dapat dibuat.');
+        const qrUrl = await generateQrCodeDataUrl(companyId, company.customUrl);
         if (!isMounted) return;
         setQrDataUrl(qrUrl);
 
         // 2. Render to canvas 1080x1920
-        const canvas = await renderPosterToCanvas(company, qrUrl);
+        const canvas = await renderPosterToCanvas({ ...company, uid: companyId }, qrUrl);
         if (!isMounted) return;
         setPreviewDataUrl(canvas.toDataURL('image/png'));
       } catch (err) {
         console.error('Gagal generate poster canvas:', err);
+        if (isMounted) { setQrDataUrl(''); setPreviewDataUrl(''); setError(err instanceof Error ? err.message : 'Gagal membuat QR Code.'); }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -51,7 +55,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     return () => {
       isMounted = false;
     };
-  }, [isOpen, company.uid, company.namaPT, company.danaTersedia, company.sektor]);
+  }, [isOpen, companyId, company.customUrl, company.namaPT, company.danaTersedia, company.sektor]);
 
   if (!isOpen) return null;
 
@@ -59,7 +63,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     if (!qrDataUrl || downloading) return;
     try {
       setDownloading(true);
-      await downloadPoster(company, qrDataUrl);
+      await downloadPoster({ ...company, uid: companyId }, qrDataUrl || undefined);
     } catch (err) {
       console.error('Error downloading poster:', err);
     } finally {
@@ -144,13 +148,13 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>QR Resolusi</span>
-                  <span className="text-amber-400 font-mono">500px High-ECC Base64</span>
+                  <span className="text-amber-400 font-mono">500px High-ECC</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Status Mesin</span>
                   <span className="text-emerald-400 flex items-center gap-1 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Fixed Bug QR Ready
+                    QR READY
                   </span>
                 </div>
               </div>
