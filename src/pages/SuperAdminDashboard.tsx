@@ -29,7 +29,7 @@ export const SuperAdminDashboard: React.FC = () => {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) navigate('/admin/login');
+    if (!user) navigate('/login');
     else if (user.role !== 'owner') navigate('/login');
   }, [user, loading, navigate]);
 
@@ -90,7 +90,7 @@ export const SuperAdminDashboard: React.FC = () => {
     <header className="border-b border-slate-800 bg-slate-900/90">
       <div className="max-w-7xl mx-auto px-4 py-5 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex items-center gap-3"><div className="rounded-xl bg-amber-500/15 p-3 text-amber-400"><ShieldAlert className="w-6 h-6"/></div><div><h1 className="text-xl font-extrabold">INTEGRITAS360 · Super Admin</h1><p className="text-xs text-slate-400">Control plane SaaS — data lintas tenant</p></div></div>
-        <div className="flex items-center gap-2"><span className="text-xs text-slate-400 hidden sm:inline">{user.email}</span><button onClick={() => void load()} className="rounded-lg border border-slate-700 px-3 py-2 text-sm flex gap-2 items-center hover:bg-slate-800"><RefreshCw className={`w-4 h-4 ${busy?'animate-spin':''}`}/>Refresh</button><button onClick={async()=>{await logout();navigate('/admin/login');}} className="rounded-lg border border-slate-700 px-3 py-2 text-sm flex gap-2 items-center hover:bg-slate-800"><LogOut className="w-4 h-4"/>Keluar</button></div>
+        <div className="flex items-center gap-2"><span className="text-xs text-slate-400 hidden sm:inline">{user.email}</span><button onClick={() => void load()} className="rounded-lg border border-slate-700 px-3 py-2 text-sm flex gap-2 items-center hover:bg-slate-800"><RefreshCw className={`w-4 h-4 ${busy?'animate-spin':''}`}/>Refresh</button><button onClick={async()=>{await logout();navigate('/login');}} className="rounded-lg border border-slate-700 px-3 py-2 text-sm flex gap-2 items-center hover:bg-slate-800"><LogOut className="w-4 h-4"/>Keluar</button></div>
       </div>
     </header>
     <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
