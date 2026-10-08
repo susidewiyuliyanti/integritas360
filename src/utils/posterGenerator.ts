@@ -8,13 +8,25 @@ export interface PosterOptions {
   customUrl?: string;
 }
 
-export async function generateQrCodeDataUrl(uid: string, customUrl?: string): Promise<string> {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://integritas360.pages.dev';
-  const url = customUrl || `${origin}/lapor/${uid}`;
-  return QRCode.toDataURL(url, { width: 500, margin: 1, color: { dark: '#0f172a', light: '#ffffff' }, errorCorrectionLevel: 'H' });
+export function resolveCompanyId(options: Partial<PosterOptions> & Record<string, any>): string {
+  return String(options.uid ?? options.companyId ?? options.company_id ?? options.perusahaanId ?? options.id ?? '').trim();
 }
 
-export async function renderPosterToCanvas(options: PosterOptions, qrDataUrl: string): Promise<HTMLCanvasElement> {
+export function resolvePublicReportUrl(companyId: string, customUrl?: string): string {
+  const id = String(companyId || '').trim();
+  if (!id) throw new Error('ID perusahaan tidak tersedia untuk QR Code.');
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://integritas360.pages.dev';
+  return customUrl || origin + '/lapor/' + encodeURIComponent(id);
+}
+
+export async function generateQrCodeDataUrl(uid: string, customUrl?: string): Promise<string> {
+  const url = resolvePublicReportUrl(uid, customUrl);
+  return QRCode.toDataURL(url, { width: 500, margin: 2, color: { dark: '#0f172a', light: '#ffffff' }, errorCorrectionLevel: 'H' });
+}
+
+export async function renderPosterToCanvas(options: PosterOptions, qrDataUrl?: string): Promise<HTMLCanvasElement> {
+  const companyId = resolveCompanyId(options);
+  if (!companyId) throw new Error('ID perusahaan tidak tersedia. QR Code tidak dapat dibuat.');
   const { namaPT, danaTersedia, sektor } = options;
   const canvas = document.createElement('canvas');
   canvas.width = 1080; canvas.height = 1920;
@@ -58,15 +70,14 @@ export async function renderPosterToCanvas(options: PosterOptions, qrDataUrl: st
   ctx.fillStyle = '#cbd5e1'; ctx.font = '400 24px "Plus Jakarta Sans", sans-serif'; ctx.fillText('Laporkan penyalahgunaan aset atau pelanggaran etika secara anonim.', 540, 825);
 
   ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(310, 870, 460, 460, 24); ctx.fill();
-  await new Promise<void>((resolve, reject) => {
-    const img = new Image(); img.crossOrigin = 'anonymous';
-    img.onload = () => { ctx.drawImage(img, 340, 900, 400, 400); resolve(); };
-    img.onerror = (e) => reject(e); img.src = qrDataUrl;
-  });
+  const qrCanvas = document.createElement('canvas');
+  const qrUrl = resolvePublicReportUrl(companyId, options.customUrl);
+  await QRCode.toCanvas(qrCanvas, qrUrl, { width: 400, margin: 2, color: { dark: '#0f172a', light: '#ffffff' }, errorCorrectionLevel: 'H' });
+  ctx.drawImage(qrCanvas, 340, 900, 400, 400);
 
   ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 30px "Plus Jakarta Sans", sans-serif'; ctx.fillText('SCAN QR CODE DI ATAS', 540, 1380);
   ctx.fillStyle = '#ffffff'; ctx.font = '500 22px "Plus Jakarta Sans", sans-serif'; ctx.fillText('atau akses langsung portal laporan:', 540, 1420);
-  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 22px "Plus Jakarta Sans", monospace'; ctx.fillText(`https://integritas360.pages.dev/lapor/${options.uid}`, 540, 1455);
+  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 22px "Plus Jakarta Sans", monospace'; ctx.fillText(resolvePublicReportUrl(companyId), 540, 1455);
 
   const guarantees = [
     { title: '100% ANONIM', sub: 'Tanpa menampilkan identitas pelapor' },
@@ -85,7 +96,7 @@ export async function renderPosterToCanvas(options: PosterOptions, qrDataUrl: st
   return canvas;
 }
 
-export async function downloadPoster(options: PosterOptions, qrDataUrl: string): Promise<void> {
+export async function downloadPoster(options: PosterOptions, qrDataUrl?: string): Promise<void> {
   const canvas = await renderPosterToCanvas(options, qrDataUrl);
   const dataUrl = canvas.toDataURL('image/png');
   const safeName = (options.namaPT || 'PERUSAHAAN').replace(/[^a-zA-Z0-9]/g, '_');
