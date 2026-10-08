@@ -10,6 +10,7 @@ import { PerusahaanDashboard } from './pages/PerusahaanDashboard';
 import { AuditorDashboard } from './pages/AuditorDashboard';
 import { AdminPerusahaanDashboard } from './pages/AdminPerusahaanDashboard';
 import { PublicReportPage } from './pages/PublicReportPage';
+import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { ProfilePage } from './pages/ProfilePage';
 import { StudiKasusPage } from './pages/StudiKasusPage';
 import { MessageCircle } from 'lucide-react';
@@ -19,7 +20,9 @@ const RouterView: React.FC = () => {
 
   let content: React.ReactNode = <LandingPage />;
 
-  if (path === '/login') {
+  if (path === '/admin' || path === '/admin/dashboard') {
+    content = <SuperAdminDashboard />;
+  } else if (path === '/login') {
     content = <LoginPage />;
   } else if (path.startsWith('/register')) {
     content = <RegisterPage />;
