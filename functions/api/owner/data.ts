@@ -76,6 +76,51 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
     const collection=body.collection;
     const id=body.id||randomId(collection||'item');
     const data=body.data||{};
+    if(op==='create-tenant' || op==='create-tenant-admin'){
+      const companyName=String(data.company_name||'').trim();
+      const companyEmail=String(data.company_email||data.email||'').trim().toLowerCase();
+      const fullName=String(data.full_name||'').trim();
+      const email=String(data.admin_email||data.email||'').trim().toLowerCase();
+      const password=String(data.password||'');
+      const isCreateTenant=op==='create-tenant';
+      let companyId=String(data.company_id||'').trim();
+
+      if(isCreateTenant && (!companyName || !companyEmail)) return json({error:'Nama perusahaan dan email perusahaan wajib diisi.'},400);
+      if(!email || password.length<10 || !fullName) return json({error:'Nama admin, email admin, dan kata sandi minimal 10 karakter wajib diisi.'},400);
+
+      if(isCreateTenant){
+        companyId=randomId('CMP');
+        const companyExists=await env.DB.prepare('SELECT id FROM companies WHERE lower(email)=? LIMIT 1').bind(companyEmail).first();
+        if(companyExists) return json({error:'Email perusahaan sudah terdaftar.'},409);
+      }else{
+        if(!companyId) return json({error:'Tenant perusahaan wajib dipilih.'},400);
+        const company=await env.DB.prepare('SELECT company_id,status FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
+        if(!company) return json({error:'Tenant perusahaan tidak ditemukan.'},404);
+      }
+
+      const count=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
+      if(Number(count?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk setiap perusahaan sudah tercapai.'},409);
+
+      const exists=await env.DB.prepare('SELECT id FROM users WHERE lower(email)=? LIMIT 1').bind(email).first();
+      if(exists) return json({error:'Email admin sudah terdaftar di sistem.'},409);
+
+      const hp=await hashPassword(password);
+      const uid=randomId('usr');
+      const companyUserId=randomId('cu');
+      const statements:any[]=[];
+      if(isCreateTenant){
+        statements.push(env.DB.prepare('INSERT INTO companies(id,company_id,company_name,email,status,deposit_balance,locked_balance,metadata_json) VALUES(?,?,?,?,?,0,0,?)')
+          .bind(companyId,companyId,companyName,companyEmail,'DEPOSIT_REQUIRED',JSON.stringify({createdBy:owner.id,tenantPlan:'saas'})));
+      }
+      statements.push(env.DB.prepare('INSERT INTO users(id,email,password_hash,password_salt,role,company_id,status,full_name,phone,metadata_json) VALUES(?,?,?,?,?,?,?,?,?,?)')
+        .bind(uid,email,hp.hash,hp.salt,'admin_perusahaan',companyId,'ACTIVE',fullName,String(data.phone||''),JSON.stringify({createdBy:owner.id,tenantAdmin:true})));
+      statements.push(env.DB.prepare('INSERT INTO company_users(id,user_id,company_id,role,is_primary_company_account,status,metadata_json) VALUES(?,?,?,?,?,?,?)')
+        .bind(companyUserId,uid,companyId,'company_admin',1,'ACTIVE',JSON.stringify({createdBy:owner.id})));
+      statements.push(env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
+        .bind(randomId('log'),owner.id,owner.email,'owner',companyId,isCreateTenant?'TENANT_CREATED':'TENANT_ADMIN_CREATED',isCreateTenant?'company':'user',isCreateTenant?companyId:uid,JSON.stringify({companyName:companyName||null,adminEmail:email})));
+      await env.DB.batch(statements);
+      return json({ok:true,company_id:companyId,user_id:uid,message:isCreateTenant?'Tenant dan admin pertama berhasil dibuat.':'Akun admin tenant berhasil dibuat.'});
+    }
     if(op==='create-user'){
       const email=String(data.email||'').trim().toLowerCase(), password=String(data.password||'');
       if(!email||password.length<6) return json({error:'Email dan password tidak valid.'},400);
