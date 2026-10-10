@@ -711,7 +711,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                 TOTAL REWARD TERSEDIA
               </span>
               <div className="text-xl sm:text-2xl font-mono font-black text-emerald-400">
-                Rp {(targetCompanyData?.danaTersedia || 50000000).toLocaleString('id-ID')}
+                Rp {Number(targetCompanyData?.danaTersedia ?? 0).toLocaleString('id-ID')}
               </div>
               <span className="text-[10px] text-emerald-300/80 block">
                 Dijamin Rekening Penjaminan
