@@ -137,7 +137,7 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center gap-2">
               <button id="nav-btn-masuk-daftar" onClick={() => navigate('/login')} className="px-3 py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-md shadow-amber-500/20 transition-all cursor-pointer flex items-center gap-1.5 min-h-10" title="Khusus Akun Perusahaan & Auditor (Pelapor tidak perlu login)">
                 <Building2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Masuk PT & Auditor</span>
+                <span>Masuk</span>
               </button>
             </div>
           )}
