@@ -120,7 +120,7 @@ export const ProfilePage: React.FC = () => {
   // Modal Keuangan States
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showNowPaymentsModal, setShowNowPaymentsModal] = useState(false);
-  const [depositTab, setDepositTab] = useState<'qris' | 'nowpayments' | 'bank'>('qris');
+  const [depositTab, setDepositTab] = useState<'qris' | 'nowpayments'>('qris');
   const [depositAmount, setDepositAmount] = useState<number>(5000000);
   const [depositMethod, setDepositMethod] = useState('QRIS Statis Nasional (INTEGRITAS360)');
   const [processingDeposit, setProcessingDeposit] = useState(false);
@@ -2077,7 +2077,7 @@ export const ProfilePage: React.FC = () => {
         )}
       </div>
 
-      {/* MODAL 1: DEPOSIT SALDO DENGAN PILIHAN QRIS, NOWPAYMENTS & BANK */}
+      {/* MODAL 1: DEPOSIT SALDO HANYA MELALUI QRIS ATAU NOWPAYMENTS */}
       {profileData?.role !== 'auditor' && showDepositModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 my-6 text-slate-100">
@@ -2102,7 +2102,7 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             {/* Payment Method Selector Tabs */}
-            <div className="grid grid-cols-3 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+            <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
               <button
                 type="button"
                 onClick={() => setDepositTab('qris')}
@@ -2131,50 +2131,18 @@ export const ProfilePage: React.FC = () => {
                 <span>NOWPayments (Crypto)</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setDepositTab('bank')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  depositTab === 'bank'
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                <span>Transfer Bank / VA</span>
-              </button>
             </div>
 
-            {/* Content for QRIS or Bank Tab */}
+            {/* Content for QRIS deposit */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* Kolom Kiri: Visual Pembayaran */}
               <div className="flex flex-col items-center">
-                {depositTab === 'qris' ? (
-                  <>
-                    <p className="text-xs font-semibold text-slate-300 mb-2 text-center">
-                      Pindai QRIS Statis Resmi (NMID: ID1026539516033)
-                    </p>
-                    <QrisStaticCard nominal={depositAmount} />
-                  </>
-                ) : (
-                  <div className="w-full space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
-                    <div className="font-bold text-amber-400 flex items-center gap-2">
-                      <CreditCard className="w-4 h-4" /> Rekening Resmi PT INTEGRITAS360
-                    </div>
-                    <div className="space-y-2 text-slate-300">
-                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400 uppercase">Bank Central Asia (BCA)</div>
-                        <div className="text-sm font-mono font-bold text-white">882-019-3821</div>
-                        <div className="text-[11px] text-slate-400">a.n. PT INTEGRITAS TIGA ENAM PULUH</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400 uppercase">Bank Mandiri</div>
-                        <div className="text-sm font-mono font-bold text-white">131-00-998822-1</div>
-                        <div className="text-[11px] text-slate-400">a.n. PT INTEGRITAS TIGA ENAM PULUH</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <div className="w-full flex flex-col items-center">
+                  <p className="text-xs font-semibold text-slate-300 mb-2 text-center">
+                    Pindai QRIS Statis Resmi (NMID: ID1026539516033)
+                  </p>
+                  <QrisStaticCard nominal={depositAmount} />
+                </div>
               </div>
 
               {/* Kolom Kanan: Form Input Nominal & Konfirmasi */}
@@ -2227,14 +2195,11 @@ export const ProfilePage: React.FC = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500"
                   >
                     <option value="QRIS Statis Nasional (INTEGRITAS360)">
-                      QRIS Statis Nasional (Semua Bank & E-Wallet)
+                      QRIS Nasional (Bank & E-Wallet)
                     </option>
                     <option value="NOWPayments (Crypto Gateway USDT/BTC/ETH)">
                       NOWPayments Crypto Gateway (USDT, BTC, ETH, SOL, TRX)
                     </option>
-                    <option value="BCA Transfer Bank">BCA Transfer Rekening</option>
-                    <option value="Mandiri Transfer Bank">Mandiri Transfer Rekening</option>
-                    <option value="BRI Transfer Bank">BRI Transfer Rekening</option>
                   </select>
                 </div>
 
@@ -2245,7 +2210,7 @@ export const ProfilePage: React.FC = () => {
                     Ketentuan Verifikasi Transaksi:
                   </div>
                   <p className="text-slate-300">
-                    Semua transaksi deposit melalui QRIS, Rekening Bank, maupun Crypto NOWPayments <strong>wajib diverifikasi dan disetujui oleh Administrator</strong> sebelum saldo aktif ditambahkan ke akun Anda.
+                    Semua transaksi deposit melalui QRIS maupun NOWPayments <strong>wajib diverifikasi dan disetujui oleh Administrator</strong> sebelum saldo aktif ditambahkan ke akun Anda.
                   </p>
                 </div>
 
