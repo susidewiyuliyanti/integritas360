@@ -9,7 +9,7 @@ import {
   where,
   serverTimestamp,
   increment
-} from 'firebase/firestore';
+} from '../lib/publicApi';
 import { db } from '../lib/publicApi';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
@@ -155,7 +155,7 @@ export const ProfilePage: React.FC = () => {
       return;
     }
 
-    const userRef = doc(db, 'users', user.uid);
+    const userRef = doc(db, 'users', (user.uid || user.id));
     const unsub = onSnapshot(
       userRef,
       (docSnap) => {
@@ -163,7 +163,7 @@ export const ProfilePage: React.FC = () => {
           const d = docSnap.data();
           const isAud = d.role === 'auditor';
           const p: UserProfile = {
-            uid: user.uid,
+            uid: (user.uid || user.id),
             email: d.email || user.email || '',
             role: d.role || 'perusahaan',
             namaPT: d.namaPT || '',
@@ -231,7 +231,7 @@ export const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
-    const q = query(collection(db, 'transactions'), where('userId', '==', user.uid));
+    const q = query(collection(db, 'transactions'), where('userId', '==', (user.uid || user.id)));
     const unsub = onSnapshot(
       q,
       (snapshot) => {
@@ -277,7 +277,7 @@ export const ProfilePage: React.FC = () => {
       const isAud = profileData?.role === 'auditor';
       const cleanFee = Math.max(100000, Number(biayaJasaPerKasus) || 150000);
 
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', (user.uid || user.id));
       const updateData: any = {
         namaPT: namaPT.trim(),
         alamat: alamat.trim(),
@@ -323,7 +323,7 @@ export const ProfilePage: React.FC = () => {
     if (!user) return;
     const clean = Math.max(100000, newFee);
     try {
-      await updateDoc(doc(db, 'users', user.uid), {
+      await updateDoc(doc(db, 'users', (user.uid || user.id)), {
         biayaJasaPerKasus: clean,
       });
       setBiayaJasaPerKasus(clean);
@@ -420,7 +420,7 @@ export const ProfilePage: React.FC = () => {
             updatePayload.sektor = (sektor || profileData?.sektor || 'Manufaktur & Pabrikasi').trim();
           }
 
-          const userRef = doc(db, 'users', user.uid);
+          const userRef = doc(db, 'users', (user.uid || user.id));
           await updateDoc(userRef, updatePayload);
 
           setDokumenUrl(finalData);
@@ -505,7 +505,7 @@ export const ProfilePage: React.FC = () => {
             updatePayload.sektor = (sektor || profileData?.sektor || 'Manufaktur & Pabrikasi').trim();
           }
 
-          const userRef = doc(db, 'users', user.uid);
+          const userRef = doc(db, 'users', (user.uid || user.id));
           await updateDoc(userRef, updatePayload);
           setPhotoURL(compressed);
           alert('Foto profil berhasil diperbarui dan data pengisian tetap tersimpan!');
@@ -537,7 +537,7 @@ export const ProfilePage: React.FC = () => {
     setProcessingDeposit(true);
     try {
       await addDoc(collection(db, 'transactions'), {
-        userId: user.uid,
+        userId: (user.uid || user.id),
         userName: profileData?.namaPT || user.email,
         type: 'deposit',
         amount: depositAmount,
@@ -571,7 +571,7 @@ export const ProfilePage: React.FC = () => {
 
       // Catat transaksi dengan status 'pending' (akan diverifikasi oleh Administrator)
       await addDoc(collection(db, 'transactions'), {
-        userId: user.uid,
+        userId: (user.uid || user.id),
         userName: profileData?.namaPT || user.email,
         type: 'deposit',
         amount: depositAmount,
@@ -606,7 +606,7 @@ export const ProfilePage: React.FC = () => {
 
     try {
       setProcessingWithdraw(true);
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', (user.uid || user.id));
 
       // Kurangi saldo aktif sementara untuk reservasi dana penarikan
       await updateDoc(userRef, {
@@ -615,7 +615,7 @@ export const ProfilePage: React.FC = () => {
 
       // Catat transaksi dengan status 'pending' (akan diverifikasi & ditransfer Administrator)
       await addDoc(collection(db, 'transactions'), {
-        userId: user.uid,
+        userId: (user.uid || user.id),
         userName: profileData?.namaPT || user.email,
         type: 'withdrawal',
         amount: withdrawAmount,
@@ -663,7 +663,7 @@ export const ProfilePage: React.FC = () => {
 
     try {
       setProcessingLock(true);
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', (user.uid || user.id));
 
       if (lockActionType === 'lock') {
         // Pindahkan dari saldo aktif -> danaTerkunci & danaTersedia
@@ -674,7 +674,7 @@ export const ProfilePage: React.FC = () => {
         });
 
         await addDoc(collection(db, 'transactions'), {
-          userId: user.uid,
+          userId: (user.uid || user.id),
           type: 'lock',
           amount: lockAmount,
           status: 'selesai',
@@ -690,7 +690,7 @@ export const ProfilePage: React.FC = () => {
         });
 
         await addDoc(collection(db, 'transactions'), {
-          userId: user.uid,
+          userId: (user.uid || user.id),
           type: 'unlock',
           amount: lockAmount,
           status: 'selesai',
