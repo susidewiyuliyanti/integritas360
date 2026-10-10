@@ -164,6 +164,14 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
       return json({ok:true});
     }
     if(op==='create'||op==='set'||op==='update'){
+      if(collection==='users'){
+        const targetCompany=String(data.company_id??data.companyId??'').trim();
+        const targetRole=String(data.role||'').toLowerCase();
+        if(targetCompany && ['admin_perusahaan','company_admin'].includes(targetRole)){
+          const count=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin') AND id<>?").bind(targetCompany,op==='create'?'':id).first<any>();
+          if(Number(count?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk setiap perusahaan sudah tercapai.'},409);
+        }
+      }
       if(collection==='companies'){
         const existing=await env.DB.prepare('SELECT id FROM companies WHERE company_id=?').bind(id).first();
         if(op==='create'||!existing){
