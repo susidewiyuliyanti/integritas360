@@ -14,32 +14,36 @@ export const onRequestPost: PagesFunction<Env> = async ({request,env}) => {
       return json({error:'Format data login tidak valid.',code:'AUTH_LOGIN_PARSE_ERROR'},400);
     }
 
-    // One-time Owner recovery. The token is supplied by the administrator and is never stored in source code.
+    // Bootstrap is token-protected. It repairs the existing owner record instead of
+    // creating a second owner or refusing recovery merely because an old owner exists.
     if (body.action === 'bootstrap-owner') {
       if (!env.BOOTSTRAP_TOKEN) return json({error:'Bootstrap belum dikonfigurasi di Cloudflare Pages.'},503);
       if (!body.token || body.token !== env.BOOTSTRAP_TOKEN) return json({error:'Bootstrap token tidak valid.'},401);
       const ownerPassword = String(body.password || '');
       if (ownerPassword.length < 12) return json({error:'Kata sandi Owner harus minimal 12 karakter.'},400);
 
-      const existingOwner = await env.DB.prepare(
-        "SELECT id FROM users WHERE lower(email) = ? AND role = 'owner' LIMIT 1"
-      ).bind(OWNER_EMAIL).first<any>();
-      if (existingOwner) return json({error:'Akun Owner sudah tersedia. Bootstrap ditutup.'},409);
-
-      const existingAccount = await env.DB.prepare(
+      stage = 'bootstrap-find-owner';
+      const officialAccount = await env.DB.prepare(
         'SELECT id FROM users WHERE lower(email) = ? LIMIT 1'
       ).bind(OWNER_EMAIL).first<any>();
+      const previousOwner = officialAccount ? null : await env.DB.prepare(
+        "SELECT id FROM users WHERE role = 'owner' ORDER BY created_at ASC LIMIT 1"
+      ).first<any>();
+      const existingAccount = officialAccount || previousOwner;
       const {salt,hash} = await hashPassword(ownerPassword);
+
+      stage = 'bootstrap-save-owner';
       if (existingAccount) {
         await env.DB.prepare(
-          "UPDATE users SET password_hash=?, password_salt=?, role='owner', company_id=NULL, status='ACTIVE', updated_at=CURRENT_TIMESTAMP WHERE id=?"
-        ).bind(hash,salt,existingAccount.id).run();
+          "UPDATE users SET email=?, password_hash=?, password_salt=?, role='owner', company_id=NULL, status='ACTIVE', full_name=COALESCE(full_name,'INTEGRITAS360 Owner'), updated_at=CURRENT_TIMESTAMP WHERE id=?"
+        ).bind(OWNER_EMAIL,hash,salt,existingAccount.id).run();
+        await env.DB.prepare('DELETE FROM sessions WHERE user_id=?').bind(existingAccount.id).run();
       } else {
         await env.DB.prepare(
           "INSERT INTO users (id,email,password_hash,password_salt,role,company_id,status,full_name,created_at,updated_at) VALUES (?,?,?,?,'owner',NULL,'ACTIVE','INTEGRITAS360 Owner',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"
         ).bind(randomId('usr'),OWNER_EMAIL,hash,salt).run();
       }
-      return json({ok:true,message:'Akun Owner berhasil disiapkan. Silakan login.',email:OWNER_EMAIL,role:'owner',status:'ACTIVE'});
+      return json({ok:true,message:'Akun Owner berhasil dipulihkan. Silakan login menggunakan email Owner resmi dan kata sandi baru.',email:OWNER_EMAIL,role:'owner',status:'ACTIVE'});
     }
 
     const email = String(body.email || '').trim().toLowerCase();
