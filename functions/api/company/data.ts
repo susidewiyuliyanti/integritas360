@@ -46,7 +46,6 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   }
   if(op==='update-user'){
     const id=String(body.id||''); const d=body.data||{};
-    const target=await env.DB.prepare('SELECT id FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
     const target=await env.DB.prepare('SELECT id,role FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
     if(!target) return json({error:'User tidak ditemukan'},404);
     if(d.role){
