@@ -47,8 +47,17 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   if(op==='update-user'){
     const id=String(body.id||''); const d=body.data||{};
     const target=await env.DB.prepare('SELECT id FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
+    const target=await env.DB.prepare('SELECT id,role FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
     if(!target) return json({error:'User tidak ditemukan'},404);
-    await env.DB.prepare('UPDATE users SET full_name=COALESCE(?,full_name),phone=COALESCE(?,phone),status=COALESCE(?,status),updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?').bind(d.full_name??null,d.phone??null,d.status??null,id,companyId).run();
+    if(d.role){
+      const nextRole=String(d.role).toLowerCase();
+      if(!['company_user','finance','hr','admin_perusahaan','company_admin'].includes(nextRole)) return json({error:'Role akun tidak diizinkan.'},400);
+      if(['admin_perusahaan','company_admin'].includes(nextRole) && !['admin_perusahaan','company_admin'].includes(String(target.role||'').toLowerCase())){
+        const adminCount=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
+        if(Number(adminCount?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk tenant ini sudah tercapai.'},409);
+      }
+    }
+    await env.DB.prepare('UPDATE users SET full_name=COALESCE(?,full_name),phone=COALESCE(?,phone),status=COALESCE(?,status),role=COALESCE(?,role),updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?').bind(d.full_name??null,d.phone??null,d.status??null,d.role??null,id,companyId).run();
     if(d.role) await env.DB.prepare('UPDATE company_users SET role=?,updated_at=CURRENT_TIMESTAMP WHERE user_id=? AND company_id=?').bind(d.role,id,companyId).run();
     return json({ok:true});
   }
