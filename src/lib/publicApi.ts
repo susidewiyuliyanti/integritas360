@@ -33,7 +33,11 @@ export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (err
 
 export async function getDocs(ref: Ref) {
   const p = new URLSearchParams({ collection: ref.collection });
-  if (ref.where) { if (ref.where.field === 'id') p.set('idValue', String(ref.where.value)); else { p.set('whereField', ref.where.field); p.set('whereValue', String(ref.where.value)); } }
+  if (ref.where) {
+    if (ref.where.field === 'id') p.set('idValue', String(ref.where.value));
+    else if (['reports','transactions','audit_logs'].includes(ref.collection) && ['companyId','company_id'].includes(ref.where.field)) p.set('companyId', String(ref.where.value));
+    else { p.set('whereField', ref.where.field); p.set('whereValue', String(ref.where.value)); }
+  }
   const data = await api('/api/public/data?' + p.toString());
   return snapshot(data.items || []);
 }
@@ -55,6 +59,9 @@ export async function addDoc(ref: Ref, data: any) {
 }
 
 export async function updateDoc(ref: Ref, data: any) {
+  if (ref.collection === 'reports') {
+    return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'update-report', id: ref.id, data }) });
+  }
   return api('/api/public/data', { method: 'POST', body: JSON.stringify({ operation: 'update', collection: ref.collection, id: ref.id, data }) });
 }
 
