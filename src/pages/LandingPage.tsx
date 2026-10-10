@@ -259,7 +259,7 @@ export const LandingPage: React.FC = () => {
               className="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer font-bold"
             >
               <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-              Hubungi Kami (087879625033)
+              Hubungi Kami
             </a>
           </div>
 
