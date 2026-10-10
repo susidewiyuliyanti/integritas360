@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
-import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity } from 'lucide-react';
+import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity, KeyRound } from 'lucide-react';
 
 type Company = Record<string, any>;
 type Report = Record<string, any>;
@@ -18,7 +18,7 @@ const date = (v: unknown) => {
 export const SuperAdminDashboard: React.FC = () => {
   const { user, loading, logout } = useAuth();
   const { navigate } = useNavigation();
-  const [tab, setTab] = useState<'overview'|'tenants'|'reports'|'transactions'|'audit'>('overview');
+  const [tab, setTab] = useState<'overview'|'tenants'|'reports'|'transactions'|'audit'|'security'>('overview');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -26,6 +26,12 @@ export const SuperAdminDashboard: React.FC = () => {
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     if (loading) return;
@@ -84,6 +90,7 @@ export const SuperAdminDashboard: React.FC = () => {
     ['reports','Semua Laporan',FileText],
     ['transactions','Saldo & Transaksi',Wallet],
     ['audit','History & Audit Log',History],
+    ['security','Keamanan Akun',KeyRound],
   ] as const;
 
   return <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -107,6 +114,47 @@ export const SuperAdminDashboard: React.FC = () => {
       {tab==='reports' && <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Kode laporan','Tenant','Judul','Kategori','Estimasi kerugian','Status','Tanggal'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{filteredReports.map((r,i)=><tr key={r.id||i} className="border-t border-slate-800"><td className="p-3 font-mono text-xs">{r.report_code||r.reportCode||r.id}</td><td className="p-3">{r.company_name||r.companyName||r.company_id||r.companyId||'-'}</td><td className="p-3 min-w-48">{r.title||r.judul||'-'}</td><td className="p-3">{r.category||r.kategori||'-'}</td><td className="p-3 whitespace-nowrap">{money(r.estimated_loss??r.estimasiKerugian)}</td><td className="p-3">{r.status||'-'}</td><td className="p-3 whitespace-nowrap">{date(r.created_at||r.createdAt)}</td></tr>)}{filteredReports.length===0&&<tr><td colSpan={7} className="p-8 text-center text-slate-500">Tidak ada data laporan.</td></tr>}</tbody></table></section>}
       {tab==='transactions' && <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Tanggal','Tenant','Tipe','Nominal','Status','Referensi'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{filteredTransactions.map((t,i)=><tr key={t.id||i} className="border-t border-slate-800"><td className="p-3 whitespace-nowrap">{date(t.created_at||t.createdAt)}</td><td className="p-3">{t.company_name||t.companyName||t.company_id||t.companyId||'-'}</td><td className="p-3">{t.type||'-'}</td><td className="p-3 whitespace-nowrap">{money(t.amount)}</td><td className="p-3">{t.status||'-'}</td><td className="p-3 font-mono text-xs">{t.tx_hash||t.txHash||t.id||'-'}</td></tr>)}{filteredTransactions.length===0&&<tr><td colSpan={6} className="p-8 text-center text-slate-500">Tidak ada transaksi.</td></tr>}</tbody></table></section>}
       {tab==='audit' && <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Waktu','Tenant','Aksi','Aktor','Detail'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{auditLogs.map((a,i)=><tr key={a.id||i} className="border-t border-slate-800"><td className="p-3 whitespace-nowrap">{date(a.created_at||a.timestamp)}</td><td className="p-3">{a.company_name||a.company_id||'-'}</td><td className="p-3">{a.action||a.event||a.type||'-'}</td><td className="p-3">{a.actor_email||a.user_email||a.actor||'-'}</td><td className="p-3 max-w-md break-words">{typeof a.metadata==='object'?JSON.stringify(a.metadata):String(a.metadata_json||a.metadata||a.description||'-')}</td></tr>)}{auditLogs.length===0&&<tr><td colSpan={5} className="p-8 text-center text-slate-500">Tidak ada audit log.</td></tr>}</tbody></table></section>}
+      {tab==='security' && <section className="max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-5 sm:p-6">
+        <h2 className="font-bold text-lg flex items-center gap-2"><KeyRound className="w-5 h-5 text-amber-400"/> Keamanan Akun Owner</h2>
+        <p className="text-sm text-slate-400 mt-2">Akun Owner utama: <strong className="text-slate-200">support.integritas360@gmail.com</strong>. Ubah kata sandi dari halaman ini. Kata sandi disimpan dalam bentuk hash, bukan teks biasa.</p>
+        {passwordMessage && <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">{passwordMessage}</div>}
+        {passwordError && <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{passwordError}</div>}
+        <form className="mt-5 space-y-4" onSubmit={async (e) => {
+          e.preventDefault();
+          setPasswordError('');
+          setPasswordMessage('');
+          setPasswordBusy(true);
+          try {
+            const response = await fetch('/api/auth/change-password', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) throw new Error(data.error || 'Gagal mengubah kata sandi.');
+            setPasswordMessage(data.message || 'Kata sandi berhasil diperbarui.');
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+          } catch (err) {
+            setPasswordError(err instanceof Error ? err.message : 'Gagal mengubah kata sandi.');
+          } finally {
+            setPasswordBusy(false);
+          }
+        }}>
+          <label className="block text-sm text-slate-300">Kata sandi saat ini
+            <input required type="password" autoComplete="current-password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-amber-500"/>
+          </label>
+          <label className="block text-sm text-slate-300">Kata sandi baru (minimal 10 karakter)
+            <input required minLength={10} type="password" autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-amber-500"/>
+          </label>
+          <label className="block text-sm text-slate-300">Konfirmasi kata sandi baru
+            <input required minLength={10} type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white outline-none focus:border-amber-500"/>
+          </label>
+          <button type="submit" disabled={passwordBusy} className="rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-60">{passwordBusy ? 'Menyimpan...' : 'Ubah Kata Sandi'}</button>
+        </form>
+      </section>}
       <footer className="text-xs text-slate-500 flex flex-wrap gap-2 items-center"><Users className="w-4 h-4"/> Panel khusus Super Admin. Jangan bagikan akses ini kepada akun tenant.</footer>
     </main>
   </div>;
