@@ -62,7 +62,10 @@ export async function updateDoc(ref: Ref, data: any) {
   if (ref.collection === 'reports') {
     return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'update-report', id: ref.id, data }) });
   }
-  return api('/api/public/data', { method: 'POST', body: JSON.stringify({ operation: 'update', collection: ref.collection, id: ref.id, data }) });
+  if (ref.collection === 'users') {
+    return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'update-user', id: ref.id, data }) });
+  }
+  throw new Error(`Pembaruan tidak didukung untuk collection ${ref.collection}`);
 }
 
 
