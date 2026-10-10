@@ -22,7 +22,7 @@ export const LoginPage: React.FC = () => {
 
   const routeByRole = (user: any) => {
     const role = user?.role;
-    if (role === 'owner') navigate('/owner');
+    if (role === 'owner') navigate('/admin');
     else if (role === 'auditor') navigate('/auditor');
     else if (role === 'company_admin' || role === 'admin_perusahaan') navigate('/admin-perusahaan');
     else navigate('/perusahaan');
