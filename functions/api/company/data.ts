@@ -27,16 +27,22 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   const body=await request.json<any>(); const op=body.operation; const companyId=actor.company_id;
   if(op==='create-user'){
     const d=body.data||{}; const email=String(d.email||'').trim().toLowerCase(); const password=String(d.password||'');
-    if(!email||password.length<6) return json({error:'Email dan password wajib valid'},400);
+    const requestedRole=String(d.role||'company_user').toLowerCase();
+    if(!email||password.length<10) return json({error:'Email wajib valid dan kata sandi minimal 10 karakter'},400);
+    if(!['company_user','finance','hr','admin_perusahaan','company_admin'].includes(requestedRole)) return json({error:'Role akun tidak diizinkan.'},400);
+    if(['admin_perusahaan','company_admin'].includes(requestedRole)){
+      const adminCount=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
+      if(Number(adminCount?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk tenant ini sudah tercapai.'},409);
+    }
     const exists=await env.DB.prepare('SELECT id FROM users WHERE lower(email)=? LIMIT 1').bind(email).first<any>();
     if(exists) return json({error:'Email sudah terdaftar'},409);
     const {salt,hash}=await hashPassword(password);
     const uid=randomId('usr');
     await env.DB.batch([
-      env.DB.prepare('INSERT INTO users (id,email,password_hash,password_salt,role,company_id,status,full_name,phone) VALUES (?,?,?,?,?,?,?,?,?)').bind(uid,email,hash,salt,d.role||'company_user',companyId,'ACTIVE',d.full_name||'',d.phone||''),
-      env.DB.prepare('INSERT INTO company_users (id,user_id,company_id,role,status,is_primary_company_account) VALUES (?,?,?,?,?,0)').bind(randomId('cu'),uid,companyId,d.role||'company_user','ACTIVE')
+      env.DB.prepare('INSERT INTO users (id,email,password_hash,password_salt,role,company_id,status,full_name,phone) VALUES (?,?,?,?,?,?,?,?,?)').bind(uid,email,hash,salt,requestedRole,companyId,'ACTIVE',d.full_name||'',d.phone||''),
+      env.DB.prepare('INSERT INTO company_users (id,user_id,company_id,role,status,is_primary_company_account) VALUES (?,?,?,?,?,0)').bind(randomId('cu'),uid,companyId,requestedRole,'ACTIVE')
     ]);
-    return json({user:{id:uid,email,role:d.role||'company_user',company_id:companyId}});
+    return json({user:{id:uid,email,role:requestedRole,company_id:companyId}});
   }
   if(op==='update-user'){
     const id=String(body.id||''); const d=body.data||{};
