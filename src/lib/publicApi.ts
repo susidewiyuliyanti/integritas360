@@ -25,7 +25,24 @@ const snapshot = (items: any[]) => ({
 
 export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (error: any) => void) {
   let stopped = false;
-  const run = async () => { try { if (!stopped) next(await getDocs(ref)); } catch (e) { if (!stopped) error?.(e); } };
+  const run = async () => {
+    try {
+      if (stopped) return;
+      const result = await getDocs(ref);
+      if (ref.id) {
+        const item = result.docs.find((d: any) => d.id === ref.id);
+        next({
+          id: ref.id,
+          exists: () => Boolean(item),
+          data: () => item?.data() || {},
+        });
+      } else {
+        next(result);
+      }
+    } catch (e) {
+      if (!stopped) error?.(e);
+    }
+  };
   void run();
   const timer = window.setInterval(run, 15000);
   return () => { stopped = true; window.clearInterval(timer); };
