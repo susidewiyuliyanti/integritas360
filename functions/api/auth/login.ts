@@ -28,7 +28,12 @@ export const onRequestPost: PagesFunction<Env> = async ({request,env}) => {
     }
 
     const ownerEmail = 'support.integritas360@gmail.com';
-    if ((user.role === 'owner' && email !== ownerEmail) || (email === ownerEmail && user.role !== 'owner')) {
+    const designatedOwner = await env.DB.prepare(
+      "SELECT id FROM users WHERE lower(email) = ? AND role = 'owner' LIMIT 1"
+    ).bind(ownerEmail).first<any>();
+    // Keep the existing Owner reachable until the designated account has been provisioned.
+    // Once it exists, only the designated email may sign in with the Owner role.
+    if (designatedOwner && ((user.role === 'owner' && email !== ownerEmail) || (email === ownerEmail && user.role !== 'owner'))) {
       return json({error:'Email atau kata sandi tidak valid.'},401);
     }
 
