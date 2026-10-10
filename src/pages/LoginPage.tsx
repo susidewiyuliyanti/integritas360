@@ -91,7 +91,7 @@ export const LoginPage: React.FC = () => {
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Masuk ke Sistem</h2>
           <p className="text-xs text-slate-400">
-            Gunakan email dan kata sandi akun yang diterbitkan oleh Owner / Super Admin.
+            Gunakan email dan kata sandi akun yang diterbitkan Admin.
           </p>
         </div>
 
@@ -184,9 +184,6 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 text-xs text-slate-400 text-center">
-            Login menggunakan email dan kata sandi akun Cloudflare yang diterbitkan Owner / Super Admin.
-          </div>
         </div>
 
         {/* Hubungi Kami WhatsApp (Tombol Daftar di-hide sementara) */}
