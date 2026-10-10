@@ -1,1 +1,126 @@
 @import "tailwindcss";
+
+/* Responsive foundation for desktop, tablet, and mobile */
+:root {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html {
+  width: 100%;
+  min-width: 320px;
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
+
+body {
+  width: 100%;
+  min-width: 320px;
+  margin: 0;
+  overflow-x: clip;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, svg, video, canvas {
+  max-width: 100%;
+}
+
+input, select, textarea, button {
+  font: inherit;
+}
+
+input, select, textarea {
+  max-width: 100%;
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+@media (max-width: 767px) {
+  main {
+    min-width: 0;
+    width: 100%;
+  }
+
+  main > *, main section, main article {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 7vw, 2.5rem);
+    overflow-wrap: anywhere;
+  }
+
+  h2 {
+    font-size: clamp(1.35rem, 5.5vw, 2rem);
+    overflow-wrap: anywhere;
+  }
+
+  p, label, a, button, th, td {
+    overflow-wrap: anywhere;
+  }
+
+  input, select, textarea {
+    min-width: 0;
+    width: 100%;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+
+  /* Keep data tables usable on small screens without breaking the page width. */
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Dashboard content commonly uses dense grids; collapse them on phones. */
+  .mobile-stack {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-full-width {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Floating contact action stays within the safe viewport area. */
+  [aria-label="Bantuan WhatsApp"] {
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  [aria-label="Bantuan WhatsApp"] a {
+    min-height: 44px;
+    min-width: 44px;
+    justify-content: center;
+    padding: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  main {
+    min-width: 0;
+  }
+}
