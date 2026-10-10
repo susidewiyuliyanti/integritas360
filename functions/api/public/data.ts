@@ -6,6 +6,18 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 const id = (prefix: string) => prefix + '_' + crypto.randomUUID();
+async function tenantSession(request: Request, db: D1Database) {
+  const cookieHeader=request.headers.get('Cookie')||'';
+  const sid=cookieHeader.split(';').map(v=>v.trim()).find(v=>v.startsWith('i360_session='))?.slice('i360_session='.length);
+  if(!sid) return null;
+  return await db.prepare(`SELECT u.id,u.role,u.company_id,u.status FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.id=? AND s.expires_at>CURRENT_TIMESTAMP AND u.status='ACTIVE' LIMIT 1`).bind(decodeURIComponent(sid)).first<any>();
+}
+async function canReadTenant(request: Request, db: D1Database, requestedId: string) {
+  const actor=await tenantSession(request,db);
+  if(!actor || !actor.company_id || actor.company_id!==requestedId) return false;
+  return ['perusahaan','admin_perusahaan','company_admin','finance','hr','company_user'].includes(String(actor.role||'').toLowerCase());
+}
+
 
 function metadata(row: any) {
   let m: any = {};
@@ -70,6 +82,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         return json({ items: row ? [metadata(row)] : [] });
       }
       if (whereField === 'company_id' && whereValue) {
+        if (!(await canReadTenant(request, env.DB, whereValue))) return json({ error: 'Akses tenant ditolak' }, 403);
         const rows = await env.DB.prepare('SELECT * FROM users WHERE company_id = ? ORDER BY created_at DESC').bind(whereValue).all<any>();
         return json({ items: rows.results.map(metadata) });
       }
@@ -88,6 +101,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       }
       if (companyIdParam) {
         const companyId = await resolveCompanyId(env.DB, companyIdParam);
+        if (!(await canReadTenant(request, env.DB, companyId))) return json({ error: 'Akses tenant ditolak' }, 403);
         const rows = await env.DB.prepare('SELECT * FROM reports WHERE company_id = ? ORDER BY created_at DESC').bind(companyId).all<any>();
         return json({ items: rows.results.map(mergeReport) });
       }
@@ -115,6 +129,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     if (collection === 'transactions') {
       if (companyIdParam) {
         const companyId = await resolveCompanyId(env.DB, companyIdParam);
+        if (!(await canReadTenant(request, env.DB, companyId))) return json({ error: 'Akses tenant ditolak' }, 403);
         const rows = await env.DB.prepare('SELECT * FROM transactions WHERE company_id = ? ORDER BY created_at DESC').bind(companyId).all<any>();
         return json({ items: rows.results.map((r:any) => ({...r, id:r.id})) });
       }
@@ -124,6 +139,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     if (collection === 'audit_logs') {
       if (companyIdParam) {
         const companyId = await resolveCompanyId(env.DB, companyIdParam);
+        if (!(await canReadTenant(request, env.DB, companyId))) return json({ error: 'Akses tenant ditolak' }, 403);
         const rows = await env.DB.prepare('SELECT * FROM audit_logs WHERE company_id = ? ORDER BY created_at DESC LIMIT 150').bind(companyId).all<any>();
         return json({ items: rows.results.map((r:any) => ({...r, id:r.id, timestamp:r.created_at, metadata: (() => { try { return JSON.parse(r.metadata_json || '{}'); } catch { return {}; } })()})) });
       }
