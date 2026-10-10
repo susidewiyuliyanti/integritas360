@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pemulihan Owner — INTEGRITAS360</title>
+<style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f4f6f8;color:#17202a;font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}.card{width:min(100%,440px);background:#fff;border:1px solid #dfe5eb;border-radius:16px;padding:28px;box-shadow:0 12px 36px #10203012}h1{font-size:23px;margin:0 0 8px}p{color:#526170;margin:0 0 18px}.warning{font-size:13px;background:#fff7e6;padding:12px;border-radius:8px;margin-bottom:18px}label{display:block;font-weight:600;margin:14px 0 6px}input{width:100%;padding:12px;border:1px solid #c8d0d9;border-radius:8px;font:inherit}button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:8px;background:#17202a;color:#fff;font:inherit;font-weight:700;cursor:pointer}button:disabled{opacity:.6}#result{margin-top:16px;white-space:pre-wrap;overflow-wrap:anywhere}.small{font-size:13px;margin-top:16px}
+</style>
+</head>
+<body>
+<main class="card">
+<h1>Pemulihan akun Owner</h1>
+<p>Gunakan halaman ini hanya untuk menyiapkan akun Owner resmi INTEGRITAS360.</p>
+<div class="warning">Token bootstrap diperlukan. Proses ini hanya dapat berhasil jika BOOTSTRAP_TOKEN sudah disetel di Cloudflare Pages Production dan akun Owner belum dibuat.</div>
+<form id="recovery">
+<label for="token">BOOTSTRAP_TOKEN</label>
+<input id="token" name="token" type="password" autocomplete="off" required>
+<label for="password">Kata sandi Owner baru (minimal 12 karakter)</label>
+<input id="password" name="password" type="password" minlength="12" autocomplete="new-password" required>
+<label for="confirm">Ulangi kata sandi</label>
+<input id="confirm" name="confirm" type="password" minlength="12" autocomplete="new-password" required>
+<button id="submit" type="submit">Pulihkan akun Owner</button>
+</form>
+<div id="result" role="status" aria-live="polite"></div>
+<p class="small">Email Owner: support.integritas360@gmail.com. Jangan bagikan token atau kata sandi kepada siapa pun.</p>
+</main>
+<script>
+const form=document.getElementById('recovery');
+const result=document.getElementById('result');
+const submit=document.getElementById('submit');
+form.addEventListener('submit',async event=>{
+ event.preventDefault();
+ const token=document.getElementById('token').value;
+ const password=document.getElementById('password').value;
+ const confirm=document.getElementById('confirm').value;
+ if(password!==confirm){result.textContent='Kata sandi dan konfirmasi tidak sama.';return;}
+ submit.disabled=true;result.textContent='Memproses pemulihan...';
+ try{
+  const response=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({action:'bootstrap-owner',token,password})});
+  const data=await response.json();
+  result.textContent='HTTP '+response.status+' — '+(data.message||data.error||'Tidak ada pesan dari server.');
+  if(response.ok&&data.ok){form.reset();const link=document.createElement('a');link.href='/login';link.textContent=' Lanjut ke halaman login';result.appendChild(document.createTextNode('\n'));result.appendChild(link);}
+ }catch(error){result.textContent='Permintaan gagal. Periksa koneksi dan coba lagi.';}
+ finally{submit.disabled=false;}
+});
+</script>
+</body>
+</html>
