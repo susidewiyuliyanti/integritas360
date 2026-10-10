@@ -123,17 +123,24 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
     }
     if(op==='create-user'){
       const email=String(data.email||'').trim().toLowerCase(), password=String(data.password||'');
-      if(!email||password.length<6) return json({error:'Email dan password tidak valid.'},400);
+      if(!email||password.length<10) return json({error:'Email wajib valid dan kata sandi minimal 10 karakter.'},400);
+      const role=String(data.role||'admin_perusahaan').toLowerCase();
+      if(!['admin_perusahaan','company_admin','company_user','finance','hr','perusahaan','auditor'].includes(role)) return json({error:'Role akun tidak diizinkan.'},400);
+      const companyId=String(data.company_id||data.companyId||'').trim();
+      if(companyId && ['admin_perusahaan','company_admin'].includes(role)){
+        const count=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
+        if(Number(count?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk setiap perusahaan sudah tercapai.'},409);
+      }
       const exists=await env.DB.prepare('SELECT id FROM users WHERE lower(email)=? LIMIT 1').bind(email).first();
       if(exists) return json({error:`Email "${email}" sudah terdaftar di sistem.`},409);
       const hp=await hashPassword(password);
       const uid=randomId('usr');
       const safeData={...data}; delete safeData.password;
       await env.DB.prepare('INSERT INTO users(id,email,password_hash,password_salt,role,company_id,status,full_name,phone,metadata_json) VALUES(?,?,?,?,?,?,?,?,?,?)')
-        .bind(uid,email,hp.hash,hp.salt,data.role||'admin_perusahaan',data.company_id||null,data.status||'ACTIVE',data.full_name||null,data.phone||null,JSON.stringify(safeData)).run();
-      if(data.company_id){
+        .bind(uid,email,hp.hash,hp.salt,role,companyId||null,data.status||'ACTIVE',data.full_name||null,data.phone||null,JSON.stringify(safeData)).run();
+      if(companyId){
         await env.DB.prepare('INSERT OR REPLACE INTO company_users(id,user_id,company_id,role,is_primary_company_account,status,metadata_json) VALUES(?,?,?,?,?,?,?)')
-          .bind(randomId('cu'),uid,data.company_id,data.company_user_role||'company_admin',data.is_primary_company_account?1:0,data.status||'ACTIVE',JSON.stringify(data)).run();
+          .bind(randomId('cu'),uid,companyId,data.company_user_role||'company_admin',data.is_primary_company_account?1:0,data.status||'ACTIVE',JSON.stringify(data)).run();
       }
       return json({ok:true,id:uid});
     }
