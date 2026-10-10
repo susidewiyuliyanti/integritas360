@@ -32,6 +32,24 @@ export const SuperAdminDashboard: React.FC = () => {
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [tenantName, setTenantName] = useState('');
+  const [tenantEmail, setTenantEmail] = useState('');
+  const [tenantAdminName, setTenantAdminName] = useState('');
+  const [tenantAdminEmail, setTenantAdminEmail] = useState('');
+  const [tenantAdminPassword, setTenantAdminPassword] = useState('');
+  const [tenantPhone, setTenantPhone] = useState('');
+  const [tenantBusy, setTenantBusy] = useState(false);
+  const [tenantMessage, setTenantMessage] = useState('');
+  const [tenantError, setTenantError] = useState('');
+  const [adminCompanyId, setAdminCompanyId] = useState('');
+  const [extraAdminName, setExtraAdminName] = useState('');
+  const [extraAdminEmail, setExtraAdminEmail] = useState('');
+  const [extraAdminPassword, setExtraAdminPassword] = useState('');
+  const [extraAdminPhone, setExtraAdminPhone] = useState('');
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [adminMessage, setAdminMessage] = useState('');
+  const [adminError, setAdminError] = useState('');
+
 
   useEffect(() => {
     if (loading) return;
@@ -110,7 +128,63 @@ export const SuperAdminDashboard: React.FC = () => {
         </div>
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><h2 className="font-bold mb-3 flex items-center gap-2"><Activity className="w-4 h-4 text-amber-400"/>Ringkasan sistem</h2><p className="text-sm text-slate-400">Panel ini khusus Owner/Super Admin untuk memantau seluruh tenant, laporan, saldo, transaksi, dan jejak audit. Tenant tetap masuk melalui portal tenant terpisah.</p><div className="flex flex-wrap gap-3 mt-4"><button onClick={()=>setTab('tenants')} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950">Kelola Tenant</button><a href="/login" className="rounded-lg border border-slate-700 px-4 py-2 text-sm flex items-center gap-2">Portal Tenant <ExternalLink className="w-4 h-4"/></a></div></section>
       </>}
-      {tab==='tenants' && <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Perusahaan / Tenant','Tenant ID','Email','Saldo Tersedia','Terkunci','Status','Dibuat'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{filteredCompanies.map((c,i)=><tr key={c.id||c.company_id||i} className="border-t border-slate-800"><td className="p-3 font-semibold">{c.company_name||c.namaPT||'-'}</td><td className="p-3 font-mono text-xs">{c.company_id||c.id||'-'}</td><td className="p-3">{c.company_email||c.email||'-'}</td><td className="p-3 whitespace-nowrap">{money(c.deposit_balance??c.danaTersedia??c.saldo)}</td><td className="p-3 whitespace-nowrap">{money(c.locked_balance??c.danaTerkunci)}</td><td className="p-3">{c.status||c.statusAkun||'-'}</td><td className="p-3 whitespace-nowrap">{date(c.created_at||c.createdAt)}</td></tr>)}{filteredCompanies.length===0&&<tr><td colSpan={7} className="p-8 text-center text-slate-500">Tidak ada data tenant.</td></tr>}</tbody></table></section>}
+      {tab==='tenants' && <div className="space-y-5">
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <div className="mb-4"><h2 className="text-lg font-bold flex items-center gap-2"><Building2 className="w-5 h-5 text-amber-400"/>Tambah Tenant Perusahaan</h2><p className="text-sm text-slate-400 mt-1">Buat ruang perusahaan yang terpisah beserta akun admin pertamanya. Tenant baru berstatus DEPOSIT_REQUIRED.</p></div>
+          {tenantMessage && <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">{tenantMessage}</div>}
+          {tenantError && <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{tenantError}</div>}
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={async e=>{
+            e.preventDefault(); setTenantBusy(true); setTenantError(''); setTenantMessage('');
+            try {
+              const response=await fetch('/api/owner/data',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation:'create-tenant',data:{company_name:tenantName,company_email:tenantEmail,full_name:tenantAdminName,admin_email:tenantAdminEmail,password:tenantAdminPassword,phone:tenantPhone}})});
+              const data=await response.json().catch(()=>({}));
+              if(!response.ok||!data.ok) throw new Error(data.error||'Tenant tidak berhasil dibuat.');
+              setTenantMessage('Tenant berhasil dibuat. ID: '+data.company_id+' · Admin pertama: '+tenantAdminEmail);
+              setTenantName('');setTenantEmail('');setTenantAdminName('');setTenantAdminEmail('');setTenantAdminPassword('');setTenantPhone('');
+              await load();
+            } catch(err){setTenantError(err instanceof Error?err.message:'Gagal membuat tenant.');}
+            finally{setTenantBusy(false);}
+          }}>
+            <label className="text-sm text-slate-300">Nama perusahaan *<input required value={tenantName} onChange={e=>setTenantName(e.target.value)} placeholder="PT Contoh Indonesia" className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <label className="text-sm text-slate-300">Email perusahaan *<input required type="email" value={tenantEmail} onChange={e=>setTenantEmail(e.target.value)} placeholder="kontak@perusahaan.co.id" className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <div className="md:col-span-2 border-t border-slate-800 pt-3 mt-1"><h3 className="font-semibold text-white">Admin perusahaan pertama</h3><p className="text-xs text-slate-400">Setiap tenant maksimal memiliki 3 akun admin termasuk akun pertama.</p></div>
+            <label className="text-sm text-slate-300">Nama admin *<input required value={tenantAdminName} onChange={e=>setTenantAdminName(e.target.value)} placeholder="Nama lengkap" className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <label className="text-sm text-slate-300">Email login admin *<input required type="email" value={tenantAdminEmail} onChange={e=>setTenantAdminEmail(e.target.value)} placeholder="admin@perusahaan.co.id" className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <label className="text-sm text-slate-300">Kata sandi sementara (min. 10 karakter) *<input required minLength={10} type="password" autoComplete="new-password" value={tenantAdminPassword} onChange={e=>setTenantAdminPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <label className="text-sm text-slate-300">Telepon admin<input value={tenantPhone} onChange={e=>setTenantPhone(e.target.value)} placeholder="Opsional" className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <div className="md:col-span-2"><button disabled={tenantBusy} className="rounded-xl bg-amber-500 px-5 py-3 font-bold text-slate-950 disabled:opacity-60">{tenantBusy?'Membuat tenant...':'Buat Tenant + Admin Pertama'}</button></div>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-bold flex items-center gap-2"><Users className="w-5 h-5 text-cyan-400"/>Tambah Admin ke Tenant yang Sudah Ada</h2>
+          <p className="text-sm text-slate-400 mt-1 mb-4">Maksimal 3 akun admin per perusahaan. Batas dihitung di backend, bukan hanya di tampilan.</p>
+          {adminMessage && <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">{adminMessage}</div>}
+          {adminError && <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{adminError}</div>}
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={async e=>{
+            e.preventDefault();setAdminBusy(true);setAdminError('');setAdminMessage('');
+            try{
+              const response=await fetch('/api/owner/data',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation:'create-tenant-admin',data:{company_id:adminCompanyId,full_name:extraAdminName,email:extraAdminEmail,password:extraAdminPassword,phone:extraAdminPhone}})});
+              const data=await response.json().catch(()=>({}));
+              if(!response.ok||!data.ok) throw new Error(data.error||'Akun admin tidak berhasil dibuat.');
+              setAdminMessage(data.message||'Akun admin berhasil dibuat.');setExtraAdminName('');setExtraAdminEmail('');setExtraAdminPassword('');setExtraAdminPhone('');await load();
+            }catch(err){setAdminError(err instanceof Error?err.message:'Gagal membuat akun admin.');}
+            finally{setAdminBusy(false);}
+          }}>
+            <label className="text-sm text-slate-300">Pilih tenant *<select required value={adminCompanyId} onChange={e=>setAdminCompanyId(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"><option value="">Pilih perusahaan</option>{companies.map(co=><option key={co.company_id||co.id} value={co.company_id||co.id}>{co.company_name||co.namaPT||co.company_id} ({co.company_id||co.id})</option>)}</select></label>
+            <label className="text-sm text-slate-300">Nama admin *<input required value={extraAdminName} onChange={e=>setExtraAdminName(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <label className="text-sm text-slate-300">Email login admin *<input required type="email" value={extraAdminEmail} onChange={e=>setExtraAdminEmail(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <label className="text-sm text-slate-300">Kata sandi sementara (min. 10 karakter) *<input required minLength={10} type="password" autoComplete="new-password" value={extraAdminPassword} onChange={e=>setExtraAdminPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <label className="text-sm text-slate-300">Telepon admin<input value={extraAdminPhone} onChange={e=>setExtraAdminPhone(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"/></label>
+            <div className="md:col-span-2"><button disabled={adminBusy||!adminCompanyId} className="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950 disabled:opacity-60">{adminBusy?'Menyimpan admin...':'Tambah Admin Tenant'}</button></div>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto">
+          <div className="p-4 border-b border-slate-800"><h2 className="font-bold">Semua Tenant</h2><p className="text-xs text-slate-400 mt-1">Setiap tenant memiliki company_id tersendiri yang digunakan backend untuk membatasi akses data.</p></div>
+          <table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Perusahaan / Tenant','Tenant ID','Email','Saldo Tersedia','Terkunci','Status','Dibuat'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{filteredCompanies.map((co,i)=><tr key={co.id||co.company_id||i} className="border-t border-slate-800"><td className="p-3 font-semibold">{co.company_name||co.namaPT||'-'}</td><td className="p-3 font-mono text-xs">{co.company_id||co.id||'-'}</td><td className="p-3">{co.email||co.company_email||'-'}</td><td className="p-3 whitespace-nowrap">{money(co.deposit_balance??co.danaTersedia??co.saldo)}</td><td className="p-3 whitespace-nowrap">{money(co.locked_balance??co.danaTerkunci)}</td><td className="p-3">{co.status||co.statusAkun||'-'}</td><td className="p-3 whitespace-nowrap">{date(co.created_at||co.createdAt)}</td></tr>)}{filteredCompanies.length===0&&<tr><td colSpan={7} className="p-8 text-center text-slate-500">Belum ada tenant.</td></tr>}</tbody></table>
+        </section>
+      </div>}
       {tab==='reports' && <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Kode laporan','Tenant','Judul','Kategori','Estimasi kerugian','Status','Tanggal'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{filteredReports.map((r,i)=><tr key={r.id||i} className="border-t border-slate-800"><td className="p-3 font-mono text-xs">{r.report_code||r.reportCode||r.id}</td><td className="p-3">{r.company_name||r.companyName||r.company_id||r.companyId||'-'}</td><td className="p-3 min-w-48">{r.title||r.judul||'-'}</td><td className="p-3">{r.category||r.kategori||'-'}</td><td className="p-3 whitespace-nowrap">{money(r.estimated_loss??r.estimasiKerugian)}</td><td className="p-3">{r.status||'-'}</td><td className="p-3 whitespace-nowrap">{date(r.created_at||r.createdAt)}</td></tr>)}{filteredReports.length===0&&<tr><td colSpan={7} className="p-8 text-center text-slate-500">Tidak ada data laporan.</td></tr>}</tbody></table></section>}
       {tab==='transactions' && <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Tanggal','Tenant','Tipe','Nominal','Status','Referensi'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{filteredTransactions.map((t,i)=><tr key={t.id||i} className="border-t border-slate-800"><td className="p-3 whitespace-nowrap">{date(t.created_at||t.createdAt)}</td><td className="p-3">{t.company_name||t.companyName||t.company_id||t.companyId||'-'}</td><td className="p-3">{t.type||'-'}</td><td className="p-3 whitespace-nowrap">{money(t.amount)}</td><td className="p-3">{t.status||'-'}</td><td className="p-3 font-mono text-xs">{t.tx_hash||t.txHash||t.id||'-'}</td></tr>)}{filteredTransactions.length===0&&<tr><td colSpan={6} className="p-8 text-center text-slate-500">Tidak ada transaksi.</td></tr>}</tbody></table></section>}
       {tab==='audit' && <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-slate-800/70 text-slate-300"><tr>{['Waktu','Tenant','Aksi','Aktor','Detail'].map(x=><th key={x} className="text-left p-3 whitespace-nowrap">{x}</th>)}</tr></thead><tbody>{auditLogs.map((a,i)=><tr key={a.id||i} className="border-t border-slate-800"><td className="p-3 whitespace-nowrap">{date(a.created_at||a.timestamp)}</td><td className="p-3">{a.company_name||a.company_id||'-'}</td><td className="p-3">{a.action||a.event||a.type||'-'}</td><td className="p-3">{a.actor_email||a.user_email||a.actor||'-'}</td><td className="p-3 max-w-md break-words">{typeof a.metadata==='object'?JSON.stringify(a.metadata):String(a.metadata_json||a.metadata||a.description||'-')}</td></tr>)}{auditLogs.length===0&&<tr><td colSpan={5} className="p-8 text-center text-slate-500">Tidak ada audit log.</td></tr>}</tbody></table></section>}
