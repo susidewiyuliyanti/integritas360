@@ -44,6 +44,31 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     ]);
     return json({user:{id:uid,email,role:requestedRole,company_id:companyId}});
   }
+  if(op==='update-report'){
+    const id=String(body.id||''); const d=body.data||{};
+    if(!id) return json({error:'ID laporan wajib diisi.'},400);
+    const report=await env.DB.prepare('SELECT * FROM reports WHERE id=? AND company_id=? LIMIT 1').bind(id,companyId).first<any>();
+    if(!report) return json({error:'Laporan tidak ditemukan pada tenant ini.'},404);
+    let current:any={}; try{current=JSON.parse(report.metadata_json||'{}')}catch{}
+    const next={...current,...d};
+    const nullable=(value:any)=>value===undefined?null:value;
+    await env.DB.prepare(`UPDATE reports SET
+      title=COALESCE(?,title), category=COALESCE(?,category), violation_type=COALESCE(?,violation_type),
+      estimated_loss=COALESCE(?,estimated_loss), description=COALESCE(?,description), incident_date=COALESCE(?,incident_date),
+      location=COALESCE(?,location), status=COALESCE(?,status), reward_amount=COALESCE(?,reward_amount),
+      reward_min_amount=COALESCE(?,reward_min_amount), reward_claim_status=COALESCE(?,reward_claim_status),
+      reward_claimed=COALESCE(?,reward_claimed), evidence_json=COALESCE(?,evidence_json),
+      metadata_json=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?`)
+      .bind(nullable(d.judul??d.title),nullable(d.kategori??d.category),nullable(d.tipePelanggaran??d.violation_type),
+        nullable(d.estimasiKerugian??d.estimated_loss),nullable(d.deskripsi??d.description),nullable(d.tanggalKejadian??d.incident_date),
+        nullable(d.lokasi??d.location),nullable(d.status),nullable(d.rewardAmount??d.reward_amount),nullable(d.rewardMinAmount??d.reward_min_amount),
+        nullable(d.rewardClaimStatus??d.reward_claim_status),d.rewardClaimed===undefined&&d.reward_claimed===undefined?null:((d.rewardClaimed??d.reward_claimed)?1:0),
+        d.buktiFiles===undefined&&d.evidence_json===undefined?null:(typeof d.evidence_json==='string'?d.evidence_json:JSON.stringify(d.buktiFiles||[])),
+        JSON.stringify(next),id,companyId).run();
+    await env.DB.prepare('INSERT INTO audit_logs (id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,?,?,?,?,?,?)')
+      .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'REPORT_UPDATED','report',id,JSON.stringify({fields:Object.keys(d)})).run();
+    return json({ok:true,id});
+  }
   if(op==='update-user'){
     const id=String(body.id||''); const d=body.data||{};
     const target=await env.DB.prepare('SELECT id,role FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
