@@ -336,7 +336,7 @@ export const StudiKasusPage: React.FC = () => {
               className="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-500/25 flex items-center gap-2 transition-all cursor-pointer"
             >
               <MessageCircle className="w-4 h-4" />
-              Hubungi Kami (WhatsApp: 0878-7962-5033)
+              Hubungi Kami
               <ArrowRight className="w-4 h-4" />
             </a>
 
