@@ -889,6 +889,33 @@ export const ProfilePage: React.FC = () => {
             )}
           </div>
 
+          {(profileData?.role === 'perusahaan' || profileData?.role === 'admin_perusahaan') && (
+            <div className="relative mt-6 flex flex-wrap items-center gap-3 border-t border-slate-800 pt-5">
+              <div className="mr-auto">
+                <p className="text-sm font-bold text-white">Keuangan Tenant</p>
+                <p className="text-xs text-slate-400">Ajukan deposit atau penarikan dana perusahaan.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('keuangan'); setShowDepositModal(true); }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/10 transition-colors hover:bg-amber-400"
+              >
+                <ArrowDownLeft className="h-4 w-4" />
+                Deposit
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('keuangan'); setWithdrawError(''); setShowWithdrawModal(true); }}
+                disabled={currentSaldo <= 0}
+                title={currentSaldo <= 0 ? 'Saldo aktif belum tersedia untuk ditarik' : 'Ajukan withdrawal'}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2.5 text-sm font-bold text-cyan-300 transition-colors hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ArrowUpRight className="h-4 w-4" />
+                Withdrawal
+              </button>
+            </div>
+          )}
+
           {/* Navigation Tabs within Profile */}
           <div className="flex items-center gap-1.5 mt-6 pt-5 border-t border-slate-800 overflow-x-auto">
             <button
