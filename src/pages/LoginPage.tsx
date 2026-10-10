@@ -196,7 +196,7 @@ export const LoginPage: React.FC = () => {
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 font-bold text-xs transition-all shadow-md shadow-emerald-600/10 cursor-pointer"
           >
             <MessageCircle className="w-4 h-4 text-emerald-400" />
-            <span>Hubungi Kami (WhatsApp: 0878-7962-5033)</span>
+            <span>Hubungi Kami</span>
           </a>
         </div>
 
