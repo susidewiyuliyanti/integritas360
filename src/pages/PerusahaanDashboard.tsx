@@ -104,13 +104,13 @@ export const PerusahaanDashboard: React.FC = () => {
   }, [user, authLoading, role, navigate]);
 
   // Effective Company Tenant ID
-  const effectiveCompanyId = authProfile?.company_id || authProfile?.perusahaanId || (authProfile as any)?.companyId || user?.uid || '';
+  const effectiveCompanyId = authProfile?.company_id || authProfile?.perusahaanId || (authProfile as any)?.companyId || (user?.uid || user?.id) || '';
 
   // Realtime onSnapshot doc users/{uid} & companies/{effectiveCompanyId}
   useEffect(() => {
     if (!user) return;
 
-    const userDocRef = doc(db, 'users', user.uid);
+    const userDocRef = doc(db, 'users', (user.uid || user.id));
     const unsubscribeDoc = onSnapshot(
       userDocRef,
       (snapshot) => {
@@ -122,7 +122,7 @@ export const PerusahaanDashboard: React.FC = () => {
           }
           setCompanyProfile((prev) => ({
             ...prev,
-            uid: user.uid,
+            uid: (user.uid || user.id),
             company_id: data.company_id || effectiveCompanyId,
             email: data.email || user.email || '',
             role: data.role || 'perusahaan',
@@ -162,7 +162,7 @@ export const PerusahaanDashboard: React.FC = () => {
             if (!prev) return null;
             return {
               ...prev,
-              uid: user.uid,
+              uid: (user.uid || user.id),
               company_id: effectiveCompanyId,
               namaPT: cData.company_name || prev.namaPT || 'PT',
               email: cData.company_email || prev.email || '',
@@ -265,7 +265,7 @@ export const PerusahaanDashboard: React.FC = () => {
 
     try {
       setProcessingLock(true);
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', (user.uid || user.id));
 
       if (lockActionType === 'lock') {
         // Pindahkan dari Saldo Terbuka -> Dana Terkunci & Dana Tersedia
@@ -276,7 +276,7 @@ export const PerusahaanDashboard: React.FC = () => {
         });
 
         await addDoc(collection(db, 'transactions'), {
-          userId: user.uid,
+          userId: (user.uid || user.id),
           userName: namaPT,
           type: 'lock',
           amount: lockAmount,
@@ -298,7 +298,7 @@ export const PerusahaanDashboard: React.FC = () => {
         });
 
         await addDoc(collection(db, 'transactions'), {
-          userId: user.uid,
+          userId: (user.uid || user.id),
           userName: namaPT,
           type: 'unlock',
           amount: lockAmount,
@@ -329,7 +329,7 @@ export const PerusahaanDashboard: React.FC = () => {
     try {
       setProcessingDeposit(true);
       await addDoc(collection(db, 'transactions'), {
-        userId: user.uid,
+        userId: (user.uid || user.id),
         userName: namaPT,
         type: 'deposit',
         amount: depositAmount,
@@ -366,7 +366,7 @@ export const PerusahaanDashboard: React.FC = () => {
     try {
       setProcessingDeposit(true);
       await addDoc(collection(db, 'transactions'), {
-        userId: user.uid,
+        userId: (user.uid || user.id),
         userName: namaPT,
         type: 'deposit',
         amount: depositAmount,
@@ -410,7 +410,7 @@ export const PerusahaanDashboard: React.FC = () => {
 
     try {
       setSavingPolicy(true);
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, 'users', (user.uid || user.id));
       await updateDoc(userRef, {
         kebijakanReward: {
           rewardKasusEtik: Number(policyEtikNominal),
@@ -509,7 +509,7 @@ export const PerusahaanDashboard: React.FC = () => {
       setActionFeedback(null);
 
       // 1. Potong Saldo Lock Perusahaan (danaTerkunci, danaTersedia, saldo)
-      const userDocRef = doc(db, 'users', user.uid);
+      const userDocRef = doc(db, 'users', (user.uid || user.id));
       await updateDoc(userDocRef, {
         danaTerkunci: increment(-totalPotongan),
         danaTersedia: increment(-totalPotongan),
@@ -533,7 +533,7 @@ export const PerusahaanDashboard: React.FC = () => {
         type: 'potong_lock_reward',
         amount: nominalReward,
         status: 'selesai',
-        userId: user.uid,
+        userId: (user.uid || user.id),
         companyName: namaPT,
         claimReportToken: report.tokenAkses,
         claimReportId: report.id,
@@ -549,7 +549,7 @@ export const PerusahaanDashboard: React.FC = () => {
         type: 'potong_lock_auditor',
         amount: auditorFee,
         status: 'selesai',
-        userId: user.uid,
+        userId: (user.uid || user.id),
         companyName: namaPT,
         claimReportToken: report.tokenAkses,
         claimReportId: report.id,
@@ -1395,7 +1395,7 @@ export const PerusahaanDashboard: React.FC = () => {
         isOpen={isPosterModalOpen}
         onClose={() => setIsPosterModalOpen(false)}
         company={{
-          uid: user?.uid || '',
+          uid: (user?.uid || user?.id) || '',
           namaPT: companyProfile?.namaPT || 'PT Anda',
           danaTersedia: Number(companyProfile?.danaTersedia || 0),
           sektor: companyProfile?.sektor,
