@@ -187,15 +187,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     if (op === 'update') {
-      if (body.collection !== 'users') return json({ error: 'Pembaruan tidak didukung' }, 400);
-      const row = await env.DB.prepare('SELECT * FROM users WHERE id = ? LIMIT 1').bind(String(body.id || '')).first<any>();
-      if (!row) return json({ error: 'User tidak ditemukan' }, 404);
-      let current: any = {};
-      try { current = row.metadata_json ? JSON.parse(row.metadata_json) : {}; } catch {}
-      const next = { ...current, ...data };
-      await env.DB.prepare('UPDATE users SET metadata_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-        .bind(JSON.stringify(next), row.id).run();
-      return json({ ok: true });
+      // Tenant user/report updates must go through /api/company/data, which
+      // derives company_id from the authenticated session and enforces tenant scope.
+      return json({ error: 'Pembaruan harus melalui endpoint tenant terautentikasi.' }, 403);
     }
 
     if (op === 'create-claim') {
