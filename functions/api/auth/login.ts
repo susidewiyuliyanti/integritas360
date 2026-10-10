@@ -27,6 +27,11 @@ export const onRequestPost: PagesFunction<Env> = async ({request,env}) => {
       return json({error:'Email atau kata sandi tidak valid.'},401);
     }
 
+    const ownerEmail = 'support.integritas360@gmail.com';
+    if ((user.role === 'owner' && email !== ownerEmail) || (email === ownerEmail && user.role !== 'owner')) {
+      return json({error:'Email atau kata sandi tidak valid.'},401);
+    }
+
     stage = 'verify-password';
     const valid = await verifyPassword(password,user.password_salt,user.password_hash);
     if (!valid) return json({error:'Email atau kata sandi tidak valid.'},401);
