@@ -78,7 +78,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     if (collection === 'users') {
       if (idValue) {
-        const row = await env.DB.prepare('SELECT * FROM users WHERE id = ? LIMIT 1').bind(idValue).first<any>();
+        const actor=await tenantSession(request,env.DB);
+        const row = actor?.company_id
+          ? await env.DB.prepare('SELECT * FROM users WHERE id = ? AND company_id = ? LIMIT 1').bind(idValue,actor.company_id).first<any>()
+          : null;
         return json({ items: row ? [metadata(row)] : [] });
       }
       if (whereField === 'company_id' && whereValue) {
@@ -87,9 +90,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         return json({ items: rows.results.map(metadata) });
       }
       if (whereField === 'role' && whereValue) {
-        // Role-based discovery is intentionally limited to non-company identities.
-        const rows = await env.DB.prepare('SELECT * FROM users WHERE role = ? ORDER BY created_at DESC').bind(whereValue).all<any>();
-        return json({ items: rows.results.map(metadata) });
+        // User discovery by role is not a public operation; Owner uses /api/admin/overview.
+        return json({ error: 'Pencarian pengguna berdasarkan role tidak tersedia secara publik.' }, 403);
       }
       return json({ error: 'Tenant scope diperlukan' }, 400);
     }
