@@ -48,7 +48,7 @@ export const onRequestPost: PagesFunction<Env> = async ({request,env}) => {
       .run();
 
     return json(
-      {user:{id:user.id,email:user.email,role:user.role,company_id:user.company_id}},
+      {ok:true,user:{id:user.id,email:user.email,role:user.role,company_id:user.company_id}},
       200,
       {'Set-Cookie':cookie('i360_session',sessionId,ttl)}
     );
