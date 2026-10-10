@@ -5,9 +5,11 @@ import {
   KeyRound, CheckCircle2, MessageCircle
 } from 'lucide-react';
 import { BrandLogo } from '../components/BrandLogo';
+import { useAuth } from '../context/AuthContext';
 
 export const LoginPage: React.FC = () => {
   const { navigate } = useNavigation();
+  const { refreshCompanyData } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -52,6 +54,10 @@ export const LoginPage: React.FC = () => {
         else setErrorMsg(data?.error || 'Gagal masuk. Silakan coba lagi.');
         return;
       }
+      // The login API sets the session cookie, but AuthContext does not update automatically.
+      // Refresh the D1-backed session before navigating so protected dashboards do not
+      // see a stale null user and bounce back to login.
+      await refreshCompanyData?.();
       routeByRole(data.user);
     } catch (err: any) {
       console.warn('Cloudflare login error:', err);
