@@ -20,7 +20,9 @@ const RouterView: React.FC = () => {
 
   let content: React.ReactNode = <LandingPage />;
 
-  if (path === '/admin' || path === '/admin/dashboard') {
+  if (path === '/admin' || path === '/admin/dashboard' || path === '/owner') {
+    // The Cloudflare D1 authentication migration uses the D1-backed Super Admin dashboard.
+    // Keep /owner as a compatibility alias so older links do not open the legacy Firebase dashboard.
     content = <SuperAdminDashboard />;
   } else if (path === '/login') {
     content = <LoginPage />;
