@@ -103,7 +103,7 @@ export const AdminPerusahaanDashboard: React.FC = () => {
 
   // Target Company ID for this Admin Perusahaan (Strict tenant isolation)
   const targetCompanyId = profile?.company_id || profile?.perusahaanId || (profile as any)?.companyId || user?.uid || '';
-  const companyName = profile?.perusahaanName || profile?.namaPT || 'Perusahaan Kepatuhan';
+  const companyName = profile?.perusahaanName || profile?.namaPT || profile?.company_name || 'Nama perusahaan belum terdaftar';
 
   // Check if company is suspended
   useEffect(() => {
