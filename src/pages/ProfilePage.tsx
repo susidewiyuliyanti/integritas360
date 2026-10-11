@@ -564,6 +564,15 @@ export const ProfilePage: React.FC = () => {
   const handleDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || depositAmount <= 0) return;
+    const isStaticQris = depositMethod === 'QRIS Statis Nasional (INTEGRITAS360)';
+    if (isStaticQris && depositAmount > 10000000) {
+      alert('Maksimal deposit melalui QRIS statis adalah Rp 10.000.000 per transaksi.');
+      return;
+    }
+    if (depositAmount < 500000) {
+      alert('Minimal deposit adalah Rp 500.000.');
+      return;
+    }
 
     try {
       setProcessingDeposit(true);
@@ -1905,10 +1914,11 @@ export const ProfilePage: React.FC = () => {
                   <input
                     type="number"
                     min={500000}
+                    max={depositMethod === 'QRIS Statis Nasional (INTEGRITAS360)' ? 10000000 : undefined}
                     step={500000}
                     required
                     value={depositAmount}
-                    onChange={(e) => setDepositAmount(Number(e.target.value))}
+                    onChange={(e) => setDepositAmount(Math.max(0, Number(e.target.value)))}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base font-mono font-bold text-blue-400 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1919,7 +1929,7 @@ export const ProfilePage: React.FC = () => {
                     Pilihan Cepat Nominal:
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {[1000000, 2500000, 5000000, 10000000, 25000000, 50000000].map((amt) => (
+                    {[1000000, 2500000, 5000000, 10000000, 25000000, 50000000].filter((amt) => depositMethod !== 'QRIS Statis Nasional (INTEGRITAS360)' || amt <= 10000000).map((amt) => (
                       <button
                         key={amt}
                         type="button"
@@ -1942,7 +1952,11 @@ export const ProfilePage: React.FC = () => {
                   </label>
                   <select
                     value={depositMethod}
-                    onChange={(e) => setDepositMethod(e.target.value)}
+                    onChange={(e) => {
+                      const method = e.target.value;
+                      setDepositMethod(method);
+                      if (method === 'QRIS Statis Nasional (INTEGRITAS360)' && depositAmount > 10000000) setDepositAmount(10000000);
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500"
                   >
                     <option value="QRIS Statis Nasional (INTEGRITAS360)">
