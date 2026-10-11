@@ -23,7 +23,7 @@ export const onRequestGet=async({request,env}:{request:Request,env:Env})=>{
 };
 export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   const actor=await sessionUser(request,env);
-  if(!actor || !actor.company_id || !['perusahaan','admin_perusahaan','company_admin','finance','hr'].includes(actor.role)) return json({error:'Unauthorized'},401);
+  if(!actor || !actor.company_id || !['perusahaan','admin_perusahaan','company_admin','finance','hr','auditor'].includes(String(actor.role||'').toLowerCase())) return json({error:'Unauthorized'},401);
   const body=await request.json<any>(); const op=body.operation; const companyId=actor.company_id;
   if(op==='save-company-profile'){
     const actorRole=String(actor.role||'').toLowerCase();
@@ -194,7 +194,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   }
   if(op==='update-user'){
     const id=String(body.id||''); const d=body.data||{};
-    const target=await env.DB.prepare('SELECT id,role FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
+    const target=await env.DB.prepare('SELECT id,role,profile_json FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
     if(!target) return json({error:'User tidak ditemukan'},404);
     if(d.role){
       const nextRole=String(d.role).toLowerCase();
@@ -202,6 +202,27 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
       if(['admin_perusahaan','company_admin'].includes(nextRole) && !['admin_perusahaan','company_admin'].includes(String(target.role||'').toLowerCase())){
         const adminCount=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
         if(Number(adminCount?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk tenant ini sudah tercapai.'},409);
+      }
+    }
+    const profileKeys=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','statusVerifikasiDokumen','catatanVerifikasi','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus','kebijakanReward'];
+    const profilePatch:any={};
+    for(const key of profileKeys) if(d[key]!==undefined) profilePatch[key]=d[key];
+    if(Object.keys(profilePatch).length){
+      const targetRole=String(target.role||'').toLowerCase();
+      if(targetRole==='auditor'){
+        let currentProfile:any={}; try{currentProfile=JSON.parse(target.profile_json||'{}')}catch{}
+        await env.DB.prepare('UPDATE users SET profile_json=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?')
+          .bind(JSON.stringify({...currentProfile,...profilePatch}),id,companyId).run();
+      }else if(['perusahaan','admin_perusahaan','company_admin','finance','hr'].includes(targetRole)){
+        const company=await env.DB.prepare('SELECT profile_json,company_name FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
+        if(!company) return json({error:'Data perusahaan tidak ditemukan.'},404);
+        let currentProfile:any={}; try{currentProfile=JSON.parse(company.profile_json||'{}')}catch{}
+        const nextProfile={...currentProfile,...profilePatch};
+        const companyName=String(nextProfile.namaPT||company.company_name||'').trim();
+        await env.DB.prepare('UPDATE companies SET company_name=?,profile_json=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=?')
+          .bind(companyName,JSON.stringify(nextProfile),companyId).run();
+      }else{
+        return json({error:'Akses pembaruan profil ditolak.'},403);
       }
     }
     await env.DB.prepare('UPDATE users SET full_name=COALESCE(?,full_name),phone=COALESCE(?,phone),status=COALESCE(?,status),role=COALESCE(?,role),updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?').bind(d.full_name??null,d.phone??null,d.status??null,d.role??null,id,companyId).run();
