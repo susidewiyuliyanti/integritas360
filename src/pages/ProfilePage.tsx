@@ -861,7 +861,7 @@ export const ProfilePage: React.FC = () => {
               <Wallet className="w-3.5 h-3.5" />
               {profileData?.role === 'auditor'
                 ? 'Honorarium & Payout'
-                : 'Dompet & Saldo Kas (Deposit, Kunci, Tarik)'}
+                : 'Saldo'}
             </button>
 
             <button
