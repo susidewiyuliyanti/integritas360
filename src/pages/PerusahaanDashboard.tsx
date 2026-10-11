@@ -241,59 +241,6 @@ export const PerusahaanDashboard: React.FC = () => {
   const saldoTerbuka = Number((companyProfile as any)?.deposit_balance ?? companyProfile?.danaTersedia ?? companyProfile?.saldo ?? 0);
   const danaTersedia = saldoTerbuka;
 
-  // Pindahkan dari Saldo Terbuka -> Dana Terkunci & Dana Tersedia
-        await updateDoc(userRef, {
-          saldo: increment(-lockAmount),
-          danaTerkunci: increment(lockAmount),
-          danaTersedia: increment(lockAmount),
-        });
-
-        await addDoc(collection(db, 'transactions'), {
-          userId: (user.uid || user.id),
-          userName: namaPT,
-          type: 'lock',
-          amount: lockAmount,
-          status: 'selesai',
-          keterangan: `Kunci dana penjaminan whistleblowing: Rp ${lockAmount.toLocaleString('id-ID')} (Saldo Terbuka berkurang otomatis)`,
-          createdAt: serverTimestamp(),
-        });
-
-        setActionFeedback({
-          type: 'success',
-          message: `Saldo sebesar Rp ${lockAmount.toLocaleString('id-ID')} berhasil dikunci! Saldo terbuka otomatis menyesuaikan menjadi Rp ${(saldoTerbuka - lockAmount).toLocaleString('id-ID')}.`
-        });
-      } else {
-        // Pindahkan dari Dana Terkunci -> Saldo Terbuka
-        await updateDoc(userRef, {
-          saldo: increment(lockAmount),
-          danaTerkunci: increment(-lockAmount),
-          danaTersedia: increment(-lockAmount),
-        });
-
-        await addDoc(collection(db, 'transactions'), {
-          userId: (user.uid || user.id),
-          userName: namaPT,
-          type: 'unlock',
-          amount: lockAmount,
-          status: 'selesai',
-          keterangan: `Buka kunci dana penjaminan: Rp ${lockAmount.toLocaleString('id-ID')} dikembalikan ke Saldo Terbuka`,
-          createdAt: serverTimestamp(),
-        });
-
-        setActionFeedback({
-          type: 'success',
-          message: `Dana sebesar Rp ${lockAmount.toLocaleString('id-ID')} berhasil dibuka dan dikembalikan ke Saldo Terbuka!`
-        });
-      }
-
-      setShowLockModal(false);
-    } catch (err: any) {
-      setLockError(err.message || 'Gagal mengubah status kunci dana.');
-    } finally {
-      setProcessingLock(false);
-    }
-  };
-
   // HANDLER: DEPOSIT SALDO (QRIS & BANK) - Menunggu Verifikasi Administrator
   const handleDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
