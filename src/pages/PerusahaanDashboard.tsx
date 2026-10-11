@@ -185,7 +185,7 @@ export const PerusahaanDashboard: React.FC = () => {
             tanggalKejadian: d.tanggalKejadian || d.incident_date,
             lokasi: d.lokasi || d.location,
             status: d.status || 'baru',
-            tokenAkses: d.tokenAkses || d.reporter_code || '',
+            tokenAkses: '', // Claim ticket identifiers are reserved for reporters and Super Admin.
             buktiFiles: d.buktiFiles || [],
             rewardClaimed: Boolean(d.rewardClaimed ?? d.reward_claimed),
             rewardReleased: Boolean(d.rewardReleased ?? d.reward_released),
@@ -883,9 +883,7 @@ export const PerusahaanDashboard: React.FC = () => {
                           </span>
                         )}
 
-                        <span className="text-[10px] font-mono text-slate-400">
-                          Tiket: #{report.tokenAkses}
-                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">ID klaim dirahasiakan untuk menjaga anonimitas pelapor.</span>
                       </div>
 
                       {/* Status Workflow Tag */}
@@ -1138,7 +1136,7 @@ export const PerusahaanDashboard: React.FC = () => {
                               </div>
                             ) : (
                               <div className="text-[11px] text-slate-400 italic">
-                                Pelapor dapat mencairkan reward kapan saja ke rekening bank / e-wallet menggunakan Nomor Tiket Rahasia (#{report.tokenAkses}).
+                                Nomor tiket klaim hanya dapat dilihat oleh pelapor dan Super Admin.
                               </div>
                             )}
                           </div>
