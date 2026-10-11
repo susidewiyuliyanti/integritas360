@@ -124,6 +124,8 @@ export const ProfilePage: React.FC = () => {
   const [depositAmount, setDepositAmount] = useState<number>(5000000);
   const [depositMethod, setDepositMethod] = useState('QRIS Statis Nasional (INTEGRITAS360)');
   const [processingDeposit, setProcessingDeposit] = useState(false);
+  const [depositProof, setDepositProof] = useState<{ fileName: string; dataUrl: string } | null>(null);
+  const [depositProofError, setDepositProofError] = useState('');
 
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number>(1000000);
@@ -483,17 +485,24 @@ export const ProfilePage: React.FC = () => {
       alert('Minimal deposit adalah Rp 500.000.');
       return;
     }
+    if (isStaticQris && !depositProof) {
+      setDepositProofError('Unggah bukti transfer terlebih dahulu.');
+      alert('Mohon unggah bukti konfirmasi deposit sebelum mengirim permintaan.');
+      return;
+    }
 
     try {
       setProcessingDeposit(true);
 
       // Catat transaksi dengan status 'pending' (akan diverifikasi oleh Administrator)
-      const response = await fetch('/api/company/data', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operation: 'create-transaction', data: { userName: profileData?.namaPT || user.email, type: 'deposit', amount: depositAmount, method: depositMethod, metode: depositMethod, keterangan: `Permintaan Deposit saldo via ${depositMethod} (Menunggu verifikasi Administrator)` } }) });
+      const response = await fetch('/api/company/data', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operation: 'create-transaction', data: { userName: profileData?.namaPT || user.email, type: 'deposit', amount: depositAmount, method: depositMethod, metode: depositMethod, buktiKonfirmasi: depositProof ? { fileName: depositProof.fileName, dataUrl: depositProof.dataUrl, uploadedAt: new Date().toISOString() } : undefined, keterangan: `Permintaan Deposit saldo via ${depositMethod} (Menunggu verifikasi Administrator)` } }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan transaksi ke D1.');
 
       setShowDepositModal(false);
       setDepositAmount(5000000);
+      setDepositProof(null);
+      setDepositProofError('');
       alert(`Permintaan deposit Rp ${depositAmount.toLocaleString('id-ID')} berhasil diajukan! Administrator akan memverifikasi pembayaran Anda sebelum saldo aktif ditambahkan.`);
     } catch (err: any) {
       console.error('Error depositing:', err);
@@ -1851,6 +1860,49 @@ export const ProfilePage: React.FC = () => {
                     </option>
                   </select>
                 </div>
+
+                {depositMethod === 'QRIS Statis Nasional (INTEGRITAS360)' && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="deposit-proof-upload" className="block text-xs font-semibold text-slate-300">
+                      Bukti / Konfirmasi Deposit <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      id="deposit-proof-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      required
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        setDepositProofError('');
+                        if (!file) { setDepositProof(null); return; }
+                        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+                        if (!allowed.includes(file.type)) {
+                          setDepositProof(null);
+                          setDepositProofError('Format file harus JPG, PNG, WEBP, atau PDF.');
+                          e.currentTarget.value = '';
+                          return;
+                        }
+                        if (file.size > 2 * 1024 * 1024) {
+                          setDepositProof(null);
+                          setDepositProofError('Ukuran bukti maksimal 2 MB.');
+                          e.currentTarget.value = '';
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          if (typeof reader.result === 'string') setDepositProof({ fileName: file.name, dataUrl: reader.result });
+                          else setDepositProofError('File tidak dapat dibaca. Silakan pilih ulang.');
+                        };
+                        reader.onerror = () => { setDepositProof(null); setDepositProofError('File tidak dapat dibaca. Silakan pilih ulang.'); };
+                        reader.readAsDataURL(file);
+                      }}
+                      className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-500/15 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-blue-300 hover:file:bg-blue-500/25"
+                    />
+                    <p className="text-[11px] text-slate-400">Unggah tangkapan layar atau file bukti pembayaran (JPG, PNG, WEBP, PDF; maksimal 2 MB).</p>
+                    {depositProof && <p className="text-[11px] text-emerald-400 flex items-center gap-1"><FileCheck className="w-3.5 h-3.5" /> Bukti dipilih: {depositProof.fileName}</p>}
+                    {depositProofError && <p className="text-[11px] text-rose-400">{depositProofError}</p>}
+                  </div>
+                )}
 
                 {/* Admin Verification Requirement Notice */}
                 <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-[11px] text-blue-200 leading-relaxed space-y-1">
