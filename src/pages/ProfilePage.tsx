@@ -1882,9 +1882,9 @@ export const ProfilePage: React.FC = () => {
                           e.currentTarget.value = '';
                           return;
                         }
-                        if (file.size > 2 * 1024 * 1024) {
+                        if (file.size > 1024 * 1024) {
                           setDepositProof(null);
-                          setDepositProofError('Ukuran bukti maksimal 2 MB.');
+                          setDepositProofError('Ukuran bukti maksimal 1 MB.');
                           e.currentTarget.value = '';
                           return;
                         }
@@ -1898,7 +1898,7 @@ export const ProfilePage: React.FC = () => {
                       }}
                       className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-500/15 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-blue-300 hover:file:bg-blue-500/25"
                     />
-                    <p className="text-[11px] text-slate-400">Unggah tangkapan layar atau file bukti pembayaran (JPG, PNG, WEBP, PDF; maksimal 2 MB).</p>
+                    <p className="text-[11px] text-slate-400">Unggah tangkapan layar atau file bukti pembayaran (JPG, PNG, WEBP, PDF; maksimal 1 MB).</p>
                     {depositProof && <p className="text-[11px] text-emerald-400 flex items-center gap-1"><FileCheck className="w-3.5 h-3.5" /> Bukti dipilih: {depositProof.fileName}</p>}
                     {depositProofError && <p className="text-[11px] text-rose-400">{depositProofError}</p>}
                   </div>
