@@ -126,7 +126,9 @@ export const PerusahaanDashboard: React.FC = () => {
             company_id: data.company_id || effectiveCompanyId,
             email: data.email || user.email || '',
             role: data.role || 'perusahaan',
-            namaPT: data.namaPT || prev?.namaPT || 'PT Tanpa Nama',
+            namaPT: data.namaPT || (data as any).company_name || prev?.namaPT || (authProfile as any)?.company_name || 'PT Tanpa Nama',
+            rewardBalance: Number((data as any).rewardBalance ?? (data as any).saldoReward ?? (data as any).reward_balance ?? prev?.rewardBalance ?? 0),
+            saldoReward: Number((data as any).saldoReward ?? (data as any).rewardBalance ?? (data as any).reward_balance ?? prev?.saldoReward ?? 0),
             sektor: data.sektor || prev?.sektor || 'Manufaktur & Bisnis',
             alamat: data.alamat || prev?.alamat || '-',
             deskripsi: data.deskripsi || prev?.deskripsi || '-',
@@ -164,7 +166,9 @@ export const PerusahaanDashboard: React.FC = () => {
               ...prev,
               uid: (user.uid || user.id),
               company_id: effectiveCompanyId,
-              namaPT: cData.company_name || prev.namaPT || 'PT',
+              namaPT: cData.company_name || cData.namaPT || prev.namaPT || (authProfile as any)?.company_name || 'PT',
+              rewardBalance: Number(cData.rewardBalance ?? cData.saldoReward ?? cData.reward_balance ?? prev.rewardBalance ?? 0),
+              saldoReward: Number(cData.saldoReward ?? cData.rewardBalance ?? cData.reward_balance ?? prev.saldoReward ?? 0),
               email: cData.company_email || prev.email || '',
               danaTersedia: Number(cData.danaTersedia || 0),
               saldo: Number(cData.saldo || 0),
@@ -1395,9 +1399,10 @@ export const PerusahaanDashboard: React.FC = () => {
         isOpen={isPosterModalOpen}
         onClose={() => setIsPosterModalOpen(false)}
         company={{
-          uid: (user?.uid || user?.id) || '',
-          namaPT: companyProfile?.namaPT || 'PT Anda',
-          danaTersedia: Number(companyProfile?.danaTersedia || 0),
+          uid: String(companyProfile?.company_id || companyProfile?.perusahaanId || (companyProfile as any)?.companyId || (user?.uid || user?.id) || ''),
+          namaPT: companyProfile?.namaPT || (companyProfile as any)?.company_name || (authProfile as any)?.company_name || 'PT Anda',
+          danaTersedia: Number((companyProfile as any)?.rewardBalance ?? (companyProfile as any)?.saldoReward ?? (companyProfile as any)?.reward_balance ?? 0),
+          rewardBalance: Number((companyProfile as any)?.rewardBalance ?? (companyProfile as any)?.saldoReward ?? (companyProfile as any)?.reward_balance ?? 0),
           sektor: companyProfile?.sektor,
         }}
       />
