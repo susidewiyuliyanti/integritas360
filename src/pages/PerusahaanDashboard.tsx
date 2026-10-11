@@ -924,7 +924,6 @@ export const PerusahaanDashboard: React.FC = () => {
                 const min2Persen = Math.round(kerugian * 0.02);
                 const currentReward = report.rewardAmount !== undefined ? report.rewardAmount : (isFinansial ? min2Persen : 5000000);
                 const auditorFee = Number(report.biayaAuditor || 150000);
-                const totalPotongLock = currentReward + auditorFee;
 
                 const isNeedsTake = report.companyCaseStatus === 'menunggu_ambil' || (report.status === 'valid' && !report.takenAt);
                 const isTakenInProgress = report.companyCaseStatus === 'kasus_diambil' && !report.rewardReleased;
@@ -1167,15 +1166,15 @@ export const PerusahaanDashboard: React.FC = () => {
                                 <span className="font-mono font-bold text-emerald-400">Rp {auditorFee.toLocaleString('id-ID')}</span>
                               </div>
                               <div className="flex flex-wrap items-center justify-between font-bold text-white pt-1 border-t border-slate-800">
-                                <span>Total Pemotongan Saldo Lock:</span>
-                                <span className="font-mono text-emerald-300">Rp {totalPotongLock.toLocaleString('id-ID')}</span>
+                                <span>Reward yang diproses dari saldo aktif:</span>
+                                <span className="font-mono text-emerald-300">Rp {currentReward.toLocaleString('id-ID')}</span>
                               </div>
                             </div>
 
                             {/* Tombol Rilis Reward */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
                               <div className="text-[11px] text-slate-400">
-                                Saldo Lock Penjaminan Anda: <strong className="text-white">Rp {danaTerkunci.toLocaleString('id-ID')}</strong>
+                                Reward akan diproses otomatis saat laporan dinyatakan VALID, dengan syarat saldo aktif mencukupi.
                               </div>
 
                               <button
@@ -1188,7 +1187,7 @@ export const PerusahaanDashboard: React.FC = () => {
                                 ) : (
                                   <Send className="w-4 h-4" />
                                 )}
-                                Rilis Reward & Terapkan Sanksi (Rp {totalPotongLock.toLocaleString('id-ID')})
+                                Proses Reward (Rp {currentReward.toLocaleString('id-ID')})
                               </button>
                             </div>
                           </div>
@@ -1201,7 +1200,7 @@ export const PerusahaanDashboard: React.FC = () => {
                               <div className="flex items-center gap-2 text-emerald-300 font-bold">
                                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                                 <span>
-                                  Reward Berhasil Dirilis ({report.rewardReleaseType === 'auto_sistem_24jam' ? 'Otomatis oleh Sistem 1x24 Jam' : 'Oleh Perusahaan'})
+                                  Reward Berhasil Dirilis ({report.rewardReleaseType === 'auto_valid' ? 'Otomatis setelah status VALID' : 'Sistem'})
                                 </span>
                               </div>
                               <span className="text-[11px] text-emerald-400 font-mono">
