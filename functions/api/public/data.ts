@@ -21,8 +21,10 @@ async function canReadTenant(request: Request, db: D1Database, requestedId: stri
 
 function metadata(row: any) {
   let m: any = {};
+  let companyProfile: any = {};
   try { m = row.metadata_json ? JSON.parse(row.metadata_json) : {}; } catch {}
-  return { ...m, id: row.id, uid: row.id, email: row.email, role: row.role, company_id: row.company_id, status: row.status };
+  try { companyProfile = row.company_profile_json ? JSON.parse(row.company_profile_json) : {}; } catch {}
+  return { ...companyProfile, ...m, id: row.id, uid: row.id, email: row.email, role: row.role, company_id: row.company_id, status: row.status };
 }
 
 function mergeReport(row: any) {
@@ -80,13 +82,13 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       if (idValue) {
         const actor=await tenantSession(request,env.DB);
         const row = actor?.company_id
-          ? await env.DB.prepare('SELECT * FROM users WHERE id = ? AND company_id = ? LIMIT 1').bind(idValue,actor.company_id).first<any>()
+          ? await env.DB.prepare('SELECT users.*, companies.profile_json AS company_profile_json FROM users LEFT JOIN companies ON companies.company_id=users.company_id WHERE users.id = ? AND users.company_id = ? LIMIT 1').bind(idValue,actor.company_id).first<any>()
           : null;
         return json({ items: row ? [metadata(row)] : [] });
       }
       if (whereField === 'company_id' && whereValue) {
         if (!(await canReadTenant(request, env.DB, whereValue))) return json({ error: 'Akses tenant ditolak' }, 403);
-        const rows = await env.DB.prepare('SELECT * FROM users WHERE company_id = ? ORDER BY created_at DESC').bind(whereValue).all<any>();
+        const rows = await env.DB.prepare('SELECT users.*, companies.profile_json AS company_profile_json FROM users LEFT JOIN companies ON companies.company_id=users.company_id WHERE users.company_id = ? ORDER BY users.created_at DESC').bind(whereValue).all<any>();
         return json({ items: rows.results.map(metadata) });
       }
       if (whereField === 'role' && whereValue) {
