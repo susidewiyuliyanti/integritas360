@@ -16,13 +16,58 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
   const [downloading, setDownloading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [liveRewardBalance, setLiveRewardBalance] = useState<number | null>(null);
+  const [resolvedCompany, setResolvedCompany] = useState<PosterOptions | null>(null);
+  const [identityReady, setIdentityReady] = useState(false);
 
-  const companyId = resolveCompanyId(company);
-  const laporUrl = companyId ? resolvePublicReportUrl(companyId, company.customUrl) : '';
-  const liveCompany: PosterOptions = { ...company, danaTersedia: liveRewardBalance ?? company.danaTersedia, rewardBalance: liveRewardBalance ?? company.rewardBalance };
+  const liveIdentity: PosterOptions = { ...company, ...(resolvedCompany || {}) };
+  const companyId = resolveCompanyId(liveIdentity);
+  const laporUrl = companyId ? resolvePublicReportUrl(companyId, liveIdentity.customUrl) : '';
+  const liveCompany: PosterOptions = { ...liveIdentity, danaTersedia: liveRewardBalance ?? liveIdentity.danaTersedia, rewardBalance: liveRewardBalance ?? liveIdentity.rewardBalance };
+
+  // Resolve the tenant identity from the authenticated D1 API before generating the QR.
+  useEffect(() => {
+    if (!isOpen) {
+      setResolvedCompany(null);
+      setIdentityReady(false);
+      setLiveRewardBalance(null);
+      return;
+    }
+    let active = true;
+    setIdentityReady(false);
+    setError('');
+    (async () => {
+      try {
+        const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store' });
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result?.company?.company_id) {
+          const row = result.company;
+          const canonical: PosterOptions = {
+            ...company,
+            uid: String(row.company_id),
+            companyId: String(row.company_id),
+            company_id: String(row.company_id),
+            namaPT: String(row.company_name || row.namaPT || result.profile?.namaPT || '').trim(),
+            sektor: row.sektor || row.sector || company.sektor || 'Kepatuhan & Integritas',
+            danaTersedia: Number(row.deposit_balance || 0),
+            rewardBalance: Number(row.deposit_balance || 0)
+          };
+          if (!canonical.namaPT) throw new Error('Nama perusahaan tidak ditemukan di database D1.');
+          if (active) setResolvedCompany(canonical);
+        } else if (!response.ok) {
+          throw new Error(result?.error || 'Tidak dapat memverifikasi perusahaan dari database D1.');
+        }
+      } catch (err) {
+        console.error('Gagal memverifikasi identitas tenant untuk QR:', err);
+        if (active) setError(err instanceof Error ? err.message : 'Gagal memverifikasi perusahaan.');
+      } finally {
+        if (active) setIdentityReady(true);
+      }
+    })();
+    return () => { active = false; };
+  }, [isOpen, company.uid, company.company_id, company.namaPT]);
 
   useEffect(() => {
-    if (!isOpen) { setLiveRewardBalance(null); return; }
+    if (!isOpen || !identityReady || !companyId) return;
     let active = true;
     const refreshBalance = async () => {
       try {
@@ -31,12 +76,15 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
         const data = await response.json();
         const balance = Number(data?.company?.deposit_balance);
         if (active && Number.isFinite(balance) && balance >= 0) setLiveRewardBalance(balance);
+        if (active && data?.company?.company_name) {
+          setResolvedCompany((prev) => ({ ...(prev || liveIdentity), namaPT: String(data.company.company_name), uid: String(data.company.company_id), company_id: String(data.company.company_id), companyId: String(data.company.company_id) }));
+        }
       } catch (err) { console.warn('Gagal menyegarkan saldo reward perusahaan:', err); }
     };
     void refreshBalance();
     const timer = window.setInterval(refreshBalance, 10000);
     return () => { active = false; window.clearInterval(timer); };
-  }, [isOpen]);
+  }, [isOpen, identityReady, companyId]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -47,12 +95,14 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
       return;
     }
 
+    if (!identityReady) { setLoading(true); return; }
     let isMounted = true;
     async function preparePoster() {
       try {
         setLoading(true);
         setError('');
-        if (!companyId) throw new Error('ID perusahaan tidak tersedia. QR Code tidak dapat dibuat.');
+        if (error) throw new Error(error);
+        if (!companyId) throw new Error('ID perusahaan tidak tersedia di database D1. QR Code tidak dapat dibuat.');
         const qrUrl = await generateQrCodeDataUrl(companyId, company.customUrl);
         if (!isMounted) return;
         setQrDataUrl(qrUrl);
@@ -77,7 +127,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     return () => {
       isMounted = false;
     };
-  }, [isOpen, companyId, company.customUrl, company.namaPT, company.danaTersedia, company.rewardBalance, company.sektor, liveRewardBalance]);
+  }, [isOpen, identityReady, companyId, liveIdentity.customUrl, liveIdentity.namaPT, liveIdentity.danaTersedia, liveIdentity.rewardBalance, liveIdentity.sektor, liveRewardBalance, error]);
 
   if (!isOpen) return null;
 
@@ -116,7 +166,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
-                Untuk: <span className="text-white font-medium">{company.namaPT}</span> • Format Siap Cetak A3/A4
+                Untuk: <span className="text-white font-medium">{liveCompany.namaPT}</span> • Format Siap Cetak A3/A4
               </p>
             </div>
           </div>
@@ -135,7 +185,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
               </div>
             ) : previewDataUrl ? (
               <div className="relative group max-h-[500px] flex items-center justify-center">
-                <img src={previewDataUrl} alt={`Poster Whistleblowing ${company.namaPT}`} className="rounded-lg shadow-2xl max-h-[480px] w-auto border border-amber-500/40 object-contain" />
+                <img src={previewDataUrl} alt={`Poster Whistleblowing ${liveCompany.namaPT}`} className="rounded-lg shadow-2xl max-h-[480px] w-auto border border-amber-500/40 object-contain" />
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-950/90 backdrop-blur px-3 py-1 rounded-full border border-slate-700 text-[11px] text-slate-300 font-medium opacity-90">
                   Preview Canvas 1080 × 1920
                 </div>
