@@ -159,7 +159,7 @@ export const AdminPerusahaanDashboard: React.FC = () => {
             tanggalKejadian: d.tanggalKejadian,
             lokasi: d.lokasi,
             status: d.status || 'baru',
-            tokenAkses: d.tokenAkses || '',
+            tokenAkses: '', // Never expose the reporter's claim ticket in company admin UI.
             pelaporAnonim: d.pelaporAnonim !== false,
             buktiFiles: d.buktiFiles || [],
             isContoh: Boolean(d.isContoh),
@@ -778,9 +778,7 @@ export const AdminPerusahaanDashboard: React.FC = () => {
                           <tr key={report.id} className="hover:bg-slate-800/40 transition-colors">
                             {/* Tiket & Date */}
                             <td className="py-3.5 px-4">
-                              <div className="font-mono font-bold text-amber-400 text-xs">
-                                #{report.tokenAkses}
-                              </div>
+                              <div className="font-mono text-slate-400 text-xs">ID klaim dirahasiakan</div>
                               <div className="text-[10px] text-slate-500 mt-0.5">
                                 {report.createdAt?.seconds
                                   ? new Date(report.createdAt.seconds * 1000).toLocaleDateString('id-ID', {
@@ -1056,9 +1054,7 @@ export const AdminPerusahaanDashboard: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-extrabold text-amber-400 text-sm">
-                      #{selectedReport.tokenAkses}
-                    </span>
+                    <span className="font-mono text-slate-400 text-sm">ID klaim dirahasiakan</span>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                       {selectedReport.kategori}
                     </span>
