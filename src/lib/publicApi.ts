@@ -25,10 +25,15 @@ const snapshot = (items: any[]) => ({
 
 export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (error: any) => void) {
   let stopped = false;
+  let inFlight = false;
   const run = async () => {
+    // Polls must be serialized. Overlapping requests can return out of order and
+    // replace newer D1 data with an older snapshot, making values appear to change.
+    if (stopped || inFlight) return;
+    inFlight = true;
     try {
-      if (stopped) return;
       const result = await getDocs(ref);
+      if (stopped) return;
       if (ref.id) {
         const item = result.docs.find((d: any) => d.id === ref.id);
         next({
@@ -41,10 +46,12 @@ export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (err
       }
     } catch (e) {
       if (!stopped) error?.(e);
+    } finally {
+      inFlight = false;
     }
   };
   void run();
-  const timer = window.setInterval(run, 15000);
+  const timer = window.setInterval(() => { void run(); }, 15000);
   return () => { stopped = true; window.clearInterval(timer); };
 }
 
