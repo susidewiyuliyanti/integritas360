@@ -7,7 +7,6 @@ import {
   where,
   updateDoc,
   addDoc,
-  increment,
   serverTimestamp
 } from '../lib/publicApi';
 
@@ -1070,7 +1069,7 @@ export const PerusahaanDashboard: React.FC = () => {
                               />
                             </div>
 
-                            {/* Info Pemotongan Saldo Lock */}
+                            {/* Rincian reward dari saldo aktif perusahaan */}
                             <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-xs space-y-1.5">
                               <div className="flex flex-wrap items-center justify-between text-slate-300">
                                 <span>Nominal Reward Pelapor:</span>
@@ -1119,7 +1118,7 @@ export const PerusahaanDashboard: React.FC = () => {
                                 </span>
                               </div>
                               <span className="text-[11px] text-emerald-400 font-mono">
-                                Total Potong Saldo Lock: Rp {totalPotongLock.toLocaleString('id-ID')}
+                                Reward dari Saldo Aktif: Rp {Number(report.rewardAmount || currentReward).toLocaleString('id-ID')}
                               </span>
                             </div>
 
