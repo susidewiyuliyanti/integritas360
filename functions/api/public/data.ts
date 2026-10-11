@@ -211,19 +211,41 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     }
 
     if (op === 'create-claim') {
+      const reportId = String(data.reportId || '');
+      const claimToken = String(data.claimReportToken || '');
       const report = await env.DB.prepare('SELECT * FROM reports WHERE id = ? OR reporter_code = ? LIMIT 1')
-        .bind(String(data.reportId || ''), String(data.claimReportToken || '')).first<any>();
+        .bind(reportId, claimToken).first<any>();
       if (!report) return json({ error: 'Laporan tidak ditemukan' }, 404);
 
+      let reportMeta:any = {};
+      try { reportMeta = JSON.parse(report.metadata_json || '{}'); } catch {}
+      if (String(report.status || '').toLowerCase() !== 'selesai' || !(reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1)) {
+        return json({ error: 'Reward belum dirilis. Klaim tersedia setelah laporan VALID dan reward dirilis.' }, 409);
+      }
+      if (Number(report.reward_claimed || 0) === 1 || ['pending','selesai','diproses'].includes(String(report.reward_claim_status || '').toLowerCase())) {
+        return json({ error: 'Klaim reward untuk laporan ini sudah diajukan.' }, 409);
+      }
+      const rewardAmount = Number(report.reward_amount || reportMeta.rewardAmount || 0);
+      if (!Number.isFinite(rewardAmount) || rewardAmount <= 0) return json({ error: 'Nominal reward belum tersedia.' }, 409);
       const txId = id('tx');
       const companyId = report.company_id;
-      await env.DB.prepare(`INSERT INTO transactions (id, user_id, company_id, type, amount, status, report_id, metadata_json)
-        VALUES (?, ?, ?, 'claim_reward', ?, ?, ?, ?)`)
-        .bind(txId, companyId, companyId, Number(data.amount || report.reward_amount || 0), data.status || 'pending', report.id, JSON.stringify(data)).run();
-
-      await env.DB.prepare('UPDATE reports SET reward_claim_status = ?, reward_claimed = 1, payout_wallet = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-        .bind(data.status || 'pending', data.bankDetails?.accountNumber || '', report.id).run();
-      return json({ id: txId });
+      const claimMeta = JSON.stringify({ ...data, amount: rewardAmount, reportId: report.id, rewardReleased: true });
+      const results = await env.DB.batch([
+        env.DB.prepare(`INSERT INTO transactions (id, user_id, company_id, type, amount, status, report_id, metadata_json)
+          SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
+          WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status)='selesai'
+            AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
+            AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true'))`)
+          .bind(txId, companyId, companyId, rewardAmount, report.id, claimMeta, report.id, companyId),
+        env.DB.prepare(`UPDATE reports SET reward_claim_status='pending', reward_claimed=1, payout_wallet=?, updated_at=CURRENT_TIMESTAMP
+          WHERE id=? AND company_id=? AND lower(status)='selesai' AND COALESCE(reward_claimed,0)=0
+          AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
+          AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')`)
+          .bind(data.bankDetails?.accountNumber || '', report.id, companyId)
+      ]);
+      const inserted = Number((results?.[0] as any)?.meta?.changes ?? (results?.[0] as any)?.changes ?? 0);
+      if (!inserted) return json({ error: 'Klaim sudah diajukan atau reward belum tersedia.' }, 409);
+      return json({ id: txId, amount: rewardAmount, status: 'pending' });
     }
 
     return json({ error: 'Operasi tidak didukung' }, 400);
