@@ -93,22 +93,33 @@ const WORDS: Record<string,string> = {
 };
 
 const originals = new WeakMap<Node, string>();
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^\${}()|[\]\\]/g, '\\$&');
+}
+
 function translateText(input: string, lang: Language): string {
   if (lang === 'id') return input;
   const trimmed = input.trim();
   if (!trimmed) return input;
   if (PHRASES[trimmed]) return input.replace(trimmed, PHRASES[trimmed]);
   let result = input;
-  const phrases = Object.keys(PHRASES).sort((a,b)=>b.length-a.length);
-  for (const phrase of phrases) {
-    if (!phrase || !PHRASES[phrase]) continue;
-    result = result.replace(new RegExp('\\b' + phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\result = result.replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (match) => {') + '\\b', 'gi'), (match) => {
-      const translated = PHRASES[phrase];
-      return match === match.toUpperCase() ? translated.toUpperCase() : match[0] === match[0].toUpperCase() ? translated[0].toUpperCase()+translated.slice(1) : translated;
-    });
+  const preserveCase = (match: string, translated: string) => {
+    if (match === match.toUpperCase()) return translated.toUpperCase();
+    if (match.length > 0 && match[0] === match[0].toUpperCase()) return translated.charAt(0).toUpperCase() + translated.slice(1);
+    return translated;
+  };
+  for (const phrase of Object.keys(PHRASES).sort((a, b) => b.length - a.length)) {
+    const translated = PHRASES[phrase];
+    if (!phrase || !translated) continue;
+    const pattern = phrase.includes(' ')
+      ? escapeRegExp(phrase)
+      : '(^|[^\\p{L}\\p{N}_])(' + escapeRegExp(phrase) + ')(?=$|[^\\p{L}\\p{N}_])';
+    const regex = new RegExp(pattern, 'giu');
+    result = result.replace(regex, (...args: any[]) => phrase.includes(' ') ? preserveCase(args[0], translated) : (args[1] || '') + preserveCase(args[2], translated));
   }
-  for (const [id,en] of Object.entries(WORDS)) {
-    result = result.replace(new RegExp('\\b'+id+'\\b','g'), en);
+  for (const [id, en] of Object.entries(WORDS)) {
+    const regex = new RegExp('(^|[^\\p{L}\\p{N}_])(' + escapeRegExp(id) + ')(?=$|[^\\p{L}\\p{N}_])', 'giu');
+    result = result.replace(regex, (_match, prefix, word) => prefix + preserveCase(word, en));
   }
   return result;
 }
