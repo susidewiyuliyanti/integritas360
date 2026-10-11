@@ -841,6 +841,7 @@ export const PerusahaanDashboard: React.FC = () => {
                 const kerugian = Number(report.estimasiKerugian || 0);
                 const min2Persen = Math.round(kerugian * 0.02);
                 const currentReward = report.rewardAmount !== undefined ? report.rewardAmount : (isFinansial ? min2Persen : 5000000);
+  const auditorFee = Number(report.biayaAuditor || 150000);
 
                 const isNeedsTake = report.companyCaseStatus === 'menunggu_ambil' || (report.status === 'valid' && !report.takenAt);
                 const isTakenInProgress = report.companyCaseStatus === 'kasus_diambil' && !report.rewardReleased;
