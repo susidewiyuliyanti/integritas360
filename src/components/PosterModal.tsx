@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Download, QrCode, CheckCircle2, Copy, ExternalLink, Loader2, ShieldCheck } from 'lucide-react';
+import { X, Download, QrCode, CheckCircle2, Copy, Loader2, ShieldCheck } from 'lucide-react';
 import { generateQrCodeDataUrl, renderPosterToCanvas, downloadPoster, resolveCompanyId, resolvePublicReportUrl, PosterOptions } from '../utils/posterGenerator';
 
 interface PosterModalProps {
@@ -176,7 +176,6 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                 {downloading ? <><Loader2 className="w-4 h-4 animate-spin" />Menyimpan Poster...</> : <><Download className="w-4 h-4" />Download Poster PNG (1080 × 1920)</>}
               </button>
 
-          </a>
             </div>
           </div>
         </div>
