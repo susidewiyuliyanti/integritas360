@@ -136,8 +136,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
             danaTersedia: Number(row.deposit_balance || 0),
             danaTerkunci: Number(row.locked_balance || 0),
             saldo: Number(row.deposit_balance || 0),
-            rewardBalance: Number(meta.rewardBalance ?? meta.saldoReward ?? meta.reward_balance ?? meta.available_balance ?? row.locked_balance ?? 0),
-            saldoReward: Number(meta.saldoReward ?? meta.rewardBalance ?? meta.reward_balance ?? meta.available_balance ?? row.locked_balance ?? 0),
+            rewardBalance: Number(row.deposit_balance || 0),
+            saldoReward: Number(row.deposit_balance || 0),
           }] : []
         });
       }
