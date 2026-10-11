@@ -209,11 +209,30 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
           .bind(data.status||'baru',Number(data.reward_amount??data.rewardAmount??0),Number(data.reward_min_amount??data.rewardMinAmount??0),data.reward_claim_status||data.rewardClaimStatus||'none',data.reward_claimed?1:0,unmeta(data),id).run();
       }else if(collection==='transactions'){
         const meta=unmeta(data);
-        const exists=await env.DB.prepare('SELECT id FROM transactions WHERE id=?').bind(id).first();
-        if(exists) await env.DB.prepare('UPDATE transactions SET status=?,amount=?,metadata_json=?,processed_at=CASE WHEN ? IN (\'selesai\',\'ditolak\') THEN CURRENT_TIMESTAMP ELSE processed_at END WHERE id=?')
-          .bind(data.status||'pending',Number(data.amount||0),meta,data.status||'pending',id).run();
-        else await env.DB.prepare('INSERT INTO transactions(id,user_id,company_id,type,amount,status,method,tx_hash,report_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?,?)')
-          .bind(id,data.user_id||data.userId||null,data.company_id||data.companyId||null,data.type||'deposit',Number(data.amount||0),data.status||'pending',data.method||data.metode||null,data.tx_hash||data.txHash||null,data.report_id||data.reportId||null,meta).run();
+        const existing=await env.DB.prepare('SELECT id,type,status,amount,company_id,user_id FROM transactions WHERE id=?').bind(id).first<any>();
+        const nextStatus=String(data.status||'pending').toLowerCase();
+        const finalStatuses=['selesai','approved','completed','berhasil'];
+        const isFinal=finalStatuses.includes(nextStatus);
+        const oldFinal=finalStatuses.includes(String(existing?.status||'').toLowerCase());
+        const txType=String(data.type||existing?.type||'deposit').toLowerCase();
+        const companyId=data.company_id||data.companyId||existing?.company_id||null;
+        const amount=Number(data.amount??existing?.amount??0);
+        if(!Number.isFinite(amount)||amount<0) return json({error:'Nominal transaksi tidak valid.'},400);
+        if(existing){
+          // Finalized transactions are immutable for balance purposes: only the first transition credits a deposit.
+          const update=await env.DB.prepare("UPDATE transactions SET status=?,amount=?,metadata_json=?,processed_at=CASE WHEN ? IN ('selesai','ditolak','approved','completed','berhasil') THEN CURRENT_TIMESTAMP ELSE processed_at END WHERE id=? AND lower(COALESCE(status,'pending')) NOT IN ('selesai','approved','completed','berhasil')")
+            .bind(nextStatus,amount,meta,nextStatus,id).run();
+          const changed=Number((update as any)?.meta?.changes ?? (update as any)?.changes ?? 0)>0;
+          if(changed && isFinal && txType==='deposit' && companyId){
+            await env.DB.prepare('UPDATE companies SET deposit_balance=deposit_balance+?,updated_at=CURRENT_TIMESTAMP WHERE company_id=?').bind(amount,companyId).run();
+          }
+        }else{
+          await env.DB.prepare('INSERT INTO transactions(id,user_id,company_id,type,amount,status,method,tx_hash,report_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?,?)')
+            .bind(id,data.user_id||data.userId||null,companyId,txType,amount,nextStatus,data.method||data.metode||null,data.tx_hash||data.txHash||null,data.report_id||data.reportId||null,meta).run();
+          if(isFinal && txType==='deposit' && companyId){
+            await env.DB.prepare('UPDATE companies SET deposit_balance=deposit_balance+?,updated_at=CURRENT_TIMESTAMP WHERE company_id=?').bind(amount,companyId).run();
+          }
+        }
       }else if(collection==='audit_logs'){
         await env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
           .bind(id,owner.id,owner.email,owner.role,data.company_id||data.companyId||null,data.action||'OWNER_ACTION',data.entity_type||null,data.entity_id||id,unmeta(data)).run();
