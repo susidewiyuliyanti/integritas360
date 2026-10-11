@@ -287,52 +287,77 @@ export const AdminPerusahaanDashboard: React.FC = () => {
   // ACTION: TETAPKAN KASUS TERBUKTI & RILIS REWARD
   // ==========================================
   const handleSetTerbuktiDanRilisReward = async () => {
-    if (!selectedReport || !selectedReport.id) return;
+    if (!selectedReport?.id) return;
     try {
       setProcessingAction(true);
 
       const calculatedReward =
-        selectedReport.rewardAmount ||
-        selectedReport.rewardMinAmount ||
+        Number(selectedReport.rewardAmount) ||
+        Number(selectedReport.rewardMinAmount) ||
         (selectedReport.tipePelanggaran === 'finansial' && selectedReport.estimasiKerugian
           ? Math.round(selectedReport.estimasiKerugian * 0.02)
           : 100000);
+      if (!Number.isFinite(calculatedReward) || calculatedReward <= 0) {
+        throw new Error('Nominal reward tidak valid.');
+      }
 
-      const reportRef = doc(db, 'reports', selectedReport.id);
-      await updateDoc(reportRef, {
-        status: 'terbukti',
-        hasilInvestigasi: 'terbukti',
-        investigasiStatus: 'investigasi_selesai',
-        investigasiCompletedAt: serverTimestamp(),
-        terbuktiNotes: investigationNotes.trim() || 'Kasus terbukti sah dan valid berdasarkan investigasi mendalam.',
-        investigasiNotes: `${selectedReport.investigasiNotes ? selectedReport.investigasiNotes + '\n' : ''}[${new Date().toLocaleString('id-ID')}] KEPUTUSAN: TERBUKTI. Reward Rp ${calculatedReward.toLocaleString('id-ID')} dirilis untuk pelapor. Catatan: ${investigationNotes.trim() || '-'}`,
-        rewardReleased: true,
-        rewardReleasedAt: serverTimestamp(),
-        rewardReleaseType: 'admin_perusahaan',
-        rewardAmount: calculatedReward,
-        rewardClaimStatus: 'siap_diklaim'
+      const notes = investigationNotes.trim() || 'Kasus terbukti sah dan valid berdasarkan investigasi mendalam.';
+      const timestamp = new Date().toLocaleString('id-ID');
+      const investigationLog = `[${timestamp}] KEPUTUSAN: TERBUKTI. Pengajuan reward Rp ${calculatedReward.toLocaleString('id-ID')}. Catatan: ${notes}`;
+      const baseNotes = selectedReport.investigasiNotes
+        ? `${selectedReport.investigasiNotes}\n`
+        : '';
+
+      // Persist the investigation decision through the tenant-scoped D1 API first.
+      const decisionResponse = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'update-report',
+          id: selectedReport.id,
+          data: {
+            status: 'valid',
+            hasilInvestigasi: 'terbukti',
+            investigasiStatus: 'investigasi_selesai',
+            investigasiCompletedAt: new Date().toISOString(),
+            terbuktiNotes: notes,
+            investigasiNotes: `${baseNotes}${investigationLog}`
+          }
+        })
       });
+      const decisionResult = await decisionResponse.json().catch(() => ({}));
+      if (!decisionResponse.ok || decisionResult.ok !== true) {
+        throw new Error(decisionResult.error || 'Keputusan investigasi gagal disimpan.');
+      }
 
-      // Log transaction record for transparency
-      await addDoc(collection(db, 'transactions'), {
-        userId: selectedReport.companyId,
-        companyName: selectedReport.companyName,
-        type: 'claim_reward',
-        amount: calculatedReward,
-        status: 'selesai',
-        keterangan: `Reward pelapor whistleblowing kasus #${selectedReport.tokenAkses} dirilis oleh Admin Perusahaan`,
-        claimReportToken: selectedReport.tokenAkses,
-        claimReportId: selectedReport.id,
-        processedBy: profile?.picName || user?.email,
-        createdAt: serverTimestamp()
-      }).catch((txErr) => console.warn('Reward transaction logging warning:', txErr));
+      // D1 owns the reward release, balance debit, report status and transaction log.
+      const rewardResponse = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'release-reward',
+          id: selectedReport.id,
+          rewardAmount: calculatedReward
+        })
+      });
+      const rewardResult = await rewardResponse.json().catch(() => ({}));
+      if (!rewardResponse.ok || rewardResult.ok !== true) {
+        showToast(
+          `Keputusan TERBUKTI tersimpan, tetapi reward belum dirilis: ${rewardResult.error || 'silakan coba kembali setelah memeriksa saldo'}`,
+          'error'
+        );
+        setShowTerbuktiConfirm(false);
+        return;
+      }
 
-      showToast(`Kasus dinyatakan TERBUKTI! Reward sebesar Rp ${calculatedReward.toLocaleString('id-ID')} telah dirilis.`);
+      showToast(`Kasus dinyatakan TERBUKTI. Reward Rp ${calculatedReward.toLocaleString('id-ID')} berhasil dirilis dan dicatat di D1.`);
       setShowTerbuktiConfirm(false);
       setInvestigationNotes('');
     } catch (err: any) {
       console.error('Error confirming proven report:', err);
-      showToast('Gagal merilis reward: ' + err.message, 'error');
+      showToast('Gagal memproses keputusan investigasi: ' + (err?.message || 'Kesalahan tidak diketahui'), 'error');
     } finally {
       setProcessingAction(false);
     }
