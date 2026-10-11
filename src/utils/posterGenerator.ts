@@ -10,7 +10,21 @@ export interface PosterOptions {
 }
 
 export function resolveCompanyId(options: Partial<PosterOptions> & Record<string, any>): string {
-  return String(options.uid ?? options.companyId ?? options.company_id ?? options.perusahaanId ?? options.id ?? '').trim();
+  // Kolom identitas perusahaan harus dievaluasi sebelum `uid`.
+  // Pada akun owner/tenant, `uid` berisi ID USER (mis. usr_owner_001), bukan ID perusahaan.
+  // Jika `uid` menang, QR akan mengarah ke /lapor/<id user> alih-alih /lapor/<id PT>.
+  const candidates = [
+    options.companyId,
+    options.company_id,
+    options.perusahaanId,
+    options.uid,
+    options.id
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate ?? '').trim();
+    if (value) return value;
+  }
+  return '';
 }
 
 export function resolvePublicReportUrl(companyId: string, customUrl?: string): string {
