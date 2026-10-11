@@ -176,16 +176,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                 {downloading ? <><Loader2 className="w-4 h-4 animate-spin" />Menyimpan Poster...</> : <><Download className="w-4 h-4" />Download Poster PNG (1080 × 1920)</>}
               </button>
 
-              <a
-                href={laporUrl || '#'}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => { if (!laporUrl) e.preventDefault(); }}
-                className="w-full py-2 px-3 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                Uji Buka Form Pelaporan Whistleblower
-              </a>
+          </a>
             </div>
           </div>
         </div>
