@@ -100,142 +100,105 @@ export const PerusahaanDashboard: React.FC = () => {
   // Effective Company Tenant ID
   const effectiveCompanyId = authProfile?.company_id || authProfile?.perusahaanId || (authProfile as any)?.companyId || (user?.uid || user?.id) || '';
 
-  // Realtime onSnapshot doc users/{uid} & companies/{effectiveCompanyId}
+  // D1 is the single source of truth for tenant profile, balance and reports.
+  // Polling replaces legacy Firebase snapshots, which could overwrite saved D1 values after refresh.
   useEffect(() => {
-    if (!user) return;
-
-    const userDocRef = doc(db, 'users', (user.uid || user.id));
-    const unsubscribeDoc = onSnapshot(
-      userDocRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          if (data.role === 'auditor') {
-            navigate('/auditor');
-            return;
-          }
-          setCompanyProfile((prev) => ({
-            ...prev,
-            uid: (user.uid || user.id),
-            company_id: data.company_id || effectiveCompanyId,
-            email: data.email || user.email || '',
-            role: data.role || 'perusahaan',
-            namaPT: data.namaPT || (data as any).company_name || prev?.namaPT || (authProfile as any)?.company_name || 'PT Tanpa Nama',
-            rewardBalance: Number((prev as any)?.rewardBalance ?? 0),
-            saldoReward: Number((prev as any)?.saldoReward ?? 0),
-            sektor: data.sektor || prev?.sektor || 'Manufaktur & Bisnis',
-            alamat: data.alamat || prev?.alamat || '-',
-            deskripsi: data.deskripsi || prev?.deskripsi || '-',
-            danaTersedia: Number((prev as any)?.danaTersedia ?? 0),
-            deposit_balance: Number((prev as any)?.deposit_balance ?? 0),
-            saldo: Number((prev as any)?.saldo ?? 0),
-            danaTerkunci: Number((prev as any)?.danaTerkunci ?? 0),
-            status: data.status || prev?.status || 'ACTIVE',
-            isLocked: data.status === 'SUSPENDED' || Boolean(data.isLocked),
-            statusVerifikasiDokumen: data.statusVerifikasiDokumen || prev?.statusVerifikasiDokumen,
-            kebijakanReward: data.kebijakanReward || prev?.kebijakanReward || { rewardKasusEtik: 100000, persenFinansial: 2, minPersenFinansial: 2 },
-            createdAt: data.createdAt,
-          }));
-
-          if (data.kebijakanReward) {
-            setPolicyEtikNominal(Number(data.kebijakanReward.rewardKasusEtik || 100000));
-            setPolicyFinansialPersen(Math.max(2, Number(data.kebijakanReward.persenFinansial || 2)));
-          }
-        }
-      },
-      (error) => {
-        console.error('Error in onSnapshot users/{uid}:', error);
-      }
-    );
-
-    // Also listen to companies collection for tenant updates
-    let unsubscribeComp = () => {};
-    if (effectiveCompanyId) {
-      const compDocRef = doc(db, 'companies', effectiveCompanyId);
-      unsubscribeComp = onSnapshot(compDocRef, (compSnap) => {
-        if (compSnap.exists()) {
-          const cData = compSnap.data();
-          setCompanyProfile((prev) => ({
-            ...(prev || {} as UserProfile),
-            uid: (user.uid || user.id),
-            company_id: cData.company_id || effectiveCompanyId,
-            namaPT: cData.company_name || cData.namaPT || prev?.namaPT || (authProfile as any)?.company_name || 'PT',
-            email: cData.company_email || prev?.email || '',
-            danaTersedia: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-            deposit_balance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-            rewardBalance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-            saldoReward: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-            saldo: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-            danaTerkunci: Number(cData.locked_balance ?? cData.danaTerkunci ?? 0),
-            locked_balance: Number(cData.locked_balance ?? cData.danaTerkunci ?? 0),
-            status: cData.status || 'ACTIVE',
-            isLocked: cData.status === 'SUSPENDED',
-          }));
-        }
-      });
-    }
-
-    // Listen to whistleblowing reports strictly matching this tenant company_id
-    const qReports = query(collection(db, 'reports'), where('companyId', '==', effectiveCompanyId));
-    const unsubscribeReports = onSnapshot(
-      qReports,
-      (snapshot) => {
-        const list: WhistleblowingReport[] = [];
-        snapshot.forEach((docSnap) => {
-          const d = docSnap.data();
-          list.push({
-            id: docSnap.id,
-            companyId: d.companyId,
-            companyName: d.companyName,
-            judul: d.judul || 'Laporan Dugaan Pelanggaran',
-            kategori: d.kategori || 'Umum',
-            tipePelanggaran: d.tipePelanggaran || (d.estimasiKerugian ? 'finansial' : 'etik'),
-            estimasiKerugian: Number(d.estimasiKerugian || 0),
-            rewardMinAmount: Number(d.rewardMinAmount || 0),
-            rewardAmount: d.rewardAmount !== undefined ? Number(d.rewardAmount) : undefined,
-            rewardStatusPerusahaan: d.rewardStatusPerusahaan || 'belum_ditentukan',
-            rewardClaimed: Boolean(d.rewardClaimed),
-            rewardClaimStatus: d.rewardClaimStatus,
-            rewardClaimBank: d.rewardClaimBank,
-            whatsappPelapor: d.whatsappPelapor,
-            targetAuditorName: d.targetAuditorName,
-            deskripsi: d.deskripsi || '',
-            tanggalKejadian: d.tanggalKejadian,
-            lokasi: d.lokasi,
-            status: d.status || 'baru',
-            tokenAkses: d.tokenAkses || '',
-            pelaporAnonim: d.pelaporAnonim !== false,
-            buktiFiles: d.buktiFiles || [],
-            isContoh: Boolean(d.isContoh),
-            catatanAuditor: d.catatanAuditor,
-            auditorId: d.auditorId,
-            auditorName: d.auditorName || d.targetAuditorName,
-            biayaAuditor: Number(d.biayaAuditor || 150000),
-            auditorVerified: Boolean(d.auditorVerified),
-            auditorVerifiedAt: d.auditorVerifiedAt,
-            companyCaseStatus: d.companyCaseStatus || (d.status === 'valid' ? 'menunggu_ambil' : d.status === 'selesai' ? 'selesai' : undefined),
-            takenAt: d.takenAt,
-            autoReleaseDeadline: d.autoReleaseDeadline,
-            sanksiKaryawan: d.sanksiKaryawan,
-            rewardReleased: Boolean(d.rewardReleased),
-            rewardReleasedAt: d.rewardReleasedAt,
-            rewardReleaseType: d.rewardReleaseType,
-            createdAt: d.createdAt,
-          });
+    if (!user || authLoading || !effectiveCompanyId) return;
+    let active = true;
+    const loadCanonicalTenantData = async () => {
+      try {
+        const response = await fetch('/api/company/me', {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-cache' }
         });
-        setReports(list);
-      },
-      (error) => {
-        console.warn('Reports collection snapshot:', error);
-      }
-    );
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result?.company?.company_id) {
+          throw new Error(result?.error || 'Data perusahaan tidak tersedia dari D1.');
+        }
+        const company = result.company;
+        const profile = result.profile || {};
+        const canonicalId = String(company.company_id);
+        if (canonicalId !== String(effectiveCompanyId)) {
+          throw new Error('ID tenant sesi tidak cocok dengan company_id pada D1.');
+        }
+        const balance = Number(company.deposit_balance ?? 0);
+        const locked = Number(company.locked_balance ?? 0);
+        const rewardPolicy = company.kebijakanReward || profile.kebijakanReward || {
+          rewardKasusEtik: 100000,
+          persenFinansial: 2,
+          minPersenFinansial: 2
+        };
+        if (active) {
+          setCompanyProfile({
+            ...(profile as UserProfile),
+            ...company,
+            uid: String(user.uid || user.id),
+            company_id: canonicalId,
+            companyId: canonicalId,
+            email: profile.email || company.email || user.email || '',
+            role: profile.role || user.role || 'perusahaan',
+            namaPT: String(company.company_name || company.namaPT || profile.namaPT || '').trim(),
+            company_name: String(company.company_name || company.namaPT || profile.namaPT || '').trim(),
+            sektor: company.sektor || company.sector || profile.sektor || '-',
+            alamat: company.alamat || profile.alamat || '-',
+            deskripsi: company.deskripsi || profile.deskripsi || '-',
+            danaTersedia: balance,
+            deposit_balance: balance,
+            rewardBalance: balance,
+            reward_balance: balance,
+            saldoReward: balance,
+            saldo: balance,
+            danaTerkunci: locked,
+            locked_balance: locked,
+            status: company.status || 'ACTIVE',
+            isLocked: company.status === 'SUSPENDED',
+            kebijakanReward: rewardPolicy
+          } as UserProfile);
+          setPolicyEtikNominal(Number(rewardPolicy.rewardKasusEtik || 100000));
+          setPolicyFinansialPersen(Math.max(2, Number(rewardPolicy.persenFinansial || 2)));
+        }
 
-    return () => {
-      unsubscribeDoc();
-      unsubscribeComp();
-      unsubscribeReports();
+        const reportsResponse = await fetch('/api/public/data?collection=reports&companyId=' + encodeURIComponent(canonicalId), {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-cache' }
+        });
+        const reportsResult = await reportsResponse.json().catch(() => ({}));
+        if (!reportsResponse.ok) throw new Error(reportsResult?.error || 'Gagal memuat laporan perusahaan dari D1.');
+        if (active) {
+          const items = Array.isArray(reportsResult?.items) ? reportsResult.items : [];
+          setReports(items.map((d: any) => ({
+            ...d,
+            id: String(d.id),
+            companyId: d.companyId || d.company_id || canonicalId,
+            judul: d.judul || d.title || 'Laporan Dugaan Pelanggaran',
+            kategori: d.kategori || d.category || 'Umum',
+            tipePelanggaran: d.tipePelanggaran || d.violation_type || (d.estimasiKerugian || d.estimated_loss ? 'finansial' : 'etik'),
+            estimasiKerugian: Number(d.estimasiKerugian ?? d.estimated_loss ?? 0),
+            rewardMinAmount: Number(d.rewardMinAmount ?? d.reward_min_amount ?? 0),
+            rewardAmount: d.rewardAmount !== undefined ? Number(d.rewardAmount) : d.reward_amount !== undefined ? Number(d.reward_amount) : undefined,
+            deskripsi: d.deskripsi || d.description || '',
+            tanggalKejadian: d.tanggalKejadian || d.incident_date,
+            lokasi: d.lokasi || d.location,
+            status: d.status || 'baru',
+            tokenAkses: d.tokenAkses || d.reporter_code || '',
+            buktiFiles: d.buktiFiles || [],
+            rewardClaimed: Boolean(d.rewardClaimed ?? d.reward_claimed),
+            rewardReleased: Boolean(d.rewardReleased ?? d.reward_released),
+            auditorName: d.auditorName || d.auditor_name || d.targetAuditorName,
+            companyCaseStatus: d.companyCaseStatus || (d.status === 'valid' ? 'menunggu_ambil' : d.status === 'selesai' ? 'selesai' : undefined),
+            createdAt: d.createdAt || d.created_at
+          } as WhistleblowingReport)));
+        }
+      } catch (error) {
+        console.error('Gagal menyegarkan data tenant dari D1:', error);
+      }
     };
-  }, [user, effectiveCompanyId]);
+    void loadCanonicalTenantData();
+    const timer = window.setInterval(() => { void loadCanonicalTenantData(); }, 10000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [user?.id, user?.uid, user?.email, user?.role, authLoading, effectiveCompanyId]);
 
   const namaPT = companyProfile?.namaPT || 'PT Anda';
   // Canonical tenant funds come from the companies row (D1 deposit_balance).
