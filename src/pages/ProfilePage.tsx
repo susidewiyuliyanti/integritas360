@@ -133,11 +133,6 @@ export const ProfilePage: React.FC = () => {
   const [processingWithdraw, setProcessingWithdraw] = useState(false);
   const [withdrawError, setWithdrawError] = useState('');
 
-  const [showLockModal, setShowLockModal] = useState(false);
-  const [lockAmount, setLockAmount] = useState<number>(1000000);
-  const [lockActionType, setLockActionType] = useState<'lock' | 'unlock'>('lock');
-  const [processingLock, setProcessingLock] = useState(false);
-  const [lockError, setLockError] = useState('');
 
   // Check login
   useEffect(() => {
@@ -640,78 +635,8 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // Handle Lock / Unlock Dana
-  const handleLockSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLockError('');
-    if (!user || lockAmount <= 0) return;
-
-    const currentSaldo = profileData?.saldo || 0;
-    const currentLocked = profileData?.danaTerkunci || profileData?.danaTersedia || 0;
-
-    if (lockActionType === 'lock') {
-      if (lockAmount > currentSaldo) {
-        setLockError(`Saldo aktif tidak mencukupi untuk dikunci. Saldo aktif: Rp ${currentSaldo.toLocaleString('id-ID')}`);
-        return;
-      }
-    } else {
-      if (lockAmount > currentLocked) {
-        setLockError(`Dana terkunci tidak mencukupi untuk dibuka. Dana terkunci saat ini: Rp ${currentLocked.toLocaleString('id-ID')}`);
-        return;
-      }
-    }
-
-    try {
-      setProcessingLock(true);
-      const userRef = doc(db, 'users', (user.uid || user.id));
-
-      if (lockActionType === 'lock') {
-        // Pindahkan dari saldo aktif -> danaTerkunci & danaTersedia
-        await updateDoc(userRef, {
-          saldo: increment(-lockAmount),
-          danaTerkunci: increment(lockAmount),
-          danaTersedia: increment(lockAmount),
-        });
-
-        await addDoc(collection(db, 'transactions'), {
-          userId: (user.uid || user.id),
-          type: 'lock',
-          amount: lockAmount,
-          status: 'selesai',
-          keterangan: 'Kunci dana penjaminan whistleblowing (dialokasikan ke poster)',
-          createdAt: serverTimestamp(),
-        });
-      } else {
-        // Pindahkan dari danaTerkunci & danaTersedia -> saldo aktif
-        await updateDoc(userRef, {
-          saldo: increment(lockAmount),
-          danaTerkunci: increment(-lockAmount),
-          danaTersedia: increment(-lockAmount),
-        });
-
-        await addDoc(collection(db, 'transactions'), {
-          userId: (user.uid || user.id),
-          type: 'unlock',
-          amount: lockAmount,
-          status: 'selesai',
-          keterangan: 'Buka kunci dana penjaminan kembali ke saldo aktif',
-          createdAt: serverTimestamp(),
-        });
-      }
-
-      setShowLockModal(false);
-      setLockAmount(1000000);
-    } catch (err: any) {
-      console.error('Error locking/unlocking dana:', err);
-      setLockError(err.message || 'Gagal mengubah status kunci dana.');
-    } finally {
-      setProcessingLock(false);
-    }
-  };
-
   const currentSaldo = Number(profileData?.saldo || 0);
-  const currentDanaTerkunci = Number(profileData?.danaTerkunci || profileData?.danaTersedia || 0);
-  const totalAset = currentSaldo + currentDanaTerkunci;
+  const totalAset = currentSaldo;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -876,13 +801,6 @@ export const ProfilePage: React.FC = () => {
                   <p className="text-[10px] uppercase font-mono font-semibold text-slate-400 tracking-wider">Total Kas Entitas</p>
                   <p className="text-xl sm:text-2xl font-mono font-bold text-amber-400 mt-0.5">
                     Rp {totalAset.toLocaleString('id-ID')}
-                  </p>
-                </div>
-                <div className="h-8 w-px bg-slate-800" />
-                <div>
-                  <p className="text-[10px] uppercase font-mono font-semibold text-emerald-400 tracking-wider">Dana Terkunci Escrow</p>
-                  <p className="text-base font-mono font-bold text-emerald-300 mt-0.5">
-                    Rp {currentDanaTerkunci.toLocaleString('id-ID')}
                   </p>
                 </div>
               </div>
@@ -1134,51 +1052,7 @@ export const ProfilePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Card 2: Lock Dana (Dana Terkunci) */}
-                  <div className="bg-slate-900/90 border border-emerald-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                        <Lock className="w-3.5 h-3.5" />
-                        Lock Dana (Dana Terkunci)
-                      </span>
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                        <ShieldCheck className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-400 mb-2">
-                      Rp {currentDanaTerkunci.toLocaleString('id-ID')}
-                    </div>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Dana jaminan integritas whistleblowing (ISO 37002). Nominal ini otomatis tertera pada poster resmi PT.
-                    </p>
-
-                    <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-800">
-                      <button
-                        onClick={() => {
-                          setLockActionType('lock');
-                          setLockError('');
-                          setShowLockModal(true);
-                        }}
-                        className="flex-1 py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        Kunci Dana
-                      </button>
-                      <button
-                        onClick={() => {
-                          setLockActionType('unlock');
-                          setLockError('');
-                          setShowLockModal(true);
-                        }}
-                        className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <Unlock className="w-3.5 h-3.5 text-amber-400" />
-                        Buka Kunci
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Rekening Bank Penarikan Perusahaan */}
+                  {/* Card 2: Rekening Bank Penarikan Perusahaan */}
                   <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-3">
@@ -1983,7 +1857,7 @@ export const ProfilePage: React.FC = () => {
                   Riwayat Mutasi Saldo & Dana Kepatuhan
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Daftar transaksi deposit, penarikan, penguncian, dan pembukaan kunci saldo
+                  Daftar transaksi deposit dan penarikan dana perusahaan
                 </p>
               </div>
               <span className="text-xs font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
@@ -1996,7 +1870,7 @@ export const ProfilePage: React.FC = () => {
                 <History className="w-10 h-10 mx-auto text-slate-700" />
                 <p className="text-sm font-medium">Belum ada riwayat transaksi.</p>
                 <p className="text-xs text-slate-600">
-                  Lakukan deposit atau kunci dana untuk memulai operasional whistleblowing.
+                  Lakukan deposit untuk mengaktifkan saldo operasional whistleblowing.
                 </p>
               </div>
             ) : (
@@ -2376,140 +2250,6 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 3: LOCK / UNLOCK DANA */}
-      {profileData?.role !== 'auditor' && showLockModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                {lockActionType === 'lock' ? (
-                  <>
-                    <Lock className="w-5 h-5 text-emerald-400" />
-                    Kunci Dana (Lock Dana Penjaminan)
-                  </>
-                ) : (
-                  <>
-                    <Unlock className="w-5 h-5 text-amber-400" />
-                    Buka Kunci Dana (Unlock Dana)
-                  </>
-                )}
-              </h3>
-              <button
-                onClick={() => setShowLockModal(false)}
-                className="text-slate-400 hover:text-white text-xs cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Toggle Action */}
-            <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setLockActionType('lock');
-                  setLockError('');
-                }}
-                className={`py-2 rounded-lg font-bold transition-all cursor-pointer ${
-                  lockActionType === 'lock'
-                    ? 'bg-emerald-500 text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Kunci Saldo Baru
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setLockActionType('unlock');
-                  setLockError('');
-                }}
-                className={`py-2 rounded-lg font-bold transition-all cursor-pointer ${
-                  lockActionType === 'unlock'
-                    ? 'bg-amber-500 text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Buka Kunci Saldo
-              </button>
-            </div>
-
-            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-1">
-              {lockActionType === 'lock' ? (
-                <>
-                  <span className="text-slate-400">Saldo Bebas Tersedia untuk Dikunci:</span>
-                  <div className="text-base font-bold font-mono text-white">
-                    Rp {currentSaldo.toLocaleString('id-ID')}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span className="text-slate-400">Dana Terkunci Saat Ini:</span>
-                  <div className="text-base font-bold font-mono text-emerald-400">
-                    Rp {currentDanaTerkunci.toLocaleString('id-ID')}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {lockError && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-                <span>{lockError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleLockSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Nominal {lockActionType === 'lock' ? 'yang Ingin Dikunci' : 'yang Ingin Dibuka'} (Rupiah)
-                </label>
-                <input
-                  type="number"
-                  min={500000}
-                  max={lockActionType === 'lock' ? currentSaldo : currentDanaTerkunci}
-                  step={500000}
-                  required
-                  value={lockAmount}
-                  onChange={(e) => setLockAmount(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-base font-mono font-bold text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
-                {lockActionType === 'lock'
-                  ? 'Dana yang dikunci akan langsung disinkronkan ke nilai "Dana Tersedia" pada poster whistleblowing perusahaan Anda sebagai jaminan komitmen kepatuhan.'
-                  : 'Membuka kunci dana akan mengembalikan saldo ke Saldo Bebas (Aktif) sehingga dapat ditarik (*withdrawal*) kapan saja.'}
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLockModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={processingLock}
-                  className={`px-5 py-2 rounded-xl text-slate-950 text-xs font-bold transition-all shadow-lg disabled:opacity-60 cursor-pointer ${
-                    lockActionType === 'lock'
-                      ? 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20'
-                      : 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20'
-                  }`}
-                >
-                  {processingLock
-                    ? 'Menyimpan...'
-                    : lockActionType === 'lock'
-                    ? 'Kunci Dana Sekarang'
-                    : 'Buka Kunci Dana Sekarang'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
