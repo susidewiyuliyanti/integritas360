@@ -219,41 +219,28 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       try {
         setLoadingCompanies(true);
         if (initialCompanyId) {
-          // QR selalu membawa canonical company_id tenant, bukan user document id.
-          const companySnap = await getDoc(doc(db, 'companies', initialCompanyId));
-          if (companySnap.exists()) {
-            const data = companySnap.data();
-            const canonicalId = String(data.companyId || data.company_id || data.uid || data.id || initialCompanyId);
-            const co: CompanyOption = {
-              uid: canonicalId,
-              namaPT: data.namaPT || data.company_name || 'Perusahaan Terkait',
-              sektor: data.sektor || 'Kepatuhan & Integritas',
-              danaTersedia: Number(data.danaTersedia ?? data.deposit_balance ?? data.saldo ?? 0)
-            };
-            setCompanies([co]);
-            setSelectedCompanyId(co.uid);
-            setTargetCompanyData(co);
-            setLoadingCompanies(false);
-            return;
+          // Resolve the QR tenant against canonical D1 data, not legacy client-side documents.
+          const response = await fetch('/api/public/company?companyId=' + encodeURIComponent(initialCompanyId), {
+            credentials: 'omit',
+            cache: 'no-store'
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result?.company?.company_id) {
+            throw new Error(result?.error || 'Company name not registered');
           }
-
-          // Backward compatibility untuk tenant lama yang ID-nya masih user.id.
-          const userSnap = await getDoc(doc(db, 'users', initialCompanyId));
-          if (userSnap.exists()) {
-            const data = userSnap.data();
-            const canonicalId = String(data.company_id || data.companyId || userSnap.id);
-            const co: CompanyOption = {
-              uid: canonicalId,
-              namaPT: data.namaPT || 'Perusahaan Terkait',
-              sektor: data.sektor || 'Kepatuhan & Integritas',
-              danaTersedia: Number(data.danaTersedia || data.saldo || 0)
-            };
-            setCompanies([co]);
-            setSelectedCompanyId(co.uid);
-            setTargetCompanyData(co);
-            setLoadingCompanies(false);
-            return;
-          }
+          const data = result.company;
+          const co: CompanyOption = {
+            uid: String(data.company_id),
+            namaPT: String(data.company_name || '').trim(),
+            sektor: data.sector || 'Kepatuhan & Integritas',
+            danaTersedia: Number(data.deposit_balance || 0)
+          };
+          if (!co.namaPT) throw new Error('Nama perusahaan belum terdaftar di database.');
+          setCompanies([co]);
+          setSelectedCompanyId(co.uid);
+          setTargetCompanyData(co);
+          setLoadingCompanies(false);
+          return;
         }
 
         // Public SaaS form tidak boleh mengunduh daftar seluruh tenant.
