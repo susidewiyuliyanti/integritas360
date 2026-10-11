@@ -233,6 +233,8 @@ export const ProfilePage: React.FC = () => {
         const list: WalletTransaction[] = [];
         snapshot.forEach((snap) => {
           const d = snap.data();
+          // Hide legacy lock/unlock entries: company funds now use the live tenant balance only.
+          if (['lock', 'unlock', 'potong_lock_reward', 'potong_lock_auditor'].includes(String(d.type || ''))) return;
           list.push({
             id: snap.id,
             userId: d.userId,
