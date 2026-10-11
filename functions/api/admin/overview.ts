@@ -63,18 +63,22 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const id = String(body.id || '').trim();
     const action = String(body.action || '').toLowerCase();
     const reason = String(body.reason || '').trim();
-    if (!id || !['approve-deposit','reject-deposit'].includes(action)) return json({ error: 'Permintaan tidak valid.' }, 400);
+    const validActions = ['approve-deposit','reject-deposit','approve-withdrawal','reject-withdrawal'];
+    if (!id || !validActions.includes(action)) return json({ error: 'Permintaan tidak valid.' }, 400);
     const tx = await env.DB.prepare('SELECT * FROM transactions WHERE id=? LIMIT 1').bind(id).first<any>();
     if (!tx) return json({ error: 'Transaksi tidak ditemukan di database utama.' }, 404);
-    if (String(tx.type || '').toLowerCase() !== 'deposit') return json({ error: 'Aksi ini hanya untuk deposit.' }, 400);
-    if (String(tx.status || '').toLowerCase() !== 'pending') return json({ error: 'Deposit sudah diproses sebelumnya.' }, 409);
-    if (action === 'approve-deposit') {
-      const companyId = String(tx.company_id || '');
-      const amount = Number(tx.amount || 0);
-      if (!companyId || !Number.isFinite(amount) || amount <= 0) return json({ error: 'Data tenant atau nominal deposit tidak valid.' }, 400);
+    const type = String(tx.type || '').toLowerCase();
+    const isDeposit = action.endsWith('-deposit') && type === 'deposit';
+    const isWithdrawal = action.endsWith('-withdrawal') && type === 'withdrawal';
+    if (!isDeposit && !isWithdrawal) return json({ error: 'Aksi tidak sesuai dengan jenis transaksi.' }, 400);
+    if (String(tx.status || '').toLowerCase() !== 'pending') return json({ error: 'Transaksi sudah diproses sebelumnya.' }, 409);
+    const companyId = String(tx.company_id || '');
+    const amount = Number(tx.amount || 0);
+    if (!companyId || !Number.isFinite(amount) || amount <= 0) return json({ error: 'Data tenant atau nominal transaksi tidak valid.' }, 400);
+    const isApproval = action.startsWith('approve-');
+    if (isApproval && isDeposit) {
       const operationId = 'depverify_' + crypto.randomUUID();
-      let meta:any = {};
-      try { meta = JSON.parse(tx.metadata_json || '{}'); } catch {}
+      let meta:any = {}; try { meta = JSON.parse(tx.metadata_json || '{}'); } catch {}
       const nextMeta = { ...meta, processedAt: new Date().toISOString(), processedBy: actor.email, depositVerificationOperationId: operationId, verificationNote: 'Deposit disetujui owner' };
       await env.DB.batch([
         env.DB.prepare(`UPDATE transactions SET status='selesai',metadata_json=? WHERE id=? AND status='pending'`).bind(JSON.stringify(nextMeta),id),
@@ -88,13 +92,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       if (verified?.status !== 'selesai' || verifiedMeta.depositVerificationOperationId !== operationId) return json({ error: 'Deposit sudah diproses oleh admin lain; saldo tidak ditambahkan.' }, 409);
       return json({ ok:true,id,status:'selesai',creditedAmount:amount,companyId });
     }
+    if (isApproval && isWithdrawal) {
+      const operationId = 'withverify_' + crypto.randomUUID();
+      let meta:any = {}; try { meta = JSON.parse(tx.metadata_json || '{}'); } catch {}
+      const nextMeta = { ...meta, processedAt: new Date().toISOString(), processedBy: actor.email, withdrawalVerificationOperationId: operationId, verificationNote: 'Withdrawal disetujui owner' };
+      await env.DB.batch([
+        env.DB.prepare(`UPDATE transactions SET status='selesai',metadata_json=? WHERE id=? AND status='pending' AND EXISTS (SELECT 1 FROM companies WHERE company_id=? AND COALESCE(deposit_balance,0)>=?)`).bind(JSON.stringify(nextMeta),id,companyId,amount),
+        env.DB.prepare(`UPDATE companies SET deposit_balance=COALESCE(deposit_balance,0)-?,updated_at=CURRENT_TIMESTAMP
+          WHERE company_id=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='selesai' AND json_extract(metadata_json,'$.withdrawalVerificationOperationId')=?)`).bind(amount,companyId,id,operationId),
+        env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
+          .bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,companyId,'WITHDRAWAL_APPROVED','transaction',id,JSON.stringify({amount,operationId}))
+      ]);
+      const verified = await env.DB.prepare('SELECT status,metadata_json FROM transactions WHERE id=?').bind(id).first<any>();
+      let verifiedMeta:any={}; try { verifiedMeta=JSON.parse(verified?.metadata_json||'{}'); } catch {}
+      if (verified?.status !== 'selesai' || verifiedMeta.withdrawalVerificationOperationId !== operationId) return json({ error: 'Withdrawal tidak diproses: saldo mungkin tidak mencukupi atau transaksi sudah diproses.' }, 409);
+      return json({ ok:true,id,status:'selesai',debitedAmount:amount,companyId });
+    }
     if (!reason) return json({ error: 'Alasan penolakan wajib diisi.' }, 400);
     let meta:any = {}; try { meta=JSON.parse(tx.metadata_json||'{}'); } catch {}
     const nextMeta={...meta,catatanAdmin:reason,processedAt:new Date().toISOString(),processedBy:actor.email};
     const result=await env.DB.prepare(`UPDATE transactions SET status='ditolak',metadata_json=? WHERE id=? AND status='pending'`).bind(JSON.stringify(nextMeta),id).run();
-    if (!Number(result.meta?.changes || 0)) return json({ error:'Deposit sudah diproses sebelumnya.' },409);
+    if (!Number(result.meta?.changes || 0)) return json({ error:'Transaksi sudah diproses sebelumnya.' },409);
     await env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
-      .bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,tx.company_id||null,'DEPOSIT_REJECTED','transaction',id,JSON.stringify({reason})).run();
+      .bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,companyId,isDeposit?'DEPOSIT_REJECTED':'WITHDRAWAL_REJECTED','transaction',id,JSON.stringify({reason})).run();
     return json({ok:true,id,status:'ditolak'});
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Gagal memproses transaksi deposit.' }, 500);
