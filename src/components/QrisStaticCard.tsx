@@ -11,6 +11,7 @@ interface QrisStaticCardProps {
   rewardBalance?: number;
   className?: string;
   showDownload?: boolean;
+  showRewardBalance?: boolean;
 }
 
 export const QrisStaticCard: React.FC<QrisStaticCardProps> = ({
@@ -18,7 +19,8 @@ export const QrisStaticCard: React.FC<QrisStaticCardProps> = ({
   companyName = 'Perusahaan Tenant',
   rewardBalance = 0,
   className = '',
-  showDownload = true
+  showDownload = true,
+  showRewardBalance = true
 }) => {
   const [qrUrl, setQrUrl] = useState<string>('');
   const [copied, setCopied] = useState<boolean>(false);
@@ -120,13 +122,15 @@ export const QrisStaticCard: React.FC<QrisStaticCardProps> = ({
           )}
         </div>
 
-        {/* Tenant Reward Balance */}
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl py-2 px-3 text-center mb-2">
-          <p className="text-[10px] text-emerald-800 uppercase font-semibold">Reward Tersedia</p>
-          <p className="text-sm font-black font-mono text-slate-950">
-            Rp {Number(rewardBalance || 0).toLocaleString('id-ID')}
-          </p>
-        </div>
+        {/* Saldo reward hanya ditampilkan pada konteks yang memang membutuhkannya */}
+        {showRewardBalance && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl py-2 px-3 text-center mb-2">
+            <p className="text-[10px] text-emerald-800 uppercase font-semibold">Reward Tersedia</p>
+            <p className="text-sm font-black font-mono text-slate-950">
+              Rp {Number(rewardBalance || 0).toLocaleString('id-ID')}
+            </p>
+          </div>
+        )}
 
         {/* Nominal Info (If specific amount selected) */}
         {nominal && nominal > 0 && (
