@@ -58,7 +58,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     return () => {
       isMounted = false;
     };
-  }, [isOpen, companyId, company.customUrl, company.namaPT, company.danaTersedia, company.sektor]);
+  }, [isOpen, companyId, company.customUrl, company.namaPT, company.danaTersedia, company.rewardBalance, company.sektor]);
 
   if (!isOpen) return null;
 
@@ -137,7 +137,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Total Reward Tersedia</span>
-                  <span className="font-mono font-bold text-emerald-400">Rp {Number(company.danaTersedia || 0).toLocaleString('id-ID')}</span>
+                  <span className="font-mono font-bold text-emerald-400">Rp {Number(company.rewardBalance ?? company.danaTersedia ?? 0).toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>QR Resolusi</span>
