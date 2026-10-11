@@ -4,6 +4,7 @@ export interface PosterOptions {
   uid: string;
   namaPT: string;
   danaTersedia: number;
+  rewardBalance?: number;
   sektor?: string;
   customUrl?: string;
 }
@@ -27,7 +28,8 @@ export async function generateQrCodeDataUrl(uid: string, customUrl?: string): Pr
 export async function renderPosterToCanvas(options: PosterOptions, qrDataUrl?: string): Promise<HTMLCanvasElement> {
   const companyId = resolveCompanyId(options);
   if (!companyId) throw new Error('ID perusahaan tidak tersedia. QR Code tidak dapat dibuat.');
-  const { namaPT, danaTersedia, sektor } = options;
+  const { namaPT, danaTersedia, rewardBalance, sektor } = options;
+  const displayedRewardBalance = Number(rewardBalance ?? danaTersedia ?? 0);
   const canvas = document.createElement('canvas');
   canvas.width = 1080; canvas.height = 1920;
   const ctx = canvas.getContext('2d');
@@ -63,7 +65,7 @@ export async function renderPosterToCanvas(options: PosterOptions, qrDataUrl?: s
   ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.roundRect(140, 560, 800, 160, 20); ctx.fill();
   ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.stroke();
   ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 26px "Plus Jakarta Sans", sans-serif'; ctx.fillText('TOTAL REWARD TERSEDIA', 540, 610);
-  const formattedDana = `Rp ${Number(danaTersedia || 0).toLocaleString('id-ID')}`;
+  const formattedDana = `Rp ${displayedRewardBalance.toLocaleString('id-ID')}`;
   ctx.fillStyle = '#4ade80'; ctx.font = 'bold 54px "Plus Jakarta Sans", monospace'; ctx.fillText(formattedDana, 540, 680);
 
   ctx.fillStyle = '#fef08a'; ctx.font = 'bold 36px "Plus Jakarta Sans", sans-serif'; ctx.fillText('LIHAT PELANGGARAN? JANGAN DIAM!', 540, 780);
