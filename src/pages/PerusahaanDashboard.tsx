@@ -976,22 +976,41 @@ export const PerusahaanDashboard: React.FC = () => {
                             </span>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                               {report.buktiFiles.map((bUrl, idx) => (
-                                <a
-                                  key={idx}
-                                  href={bUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="group relative rounded-xl overflow-hidden border border-slate-700 hover:border-amber-400 bg-slate-950 block shadow"
-                                >
-                                  <img
-                                    src={bUrl}
-                                    alt={`Bukti ${idx + 1}`}
-                                    className="w-full h-24 object-cover group-hover:scale-105 transition-transform"
-                                  />
-                                  <div className="absolute inset-x-0 bottom-0 bg-slate-950/90 p-1 text-[10px] text-center text-slate-300 font-medium">
-                                    Bukti #{idx + 1} (Klik Buka)
-                                  </div>
-                                </a>
+                                <div key={idx} className="rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shadow">
+                                  <a
+                                    href={bUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="group relative block hover:border-amber-400"
+                                    aria-label={`Buka bukti laporan ${idx + 1} di tab baru`}
+                                  >
+                                    {/^data:image\\//i.test(bUrl) || /\\.(png|jpe?g|gif|webp|bmp)(?:[?#]|$)/i.test(bUrl) ? (
+                                      <img
+                                        src={bUrl}
+                                        alt={`Pratinjau bukti ${idx + 1}`}
+                                        className="w-full h-24 object-cover group-hover:scale-105 transition-transform"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-24 flex flex-col items-center justify-center gap-1 text-slate-300">
+                                        <FileCheck className="w-6 h-6 text-emerald-400" />
+                                        <span className="text-[10px]">Dokumen bukti #{idx + 1}</span>
+                                      </div>
+                                    )}
+                                    <div className="bg-slate-900 p-1.5 text-[10px] text-center text-slate-300 font-medium">
+                                      Buka Bukti #{idx + 1}
+                                    </div>
+                                  </a>
+                                  <a
+                                    href={bUrl}
+                                    download={`Bukti_Laporan_${idx + 1}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center justify-center gap-1.5 p-2 text-[11px] font-semibold text-emerald-300 hover:text-white hover:bg-emerald-500/15 border-t border-slate-800"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                    Download Bukti
+                                  </a>
+                                </div>
                               ))}
                             </div>
                           </div>
