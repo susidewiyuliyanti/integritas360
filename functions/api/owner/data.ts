@@ -215,7 +215,9 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
         const isFinal=finalStatuses.includes(nextStatus);
         const oldFinal=finalStatuses.includes(String(existing?.status||'').toLowerCase());
         const txType=String(data.type||existing?.type||'deposit').toLowerCase();
-        const companyId=data.company_id||data.companyId||existing?.company_id||null;
+        let companyId=data.company_id||data.companyId||existing?.company_id||null;
+        const transactionUserId=data.user_id||data.userId||existing?.user_id||null;
+        if(!companyId && transactionUserId){ const linked=await env.DB.prepare('SELECT company_id FROM users WHERE id=? LIMIT 1').bind(transactionUserId).first<any>(); companyId=linked?.company_id||null; }
         const amount=Number(data.amount??existing?.amount??0);
         if(!Number.isFinite(amount)||amount<0) return json({error:'Nominal transaksi tidak valid.'},400);
         if(existing){
