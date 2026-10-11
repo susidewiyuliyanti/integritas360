@@ -436,7 +436,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       const assignedAuditorId = selectedAuditorId || (auditors[0]?.uid || '');
       const assignedAuditorName = chosenAuditor?.namaPT || chosenAuditor?.picName || 'Auditor Independen Terdaftar';
 
-      await addDoc(collection(db, 'reports'), {
+      const reportData = {
         companyId: selectedCompanyId || 'general',
         companyName: targetCompany,
         judul: judul.trim(),
@@ -444,7 +444,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         tipePelanggaran,
         estimasiKerugian: tipePelanggaran === 'finansial' ? cleanKerugian : 0,
         rewardMinAmount: minReward,
-        rewardAmount: minReward, // Nilai default reward minimal (2% untuk finansial, Rp 100.000 untuk etik)
+        rewardAmount: minReward,
         rewardStatusPerusahaan: 'belum_ditentukan',
         deskripsi: deskripsi.trim(),
         tanggalKejadian: tanggalKejadian || null,
@@ -460,9 +460,26 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         targetAuditorIds: assignedAuditorId ? [assignedAuditorId] : [],
         targetAuditorNames: [assignedAuditorName],
         status: 'baru',
-        tokenAkses: secretToken,
-        createdAt: serverTimestamp(),
-      });
+        tokenAkses: secretToken
+      };
+
+      if (!isContohMode) {
+        if (!selectedCompanyId || selectedCompanyId === 'manual' || selectedCompanyId === 'general') {
+          throw new Error('QR pelaporan ini tidak terhubung ke tenant perusahaan yang valid.');
+        }
+        const response = await fetch('/api/public/data', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          cache: 'no-store',
+          body: JSON.stringify({ operation: 'create-report', data: reportData })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result?.id || String(result.companyId) !== String(selectedCompanyId)) {
+          throw new Error(result?.error || 'Laporan gagal disimpan ke database tenant.');
+        }
+      } else {
+        await addDoc(collection(db, 'reports'), { ...reportData, createdAt: serverTimestamp() });
+      }
 
       setSubmittedToken(secretToken);
     } catch (err: any) {
@@ -482,9 +499,41 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       setTrackingError('');
       setTrackedReport(null);
 
+      // New SaaS reports are stored in D1. Check the canonical database first,
+      // then fall back to legacy Firestore tickets created before the migration.
+      const normalizedToken = trackTokenInput.trim().toUpperCase();
+      const d1Response = await fetch('/api/public/data?collection=reports&whereField=tokenAkses&whereValue=' + encodeURIComponent(normalizedToken), {
+        credentials: 'omit',
+        cache: 'no-store'
+      });
+      const d1Result = await d1Response.json().catch(() => ({}));
+      const d1Report = Array.isArray(d1Result?.items) ? d1Result.items[0] : null;
+      if (d1Response.ok && d1Report) {
+        setTrackedReport({
+          ...d1Report,
+          id: String(d1Report.id),
+          companyId: String(d1Report.companyId || ''),
+          judul: d1Report.judul || d1Report.title || 'Laporan Dugaan Pelanggaran',
+          kategori: d1Report.kategori || d1Report.category || 'Umum',
+          tipePelanggaran: d1Report.tipePelanggaran || d1Report.violation_type || (d1Report.estimasiKerugian || d1Report.estimated_loss ? 'finansial' : 'etik'),
+          estimasiKerugian: Number(d1Report.estimasiKerugian ?? d1Report.estimated_loss ?? 0),
+          rewardMinAmount: Number(d1Report.rewardMinAmount ?? d1Report.reward_min_amount ?? 0),
+          rewardAmount: Number(d1Report.rewardAmount ?? d1Report.reward_amount ?? 0),
+          deskripsi: d1Report.deskripsi || d1Report.description || '',
+          status: d1Report.status || 'baru',
+          tokenAkses: d1Report.tokenAkses || normalizedToken,
+          buktiFiles: Array.isArray(d1Report.buktiFiles) ? d1Report.buktiFiles : [],
+          rewardClaimed: Boolean(d1Report.rewardClaimed ?? d1Report.reward_claimed)
+        } as WhistleblowingReport);
+        if (d1Report.whatsappPelapor) setClaimWhatsapp(String(d1Report.whatsappPelapor));
+        setClaimSuccess('');
+        setClaimError('');
+        return;
+      }
+
       const q = query(
         collection(db, 'reports'),
-        where('tokenAkses', '==', trackTokenInput.trim().toUpperCase())
+        where('tokenAkses', '==', normalizedToken)
       );
       const snap = await getDocs(q);
 
