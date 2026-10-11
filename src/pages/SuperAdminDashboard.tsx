@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
-import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity, KeyRound } from 'lucide-react';
+import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity, KeyRound, Bot, MessageSquare, TrendingUp, Target, Sparkles, Send, User, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
 
 type Company = Record<string, any>;
 type Report = Record<string, any>;
@@ -18,7 +18,7 @@ const date = (v: unknown) => {
 export const SuperAdminDashboard: React.FC = () => {
   const { user, loading, logout } = useAuth();
   const { navigate } = useNavigation();
-  const [tab, setTab] = useState<'overview'|'tenants'|'reports'|'transactions'|'audit'|'security'>('overview');
+  const [tab, setTab] = useState<'overview'|'tenants'|'reports'|'transactions'|'audit'|'security'|'ai-sales'>('overview');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -50,6 +50,13 @@ export const SuperAdminDashboard: React.FC = () => {
   const [adminMessage, setAdminMessage] = useState('');
   const [adminError, setAdminError] = useState('');
 
+  // AI Sales Agent state
+  const [aiMessages, setAiMessages] = useState<{role:'user'|'assistant';content:string;timestamp:number}[]>([
+    {role:'assistant',content:'Halo! Saya AI Sales Agent Integritas360. Saya bisa membantu Anda menganalisis data tenant, memberikan rekomendasi follow-up, dan menjawab pertanyaan tentang sales performance. Ada yang bisa saya bantu?',timestamp:Date.now()}
+  ]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiExpanded, setAiExpanded] = useState(true);
 
   useEffect(() => {
     if (loading) return;
@@ -109,6 +116,7 @@ export const SuperAdminDashboard: React.FC = () => {
     ['transactions','Saldo & Transaksi',Wallet],
     ['audit','History & Audit Log',History],
     ['security','Keamanan Akun',KeyRound],
+    ['ai-sales','AI Sales Agent',Bot],
   ] as const;
 
   return <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -229,7 +237,235 @@ export const SuperAdminDashboard: React.FC = () => {
           <button type="submit" disabled={passwordBusy} className="rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-60">{passwordBusy ? 'Menyimpan...' : 'Ubah Kata Sandi'}</button>
         </form>
       </section>}
+      {tab==='ai-sales' && <AISalesAgentPanel
+        companies={companies}
+        reports={reports}
+        transactions={transactions}
+        aiMessages={aiMessages}
+        setAiMessages={setAiMessages}
+        aiInput={aiInput}
+        setAiInput={setAiInput}
+        aiLoading={aiLoading}
+        setAiLoading={setAiLoading}
+        aiExpanded={aiExpanded}
+        setAiExpanded={setAiExpanded}
+      />}
       <footer className="text-xs text-slate-500 flex flex-wrap gap-2 items-center"><Users className="w-4 h-4"/> Panel khusus Super Admin. Jangan bagikan akses ini kepada akun tenant.</footer>
     </main>
+  </div>;
+};
+
+/* ── AI Sales Agent Panel ── */
+interface AISalesAgentPanelProps {
+  companies: Company[];
+  reports: Report[];
+  transactions: Transaction[];
+  aiMessages: {role:'user'|'assistant';content:string;timestamp:number}[];
+  setAiMessages: React.Dispatch<React.SetStateAction<{role:'user'|'assistant';content:string;timestamp:number}[]>>;
+  aiInput: string;
+  setAiInput: (v:string)=>void;
+  aiLoading: boolean;
+  setAiLoading: (v:boolean)=>void;
+  aiExpanded: boolean;
+  setAiExpanded: (v:boolean)=>void;
+}
+
+const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
+  companies, reports, transactions, aiMessages, setAiMessages, aiInput, setAiInput, aiLoading, setAiLoading, aiExpanded, setAiExpanded
+}) => {
+  const [activeInsight, setActiveInsight] = useState<'overview'|'leads'|'conversion'|'revenue'>('overview');
+
+  // Hitung metrik sales dari data D1
+  const totalTenants = companies.length;
+  const activeTenants = companies.filter(c => ['ACTIVE','active','aktif'].includes(String(c.status||'').toUpperCase())).length;
+  const depositRequiredTenants = companies.filter(c => ['DEPOSIT_REQUIRED','deposit_required'].includes(String(c.status||'').toUpperCase())).length;
+  const suspendedTenants = companies.filter(c => ['SUSPENDED','suspended'].includes(String(c.status||'').toUpperCase())).length;
+  const totalRevenue = transactions.filter(t => ['completed','selesai','success'].includes(String(t.status||'').toLowerCase())).reduce((sum,t)=>sum+Number(t.amount||0),0);
+  const pendingRevenue = transactions.filter(t => ['pending','menunggu'].includes(String(t.status||'').toLowerCase())).reduce((sum,t)=>sum+Number(t.amount||0),0);
+  const avgDeposit = totalTenants > 0 ? totalRevenue / totalTenants : 0;
+
+  // Generate insight otomatis berdasarkan data D1
+  const generateInsights = ():string[] => {
+    const insights:string[] = [];
+    if (depositRequiredTenants > 0) insights.push(`${depositRequiredTenants} tenant menunggu deposit — peluang follow-up sales.`);
+    if (pendingRevenue > 0) insights.push(`Rp ${pendingRevenue.toLocaleString('id-ID')} transaksi pending — perlu verifikasi cepat.`);
+    if (activeTenants === 0 && totalTenants > 0) insights.push('Semua tenant belum aktif — perlu onboarding intensif.');
+    if (activeTenants > 0) insights.push(`${activeTenants} tenant aktif — potensi upsell laporan/audit tambahan.`);
+    if (suspendedTenants > 0) insights.push(`${suspendedTenants} tenant ditangguhkan — evaluasi retensi.`);
+    if (avgDeposit > 0) insights.push(`Rata-rata deposit per tenant: Rp ${Math.round(avgDeposit).toLocaleString('id-ID')}.`);
+    if (reports.length > 0) {
+      const validReports = reports.filter(r => ['valid','terverifikasi','verified'].includes(String(r.status||'').toLowerCase())).length;
+      insights.push(`${validReports}/${reports.length} laporan terverifikasi — tingkat kepercayaan sistem tinggi.`);
+    }
+    if (insights.length === 0) insights.push('Data masih terbatas. Ajukan deposit ke tenant untuk memulai revenue.');
+    return insights;
+  };
+
+  const insights = useMemo(generateInsights, [companies, transactions, reports, depositRequiredTenants, pendingRevenue, activeTenants, suspendedTenants, avgDeposit]);
+
+  // Handle kirim pesan ke AI
+  const handleSend = async () => {
+    if (!aiInput.trim() || aiLoading) return;
+    const userMsg = aiInput.trim();
+    setAiInput('');
+    setAiMessages(prev => [...prev, {role:'user',content:userMsg,timestamp:Date.now()}]);
+    setAiLoading(true);
+
+    // Simulasi AI response berdasarkan data D1 (nanti bisa diganti dengan API call ke AI service)
+    setTimeout(() => {
+      const lower = userMsg.toLowerCase();
+      let response = '';
+
+      if (lower.includes('tenant') || lower.includes('perusahaan')) {
+        response = `Saat ini ada ${totalTenants} tenant: ${activeTenants} aktif, ${depositRequiredTenants} menunggu deposit, ${suspendedTenants} ditangguhkan. Total revenue: Rp ${totalRevenue.toLocaleString('id-ID')}.`;
+      } else if (lower.includes('deposit') || lower.includes('saldo') || lower.includes('revenue') || lower.includes('pendapatan')) {
+        response = `Total revenue terkonfirmasi: Rp ${totalRevenue.toLocaleString('id-ID')}. Pending: Rp ${pendingRevenue.toLocaleString('id-ID')}. Rata-rata deposit per tenant: Rp ${Math.round(avgDeposit).toLocaleString('id-ID')}.`;
+      } else if (lower.includes('laporan') || lower.includes('report')) {
+        response = `Total ${reports.length} laporan masuk. ${reports.filter(r => ['valid','terverifikasi','verified'].includes(String(r.status||'').toLowerCase())).length} terverifikasi, ${reports.filter(r => ['pending','menunggu'].includes(String(r.status||'').toLowerCase())).length} menunggu review.`;
+      } else if (lower.includes('follow') || lower.includes('tindak') || lower.includes('rekomendasi')) {
+        const recs = [];
+        if (depositRequiredTenants > 0) recs.push(`Follow-up ${depositRequiredTenants} tenant dengan status DEPOSIT_REQUIRED via email/WhatsApp.`);
+        if (pendingRevenue > 0) recs.push(`Prioritaskan verifikasi ${transactions.filter(t => ['pending','menunggu'].includes(String(t.status||'').toLowerCase())).length} transaksi pending.`);
+        if (suspendedTenants > 0) recs.push(`Hubungi ${suspendedTenants} tenant yang ditangguhkan untuk evaluasi retensi.`);
+        if (recs.length === 0) recs.push('Semua tenant aktif — fokus pada upsell fitur premium dan laporan audit tambahan.');
+        response = 'Rekomendasi tindak lanjut:\n' + recs.map((r,i) => `${i+1}. ${r}`).join('\n');
+      } else if (lower.includes('konversi') || lower.includes('conversion')) {
+        const rate = totalTenants > 0 ? (activeTenants / totalTenants * 100).toFixed(1) : '0';
+        response = `Conversion rate: ${rate}% (${activeTenants}/${totalTenants} tenant aktif). ${depositRequiredTenants} tenant di funnel deposit. Tingkatkan dengan follow-up personal dan demo produk.`;
+      } else if (lower.includes('analisis') || lower.includes('analisa') || lower.includes('insight')) {
+        response = 'Insight dari data D1:\n' + insights.map((ins,i) => `${i+1}. ${ins}`).join('\n');
+      } else {
+        response = `Saya memahami pertanyaan Anda. Berdasarkan data D1 saat ini:\n- ${totalTenants} tenant terdaftar\n- Rp ${totalRevenue.toLocaleString('id-ID')} revenue\n- ${reports.length} laporan\n\nAda yang spesifik ingin Anda analisis?`;
+      }
+
+      setAiMessages(prev => [...prev, {role:'assistant',content:response,timestamp:Date.now()}]);
+      setAiLoading(false);
+    }, 1200);
+  };
+
+  const handleKeyDown = (e:React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
+
+  return <div className="space-y-6">
+    {/* Header AI Sales */}
+    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-400"><Sparkles className="w-5 h-5"/></div>
+        <div>
+          <h2 className="font-bold text-lg">AI Sales Agent</h2>
+          <p className="text-xs text-slate-400">Analisis data D1 real-time · Rekomendasi sales · Chat interaktif</p>
+        </div>
+      </div>
+    </section>
+
+    {/* Metrik Sales */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {[
+        [Target,'Total Tenant',totalTenants],
+        [TrendingUp,'Tenant Aktif',activeTenants],
+        [Wallet,'Revenue Terkonfirmasi',`Rp ${totalRevenue.toLocaleString('id-ID')}`],
+        [Lightbulb,'Avg Deposit/Tenant',`Rp ${Math.round(avgDeposit).toLocaleString('id-ID')}`],
+      ].map(([Icon,label,value]:any)=><div key={label} className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><div className="flex items-center justify-between text-slate-400 text-sm"><span>{label}</span><Icon className="w-5 h-5 text-emerald-400"/></div><div className="mt-3 text-2xl font-extrabold break-words">{value}</div></div>)}
+    </div>
+
+    {/* Insight Cards */}
+    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Lightbulb className="w-4 h-4 text-amber-400"/>
+        <h3 className="font-bold">Insight Otomatis dari D1</h3>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {insights.map((insight,i)=>(
+          <div key={i} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4 flex gap-3 items-start">
+            <div className="rounded-full bg-amber-500/15 text-amber-400 w-6 h-6 flex items-center justify-center text-xs font-bold shrink-0">{i+1}</div>
+            <p className="text-sm text-slate-300">{insight}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* Chat Interface */}
+    <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
+      <button onClick={()=>setAiExpanded(!aiExpanded)} className="w-full flex items-center justify-between p-5 hover:bg-slate-800/50 transition-colors">
+        <div className="flex items-center gap-3">
+          <Bot className="w-5 h-5 text-emerald-400"/>
+          <h3 className="font-bold">Chat dengan AI Sales Agent</h3>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">Live</span>
+        </div>
+        {aiExpanded ? <ChevronUp className="w-5 h-5 text-slate-400"/> : <ChevronDown className="w-5 h-5 text-slate-400"/>}
+      </button>
+
+      {aiExpanded && <>
+        {/* Messages */}
+        <div className="px-5 py-4 space-y-4 max-h-[400px] overflow-y-auto border-t border-slate-800">
+          {aiMessages.map((msg,i)=>{
+            const isUser = msg.role === 'user';
+            return <div key={i} className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
+              <div className={`rounded-full w-8 h-8 flex items-center justify-center shrink-0 ${isUser ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-500/15 text-emerald-400'}`}>
+                {isUser ? <User className="w-4 h-4"/> : <Bot className="w-4 h-4"/>}
+              </div>
+              <div className={`rounded-2xl px-4 py-3 text-sm max-w-[80%] whitespace-pre-line ${isUser ? 'bg-amber-500/10 text-slate-200 border border-amber-500/20' : 'bg-slate-800 text-slate-300 border border-slate-700'}`}>
+                {msg.content}
+              </div>
+            </div>;
+          })}
+          {aiLoading && <div className="flex gap-3">
+            <div className="rounded-full w-8 h-8 flex items-center justify-center shrink-0 bg-emerald-500/15 text-emerald-400"><Bot className="w-4 h-4 animate-pulse"/></div>
+            <div className="rounded-2xl px-4 py-3 text-sm bg-slate-800 text-slate-400 border border-slate-700">
+              <span className="inline-flex gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce"/><span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]"/><span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]"/></span>
+            </div>
+          </div>}
+        </div>
+
+        {/* Input */}
+        <div className="p-4 border-t border-slate-800">
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <input
+                value={aiInput}
+                onChange={e=>setAiInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Tanya tentang tenant, revenue, conversion, rekomendasi follow-up..."
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-500 pr-10"
+                disabled={aiLoading}
+              />
+              <MessageSquare className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600"/>
+            </div>
+            <button
+              onClick={handleSend}
+              disabled={!aiInput.trim() || aiLoading}
+              className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Send className="w-4 h-4"/> Kirim
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2">AI Sales Agent menganalisis data D1 real-time. Tekan Enter untuk kirim.</p>
+        </div>
+      </>}
+    </section>
+
+    {/* Quick Actions */}
+    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <h3 className="font-bold mb-3 flex items-center gap-2"><Target className="w-4 h-4 text-amber-400"/>Tindakan Cepat</h3>
+      <div className="flex flex-wrap gap-2">
+        {[
+          {label:'Analisis tenant', prompt:'Berikan analisis lengkap tentang semua tenant'},
+          {label:'Revenue hari ini', prompt:'Berapa revenue dan transaksi hari ini?'},
+          {label:'Rekomendasi follow-up', prompt:'Apa rekomendasi follow-up untuk tenant?'},
+          {label:'Conversion rate', prompt:'Berapa conversion rate tenant saat ini?'},
+          {label:'Tenant pending deposit', prompt:'Siapa saja tenant yang menunggu deposit?'},
+          {label:'Laporan overview', prompt:'Berikan overview laporan yang masuk'},
+        ].map((action)=>(
+          <button
+            key={action.label}
+            onClick={()=>{setAiInput(action.prompt); setAiExpanded(true);}}
+            className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-300 hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </section>
   </div>;
 };
