@@ -132,12 +132,12 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Target Perusahaan</span>
+                  <span>Nama Perusahaan Tenant</span>
                   <span className="font-semibold text-white">{company.namaPT}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Total Reward Tersedia</span>
-                  <span className="font-mono font-bold text-emerald-400">Rp {Number(company.rewardBalance ?? company.danaTersedia ?? 0).toLocaleString('id-ID')}</span>
+                  <span className="font-mono font-bold text-emerald-400">Rp {Number(company.danaTersedia ?? company.rewardBalance ?? 0).toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>QR Resolusi</span>
