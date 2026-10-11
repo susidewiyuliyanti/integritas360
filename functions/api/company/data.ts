@@ -44,6 +44,23 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     ]);
     return json({user:{id:uid,email,role:requestedRole,company_id:companyId}});
   }
+  if(op==='create-transaction'){
+    const d=body.data||{};
+    const type=String(d.type||'').toLowerCase();
+    const amount=Number(d.amount||0);
+    if(!['deposit','withdrawal'].includes(type)) return json({error:'Jenis transaksi tidak didukung.'},400);
+    if(!Number.isFinite(amount)||amount<=0) return json({error:'Nominal transaksi harus lebih besar dari nol.'},400);
+    const method=String(d.method||d.metode||'').trim();
+    if(type==='deposit' && !/qris|nowpayments/i.test(method)) return json({error:'Deposit hanya tersedia melalui QRIS atau NOWPayments.'},400);
+    const txId=randomId('tx');
+    const metadata={...d,userId:actor.id,companyId,createdAt:d.createdAt||new Date().toISOString()};
+    await env.DB.prepare(`INSERT INTO transactions(id,user_id,company_id,type,amount,status,method,tx_hash,metadata_json)
+      VALUES(?,?,?,?,?,'pending',?,?,?)`)
+      .bind(txId,actor.id,companyId,type,amount,method||null,d.txHash||d.tx_hash||null,JSON.stringify(metadata)).run();
+    await env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
+      .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'TRANSACTION_CREATED','transaction',txId,JSON.stringify({type,amount,method})).run();
+    return json({ok:true,id:txId,status:'pending'});
+  }
   if(op==='release-reward'){
     const id=String(body.id||'');
     const requested=Number(body.rewardAmount||0);
