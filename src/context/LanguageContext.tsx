@@ -116,7 +116,65 @@ const PHRASES: Record<string, string> = {
   'Audit Kepatuhan & Investigasi':'Compliance & Investigation Audit',
   'Laporan Dugaan Pelanggaran':'Suspected Misconduct Report',
   'Menunggu verifikasi Administrator':'Awaiting administrator verification',
-  'Periksa koneksi internet dan coba lagi.':'Check your internet connection and try again.'
+  'Periksa koneksi internet dan coba lagi.':'Check your internet connection and try again.',
+  'Menerima laporan secara anonim':'Receive reports anonymously',
+  'Laporan Anda akan diproses secara rahasia':'Your report will be handled confidentially',
+  'Sederhana untuk Pelapor, Terukur untuk Perusahaan':'Simple for Reporters, Measurable for Companies',
+  'Scan QR perusahaan':'Scan the company QR code',
+  'Perusahaan meninjau laporan':'The company reviews the report',
+  'Saldo reward dikunci sebelum kasus dibuka':'Reward balance is locked before the case is opened',
+  'Laporan akan ditinjau oleh auditor independen':'Reports will be reviewed by an independent auditor',
+  'Identitas Anda akan tetap dirahasiakan':'Your identity will remain confidential',
+  'Laporkan pelanggaran secara aman dan rahasia':'Report misconduct safely and confidentially',
+  'Laporan Anda akan dijaga kerahasiaannya':'Your report will be kept confidential',
+  'Perusahaan Didaftarkan Manual':'Company Registration Is Manual',
+  'Pelapor whistleblower?':'Are you a whistleblower?',
+  'Lapor secara anonim tanpa login di sini':'Submit an anonymous report without signing in here',
+  'Harap masukkan email dan kata sandi.':'Please enter your email and password.',
+  'Akun login Anda sedang dinonaktifkan / ditangguhkan.':'Your account has been disabled or suspended.',
+  'Gagal masuk. Silakan coba lagi.':'Sign-in failed. Please try again.',
+  'Koneksi ke server gagal. Periksa koneksi internet dan coba lagi.':'Could not connect to the server. Check your internet connection and try again.',
+  'Harap masukkan alamat email Anda.':'Please enter your email address.',
+  'Fitur reset kata sandi sedang dipindahkan ke sistem Cloudflare. Hubungi Owner / Super Admin untuk reset sementara.':'Password reset is being migrated to Cloudflare. Contact the Owner / Super Admin for a temporary reset.',
+  'Login Google sudah dinonaktifkan. Gunakan email dan kata sandi yang diterbitkan Owner / Super Admin.':'Google sign-in is disabled. Use the email and password issued by the Owner / Super Admin.',
+  'Masuk ke Sistem':'Sign In to the System',
+  'Atur Ulang Kata Sandi':'Reset Password',
+  'Kami akan mengirim link reset ke email Anda':'We will send a password reset link to your email',
+  'Perusahaan meninjau laporan':'The company reviews the report',
+  'Memverifikasi akses Super Admin…':'Verifying Super Admin access…',
+  'Control plane SaaS — data lintas tenant':'SaaS control plane — cross-tenant data',
+  'Semua Tenant':'All Tenants',
+  'Semua Laporan':'All Reports',
+  'Saldo & Transaksi':'Balances & Transactions',
+  'Total Tenant':'Total Tenants',
+  'Saldo Tersedia':'Available Balance',
+  'Saldo Terkunci':'Locked Balance',
+  'Laporan Aktif':'Active Reports',
+  'Transaksi Pending':'Pending Transactions',
+  'Ringkasan sistem':'System Summary',
+  'Panel ini khusus Owner/Super Admin untuk memantau seluruh tenant, laporan, saldo, transaksi, dan jejak audit. Tenant tetap masuk melalui portal tenant terpisah.':'This panel is for the Owner/Super Admin to monitor all tenants, reports, balances, transactions, and audit trails. Tenants continue to use their separate portal.',
+  'Kelola Tenant':'Manage Tenants',
+  'Portal Tenant':'Tenant Portal',
+  'Tambah Tenant Perusahaan':'Add Company Tenant',
+  'Buat ruang perusahaan yang terpisah beserta akun admin pertamanya. Tenant baru berstatus DEPOSIT_REQUIRED.':'Create an isolated company workspace and its first admin account. New tenants have DEPOSIT_REQUIRED status.',
+  'Setiap tenant maksimal memiliki 3 akun admin termasuk akun pertama.':'Each tenant can have a maximum of 3 admin accounts, including the first.',
+  'Tarik saldo honorarium ke rekening bank':'Withdraw fee balance to a bank account',
+  'Kelola profil praktisi dan dokumen lisensi profesi':'Manage practitioner profile and professional license documents',
+  'Total Berkas Masuk':'Total Incoming Cases',
+  'Laporan Baru':'New Reports',
+  'Kasus Selesai':'Completed Cases',
+  'Spesialisasi Audit':'Audit Specialization',
+  'Saldo Honorarium':'Fee Balance',
+  'Data profil dan legalitas perusahaan berhasil disimpan!':'Company profile and legal documents saved successfully!',
+  'Profil praktisi auditor, lisensi profesi, tarif jasa, dan rekening bank berhasil disimpan!':'Auditor profile, professional license, service fees, and bank account saved successfully!',
+  'Dokumen berhasil diunggah dan seluruh data pengisian perusahaan tersimpan aman! Menunggu verifikasi Administrator.':'Documents uploaded and all company details saved securely! Awaiting administrator verification.',
+  'Foto profil berhasil diperbarui dan data pengisian tetap tersimpan!':'Profile photo updated and profile details remain saved!',
+  'Regulasi Wajib: Persentase reward kasus finansial minimal adalah 2% dari nilai kerugian.':'Mandatory regulation: The reward for financial cases must be at least 2% of the loss amount.',
+  'Ketentuan: Reward kasus pelanggaran etik minimal adalah Rp 100.000 (dapat disesuaikan dengan kebijakan perusahaan).':'Requirement: The minimum reward for an ethics violation case is IDR 100,000 (subject to company policy).',
+  'Audit Kepatuhan & Investigasi':'Compliance & Investigation Audit',
+  'Laporan Dugaan Pelanggaran':'Suspected Misconduct Report',
+  'Menunggu verifikasi Administrator':'Awaiting administrator verification',
+  'Laporan Anda akan dijaga kerahasiaannya':'Your report will be kept confidential'
 };
 
 const WORDS: Record<string,string> = {
@@ -158,9 +216,12 @@ function translateText(input: string, lang: Language): string {
     const regex = new RegExp(pattern, 'giu');
     result = result.replace(regex, (_match: string, prefix: string, phraseMatch: string) => prefix + preserveCase(phraseMatch, translated));
   }
-  for (const [id, en] of Object.entries(WORDS)) {
-    const regex = new RegExp('(^|[^\\p{L}\\p{N}_])(' + escapeRegExp(id) + ')(?=$|[^\\p{L}\\p{N}_])', 'giu');
-    result = result.replace(regex, (_match, prefix, word) => prefix + preserveCase(word, en));
+  // Word-level fallback is safe for short labels only; avoid mangling full sentences and report narratives.
+  if (trimmed.length <= 48 && trimmed.split(/\\s+/).length <= 6) {
+    for (const [id, en] of Object.entries(WORDS)) {
+      const regex = new RegExp('(^|[^\\p{L}\\p{N}_])(' + escapeRegExp(id) + ')(?=$|[^\\p{L}\\p{N}_])', 'giu');
+      result = result.replace(regex, (_match, prefix, word) => prefix + preserveCase(word, en));
+    }
   }
   return result;
 }
