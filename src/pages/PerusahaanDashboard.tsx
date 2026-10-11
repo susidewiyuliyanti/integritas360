@@ -108,7 +108,11 @@ export const PerusahaanDashboard: React.FC = () => {
   useEffect(() => {
     if (!user || authLoading || !effectiveCompanyId) return;
     let active = true;
+    let tenantRefreshInFlight = false;
     const loadCanonicalTenantData = async () => {
+      // Prevent slow polls from finishing out of order and overwriting newer data.
+      if (tenantRefreshInFlight) return;
+      tenantRefreshInFlight = true;
       try {
         const response = await fetch('/api/company/me', {
           credentials: 'include',
@@ -197,6 +201,7 @@ export const PerusahaanDashboard: React.FC = () => {
       } catch (error) {
         console.error('Gagal menyegarkan data tenant dari D1:', error);
       } finally {
+        tenantRefreshInFlight = false;
         if (active) setDataReady(true);
       }
     };
