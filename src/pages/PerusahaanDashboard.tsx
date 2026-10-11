@@ -127,14 +127,15 @@ export const PerusahaanDashboard: React.FC = () => {
             email: data.email || user.email || '',
             role: data.role || 'perusahaan',
             namaPT: data.namaPT || (data as any).company_name || prev?.namaPT || (authProfile as any)?.company_name || 'PT Tanpa Nama',
-            rewardBalance: Number((data as any).rewardBalance ?? (data as any).saldoReward ?? (data as any).reward_balance ?? (prev as any)?.rewardBalance ?? 0),
-            saldoReward: Number((data as any).saldoReward ?? (data as any).rewardBalance ?? (data as any).reward_balance ?? (prev as any)?.saldoReward ?? 0),
+            rewardBalance: Number((prev as any)?.rewardBalance ?? 0),
+            saldoReward: Number((prev as any)?.saldoReward ?? 0),
             sektor: data.sektor || prev?.sektor || 'Manufaktur & Bisnis',
             alamat: data.alamat || prev?.alamat || '-',
             deskripsi: data.deskripsi || prev?.deskripsi || '-',
-            danaTersedia: Number(data.danaTersedia || prev?.danaTersedia || 0),
-            saldo: Number(data.saldo || prev?.saldo || 0),
-            danaTerkunci: data.danaTerkunci !== undefined ? Number(data.danaTerkunci) : Number(data.danaTersedia || 0),
+            danaTersedia: Number((prev as any)?.danaTersedia ?? 0),
+            deposit_balance: Number((prev as any)?.deposit_balance ?? 0),
+            saldo: Number((prev as any)?.saldo ?? 0),
+            danaTerkunci: Number((prev as any)?.danaTerkunci ?? 0),
             status: data.status || prev?.status || 'ACTIVE',
             isLocked: data.status === 'SUSPENDED' || Boolean(data.isLocked),
             statusVerifikasiDokumen: data.statusVerifikasiDokumen || prev?.statusVerifikasiDokumen,
@@ -161,11 +162,10 @@ export const PerusahaanDashboard: React.FC = () => {
         if (compSnap.exists()) {
           const cData = compSnap.data();
           setCompanyProfile((prev) => {
-            if (!prev) return null;
-            return {
               ...prev,
+              ...(prev || {} as UserProfile),
               uid: (user.uid || user.id),
-              company_id: effectiveCompanyId,
+              company_id: cData.company_id || effectiveCompanyId,
               namaPT: cData.company_name || cData.namaPT || prev.namaPT || (authProfile as any)?.company_name || 'PT',
               rewardBalance: Number(cData.rewardBalance ?? cData.saldoReward ?? cData.reward_balance ?? prev.rewardBalance ?? 0),
               saldoReward: Number(cData.saldoReward ?? cData.rewardBalance ?? cData.reward_balance ?? prev.saldoReward ?? 0),
@@ -174,8 +174,8 @@ export const PerusahaanDashboard: React.FC = () => {
               deposit_balance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
               rewardBalance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
               saldoReward: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-              saldo: Number(cData.saldo || 0),
-              danaTerkunci: Number(cData.danaTerkunci || 0),
+              saldo: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+              danaTerkunci: Number(cData.locked_balance ?? cData.danaTerkunci ?? 0),
               status: cData.status || 'ACTIVE',
               isLocked: cData.status === 'SUSPENDED' || Boolean(cData.danaTerkunci && !cData.danaTersedia)
             };
@@ -247,9 +247,10 @@ export const PerusahaanDashboard: React.FC = () => {
   }, [user, effectiveCompanyId]);
 
   const namaPT = companyProfile?.namaPT || 'PT Anda';
-  const saldoTerbuka = Number(companyProfile?.saldo || 0);
-  const danaTerkunci = Number(companyProfile?.danaTerkunci !== undefined ? companyProfile.danaTerkunci : companyProfile?.danaTersedia || 0);
-  const danaTersedia = danaTerkunci;
+  // Canonical tenant funds come from the companies row (D1 deposit_balance).
+  const saldoTerbuka = Number((companyProfile as any)?.deposit_balance ?? companyProfile?.danaTersedia ?? companyProfile?.saldo ?? 0);
+  const danaTerkunci = Number((companyProfile as any)?.locked_balance ?? companyProfile?.danaTerkunci ?? 0);
+  const danaTersedia = saldoTerbuka;
   const totalAset = saldoTerbuka + danaTerkunci;
 
   // HANDLER: KUNCI / BUKA SALDO PERUSAHAAN
@@ -837,55 +838,7 @@ export const PerusahaanDashboard: React.FC = () => {
                 <ArrowDownLeft className="w-3.5 h-3.5" />
                 Deposit
               </button>
-              <button
-                onClick={() => {
-                  setLockActionType('lock');
-                  setLockAmount(Math.min(1000000, saldoTerbuka > 0 ? saldoTerbuka : 1000000));
-                  setShowLockModal(true);
-                }}
-                disabled={saldoTerbuka <= 0}
-                className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer"
-              >
-                <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                Kunci Saldo
-              </button>
-            </div>
-          </div>
 
-          {/* Card 2: Dana Terkunci (Escrow Penjaminan Poster) */}
-          <div className="bg-slate-900 border border-slate-800 hover:border-emerald-500/30 rounded-2xl p-5 shadow-lg flex flex-col justify-between transition-all">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 uppercase tracking-wider font-mono">
-                <span className="flex items-center gap-1.5">
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                  Dana Jaminan Poster (Escrow)
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  TERJAMIN AKTIF
-                </span>
-              </div>
-              <div className="text-3xl font-black font-mono tracking-tight text-emerald-300">
-                Rp {danaTerkunci.toLocaleString('id-ID')}
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Penjaminan komitmen whistleblowing resmi (ISO 37002). Tertera otomatis pada poster QR resmi perusahaan dan aman dalam rekening penjaminan.
-              </p>
-            </div>
-
-            <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setLockActionType('unlock');
-                  setLockAmount(Math.min(1000000, danaTerkunci > 0 ? danaTerkunci : 1000000));
-                  setShowLockModal(true);
-                }}
-                disabled={danaTerkunci <= 0}
-                className="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer"
-              >
-                <Unlock className="w-3.5 h-3.5 text-amber-400" />
-                Buka Kunci Dana
-              </button>
             </div>
           </div>
 
