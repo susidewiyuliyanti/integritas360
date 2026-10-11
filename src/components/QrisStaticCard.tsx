@@ -41,7 +41,7 @@ export const QrisStaticCard: React.FC<QrisStaticCardProps> = ({
         }
       }
     );
-  }, []);
+  }, [companyName, rewardBalance]);
 
   const handleCopyNmid = () => {
     navigator.clipboard.writeText(NMID_CODE);
@@ -53,7 +53,7 @@ export const QrisStaticCard: React.FC<QrisStaticCardProps> = ({
     if (!qrUrl) return;
     const a = document.createElement('a');
     a.href = qrUrl;
-    a.download = `QRIS-STATIS-INTEGRITAS360-${NMID_CODE}.png`;
+    a.download = `QRIS-${String(companyName || "TENANT").replace(/[^a-z0-9-_]/gi, "-")}-${NMID_CODE}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -110,7 +110,7 @@ export const QrisStaticCard: React.FC<QrisStaticCardProps> = ({
           {qrUrl ? (
             <img
               src={qrUrl}
-              alt="QRIS Statis INTEGRITAS360"
+              alt={`QRIS pembayaran untuk ${companyName}`}
               className="w-56 h-56 object-contain rounded-lg"
             />
           ) : (
