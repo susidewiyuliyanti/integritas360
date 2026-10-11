@@ -163,6 +163,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
   const [manualCompanyName, setManualCompanyName] = useState<string>('');
   const [targetCompanyData, setTargetCompanyData] = useState<CompanyOption | null>(null);
   const [loadingCompanies, setLoadingCompanies] = useState<boolean>(true);
+  const [companyLoadError, setCompanyLoadError] = useState<string>('');
 
   // Auditor Selection State (Pelapor hanya bisa memilih SATU auditor independen)
   const [auditors, setAuditors] = useState<AuditorOption[]>([]);
@@ -218,6 +219,11 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
     async function loadCompanies() {
       try {
         setLoadingCompanies(true);
+        setCompanyLoadError('');
+        if (initialCompanyId) {
+          setTargetCompanyData(null);
+          setCompanies([]);
+        }
         if (initialCompanyId) {
           // Resolve the QR tenant against canonical D1 data, not legacy client-side documents.
           const response = await fetch('/api/public/company?companyId=' + encodeURIComponent(initialCompanyId), {
@@ -271,6 +277,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         }
       } catch (err) {
         console.error('Error loading companies for report form:', err);
+        if (initialCompanyId) setCompanyLoadError(err instanceof Error ? err.message : 'Perusahaan tidak dapat diverifikasi dari database D1.');
       } finally {
         setLoadingCompanies(false);
       }
@@ -626,6 +633,25 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       setClaimingReward(false);
     }
   };
+
+  if (initialCompanyId && (loadingCompanies || !targetCompanyData)) {
+    return (
+      <div id="form-pelaporan-section" className="w-full max-w-4xl mx-auto p-6 rounded-2xl border border-slate-700 bg-slate-900 text-slate-100">
+        {loadingCompanies ? (
+          <div className="flex items-center justify-center gap-3 py-8 text-sm text-slate-300">
+            <span className="inline-block w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+            Memverifikasi nama dan saldo perusahaan dari database D1...
+          </div>
+        ) : (
+          <div className="py-6 text-center space-y-3">
+            <h2 className="text-xl font-bold text-red-400">Perusahaan tidak terverifikasi</h2>
+            <p className="text-sm text-slate-300">{companyLoadError || 'Company name not registered'}</p>
+            <p className="text-xs text-slate-500">Form laporan dikunci sampai ID QR cocok dengan perusahaan yang terdaftar.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div id="form-pelaporan-section" className="w-full max-w-4xl mx-auto space-y-6">
