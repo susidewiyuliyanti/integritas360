@@ -49,6 +49,15 @@ export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (err
 }
 
 export async function getDocs(ref: Ref) {
+  // Company profile is canonical in D1 companies.profile_json. Read the signed-in
+  // user's merged profile from the same API used by AuthContext to avoid stale
+  // users-table metadata overwriting the saved company profile.
+  if (ref.collection === 'users' && ref.id) {
+    const data = await api('/api/company/me');
+    const profile = data?.profile;
+    const item = profile ? { ...profile, id: profile.uid || ref.id } : null;
+    return snapshot(item ? [item] : []);
+  }
   const p = new URLSearchParams({ collection: ref.collection });
   if (ref.id) {
     // Document listeners must request the exact D1 row, not an unfiltered collection.
