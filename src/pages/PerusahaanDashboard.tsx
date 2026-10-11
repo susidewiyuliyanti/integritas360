@@ -67,6 +67,7 @@ export const PerusahaanDashboard: React.FC = () => {
   const [depositTab, setDepositTab] = useState<'qris' | 'nowpayments' | 'bank'>('qris');
   const [depositAmount, setDepositAmount] = useState<number>(5000000);
   const [depositMethod, setDepositMethod] = useState('QRIS Statis Nasional (INTEGRITAS360)');
+  const [paymentProof, setPaymentProof] = useState<{ name: string; type: string; dataUrl: string } | null>(null);
   const [processingDeposit, setProcessingDeposit] = useState(false);
   const autoRewardAttempts = useRef<Set<string>>(new Set());
 
@@ -245,6 +246,10 @@ export const PerusahaanDashboard: React.FC = () => {
   const handleDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || depositAmount <= 0) return;
+    if (!paymentProof) {
+      setActionFeedback({ type: 'error', message: 'Unggah bukti pembayaran terlebih dahulu sebelum mengajukan deposit.' });
+      return;
+    }
 
     try {
       setProcessingDeposit(true);
@@ -255,6 +260,9 @@ export const PerusahaanDashboard: React.FC = () => {
         amount: depositAmount,
         status: 'pending',
         metode: depositMethod,
+        paymentProofName: paymentProof.name,
+        paymentProofType: paymentProof.type,
+        paymentProofDataUrl: paymentProof.dataUrl,
         keterangan: `Deposit saldo perusahaan via ${depositMethod}: Rp ${depositAmount.toLocaleString('id-ID')} (Menunggu verifikasi Administrator)`,
         createdAt: serverTimestamp(),
       });
@@ -282,6 +290,10 @@ export const PerusahaanDashboard: React.FC = () => {
     apiKeyUsed: string;
   }) => {
     if (!user || depositAmount <= 0) return;
+    if (!paymentProof) {
+      setActionFeedback({ type: 'error', message: 'Unggah bukti pembayaran terlebih dahulu sebelum mengajukan deposit.' });
+      return;
+    }
 
     try {
       setProcessingDeposit(true);
@@ -295,6 +307,9 @@ export const PerusahaanDashboard: React.FC = () => {
         cryptoCurrency: cryptoInfo.cryptoCurrency,
         cryptoAmount: cryptoInfo.cryptoAmount,
         txHash: cryptoInfo.txHash,
+        paymentProofName: paymentProof.name,
+        paymentProofType: paymentProof.type,
+        paymentProofDataUrl: paymentProof.dataUrl,
         keterangan: `Deposit Crypto via NOWPayments: ${cryptoInfo.cryptoAmount} ${cryptoInfo.cryptoCurrency} (TXID: ${cryptoInfo.txHash}) - Menunggu verifikasi Administrator`,
         createdAt: serverTimestamp(),
       });
@@ -1304,6 +1319,42 @@ export const PerusahaanDashboard: React.FC = () => {
                   </div>
                 </div>
 
+                <div>
+                  <label htmlFor="deposit-payment-proof" className="block text-xs font-semibold text-slate-300 mb-1.5">Bukti Pembayaran * (JPG, PNG, WEBP, atau PDF; maks. 1,5 MB)</label>
+                  <input
+                    id="deposit-payment-proof"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    required
+                    onChange={(e) => {
+                      const file = e.currentTarget.files?.[0];
+                      if (!file) { setPaymentProof(null); return; }
+                      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+                      if (!allowed.includes(file.type)) {
+                        setPaymentProof(null);
+                        e.currentTarget.value = '';
+                        setActionFeedback({ type: 'error', message: 'Format bukti pembayaran harus JPG, PNG, WEBP, atau PDF.' });
+                        return;
+                      }
+                      if (file.size > 1.5 * 1024 * 1024) {
+                        setPaymentProof(null);
+                        e.currentTarget.value = '';
+                        setActionFeedback({ type: 'error', message: 'Ukuran bukti pembayaran maksimal 1,5 MB.' });
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        if (typeof reader.result === 'string') setPaymentProof({ name: file.name, type: file.type, dataUrl: reader.result });
+                      };
+                      reader.onerror = () => setActionFeedback({ type: 'error', message: 'Bukti pembayaran gagal dibaca. Silakan pilih file kembali.' });
+                      reader.readAsDataURL(file);
+                    }}
+                    className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-500/15 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-blue-300 hover:file:bg-blue-500/25 bg-slate-950 border border-slate-800 rounded-xl p-2"
+                  />
+                  {paymentProof && <p className="mt-1.5 text-[11px] text-emerald-300">Bukti dipilih: {paymentProof.name}</p>}
+                  <p className="mt-1 text-[10px] text-slate-500">Bukti ini akan dilampirkan pada transaksi untuk diperiksa Administrator sebelum saldo ditambahkan.</p>
+                </div>
+
                 {/* Admin Verification Requirement Notice */}
                 <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-[11px] text-blue-200 leading-relaxed space-y-1">
                   <div className="font-bold flex items-center gap-1.5 text-blue-300">
@@ -1327,7 +1378,13 @@ export const PerusahaanDashboard: React.FC = () => {
                   {depositMethod.includes('NOWPayments') ? (
                     <button
                       type="button"
-                      onClick={() => setShowNowPaymentsModal(true)}
+                      onClick={() => {
+                        if (!paymentProof) {
+                          setActionFeedback({ type: 'error', message: 'Unggah bukti pembayaran terlebih dahulu.' });
+                          return;
+                        }
+                        setShowNowPaymentsModal(true);
+                      }}
                       className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/20 cursor-pointer flex items-center gap-1.5"
                     >
                       <Coins className="w-4 h-4" />
