@@ -170,7 +170,10 @@ export const PerusahaanDashboard: React.FC = () => {
               rewardBalance: Number(cData.rewardBalance ?? cData.saldoReward ?? cData.reward_balance ?? prev.rewardBalance ?? 0),
               saldoReward: Number(cData.saldoReward ?? cData.rewardBalance ?? cData.reward_balance ?? prev.saldoReward ?? 0),
               email: cData.company_email || prev.email || '',
-              danaTersedia: Number(cData.danaTersedia || 0),
+              danaTersedia: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+              deposit_balance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+              rewardBalance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+              saldoReward: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
               saldo: Number(cData.saldo || 0),
               danaTerkunci: Number(cData.danaTerkunci || 0),
               status: cData.status || 'ACTIVE',
@@ -1401,8 +1404,8 @@ export const PerusahaanDashboard: React.FC = () => {
         company={{
           uid: String(companyProfile?.company_id || companyProfile?.perusahaanId || (companyProfile as any)?.companyId || (user?.uid || user?.id) || ''),
           namaPT: companyProfile?.namaPT || (companyProfile as any)?.company_name || (authProfile as any)?.company_name || 'PT Anda',
-          danaTersedia: Number((companyProfile as any)?.rewardBalance ?? (companyProfile as any)?.saldoReward ?? (companyProfile as any)?.reward_balance ?? 0),
-          rewardBalance: Number((companyProfile as any)?.rewardBalance ?? (companyProfile as any)?.saldoReward ?? (companyProfile as any)?.reward_balance ?? 0),
+          danaTersedia: Number((companyProfile as any)?.deposit_balance ?? (companyProfile as any)?.danaTersedia ?? 0),
+          rewardBalance: Number((companyProfile as any)?.deposit_balance ?? (companyProfile as any)?.danaTersedia ?? 0),
           sektor: companyProfile?.sektor,
         }}
       />
