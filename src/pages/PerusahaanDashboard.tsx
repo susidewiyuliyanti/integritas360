@@ -268,6 +268,7 @@ export const PerusahaanDashboard: React.FC = () => {
       });
 
       setShowDepositModal(false);
+      setPaymentProof(null);
       setActionFeedback({
         type: 'success',
         message: `Permintaan deposit Rp ${depositAmount.toLocaleString('id-ID')} berhasil diajukan! Semua transaksi akan diverifikasi oleh Administrator sebelum saldo aktif ditambahkan.`
@@ -316,6 +317,7 @@ export const PerusahaanDashboard: React.FC = () => {
 
       setShowNowPaymentsModal(false);
       setShowDepositModal(false);
+      setPaymentProof(null);
       setActionFeedback({
         type: 'success',
         message: `Konfirmasi deposit crypto sebesar ${cryptoInfo.cryptoAmount} ${cryptoInfo.cryptoCurrency} (setara Rp ${depositAmount.toLocaleString('id-ID')}) berhasil dikirim! Administrator akan memverifikasi TXID blockchain sebelum saldo aktif ditambahkan.`
@@ -674,7 +676,7 @@ export const PerusahaanDashboard: React.FC = () => {
 
             <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center gap-2">
               <button
-                onClick={() => setShowDepositModal(true)}
+                onClick={() => { setPaymentProof(null); setShowDepositModal(true); }}
                 className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-blue-600/20 cursor-pointer"
               >
                 <ArrowDownLeft className="w-3.5 h-3.5" />
@@ -1215,7 +1217,7 @@ export const PerusahaanDashboard: React.FC = () => {
                 </div>
               </div>
               <button
-                onClick={() => setShowDepositModal(false)}
+                onClick={() => { setShowDepositModal(false); setPaymentProof(null); }}
                 className="text-slate-400 hover:text-white text-xs cursor-pointer p-1"
               >
                 ✕
@@ -1369,7 +1371,7 @@ export const PerusahaanDashboard: React.FC = () => {
                 <div className="pt-2 flex items-center justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowDepositModal(false)}
+                    onClick={() => { setShowDepositModal(false); setPaymentProof(null); }}
                     className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 cursor-pointer"
                   >
                     Batal
