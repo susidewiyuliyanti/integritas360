@@ -109,7 +109,19 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         const companyId = await resolveCompanyId(env.DB, companyIdParam);
         if (!(await canReadTenant(request, env.DB, companyId))) return json({ error: 'Akses tenant ditolak' }, 403);
         const rows = await env.DB.prepare('SELECT * FROM reports WHERE company_id = ? ORDER BY created_at DESC').bind(companyId).all<any>();
-        return json({ items: rows.results.map(mergeReport) });
+        // Tenant users may review case details, but must never receive claim-ticket IDs
+        // or reporter identity/contact fields. Keep the internal DB id only for scoped actions.
+        const items = rows.results.map((row: any) => {
+          const report = mergeReport(row);
+          for (const key of [
+            'tokenAkses', 'reportCode', 'reporter_code', 'report_code',
+            'namaPelapor', 'kontakPelapor', 'whatsappPelapor', 'rewardClaimWhatsapp',
+            'rewardClaimBank', 'claimReportToken', 'claimReportId'
+          ]) delete report[key];
+          report.pelaporAnonim = true;
+          return report;
+        });
+        return json({ items });
       }
       return json({ error: 'Tenant scope diperlukan' }, 400);
     }
