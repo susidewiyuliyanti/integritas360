@@ -808,7 +808,7 @@ export const PerusahaanDashboard: React.FC = () => {
         </div>
 
         {/* Financial & Governance Command Center Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Card 1: Saldo Kas Bebas */}
           <div className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 shadow-lg flex flex-col justify-between transition-all">
             <div className="space-y-3">
