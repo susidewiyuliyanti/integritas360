@@ -1892,7 +1892,7 @@ export const ProfilePage: React.FC = () => {
                   <p className="text-xs font-semibold text-slate-300 mb-2 text-center">
                     Pindai QRIS Statis Resmi (NMID: ID1026539516033)
                   </p>
-                  <QrisStaticCard nominal={depositAmount} />
+                  <QrisStaticCard nominal={depositAmount} companyName="INTEGRITAS360" showRewardBalance={false} />
                 </div>
               </div>
 
