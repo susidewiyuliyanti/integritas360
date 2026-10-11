@@ -87,6 +87,9 @@ export async function updateDoc(ref: Ref, data: any) {
     return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'update-report', id: ref.id, data }) });
   }
   if (ref.collection === 'users') {
+    if (data && ['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor'].some((key) => Object.prototype.hasOwnProperty.call(data,key))) {
+      return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'save-company-profile', data }) });
+    }
     return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'update-user', id: ref.id, data }) });
   }
   throw new Error(`Pembaruan tidak didukung untuk collection ${ref.collection}`);
