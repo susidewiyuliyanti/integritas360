@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Download, QrCode, CheckCircle2, Copy, Loader2, ShieldCheck } from 'lucide-react';
 import { generateQrCodeDataUrl, renderPosterToCanvas, downloadPoster, resolveCompanyId, resolvePublicReportUrl, PosterOptions } from '../utils/posterGenerator';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PosterModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface PosterModalProps {
 }
 
 export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, company }) => {
+  const { language } = useLanguage();
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [previewDataUrl, setPreviewDataUrl] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -19,7 +21,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
   const [resolvedCompany, setResolvedCompany] = useState<PosterOptions | null>(null);
   const [identityReady, setIdentityReady] = useState(false);
 
-  const liveIdentity: PosterOptions = { ...company, ...(resolvedCompany || {}) };
+  const liveIdentity: PosterOptions = { ...company, ...(resolvedCompany || {}), lang: language };
   const companyId = resolveCompanyId(liveIdentity);
   const laporUrl = companyId ? resolvePublicReportUrl(companyId, liveIdentity.customUrl) : '';
   const liveCompany: PosterOptions = { ...liveIdentity, danaTersedia: liveRewardBalance ?? liveIdentity.danaTersedia, rewardBalance: liveRewardBalance ?? liveIdentity.rewardBalance };
@@ -106,7 +108,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
         if (!isMounted) return;
         setQrDataUrl(qrUrl);
 
-        const canvas = await renderPosterToCanvas({ ...liveCompany, uid: companyId }, qrUrl);
+        const canvas = await renderPosterToCanvas({ ...liveCompany, uid: companyId, lang: language }, qrUrl);
         if (!isMounted) return;
         setPreviewDataUrl(canvas.toDataURL('image/png'));
       } catch (err) {
@@ -134,7 +136,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     if (!qrDataUrl || downloading) return;
     try {
       setDownloading(true);
-      await downloadPoster({ ...liveCompany, uid: companyId }, qrDataUrl || undefined);
+      await downloadPoster({ ...liveCompany, uid: companyId, lang: language }, qrDataUrl || undefined);
     } catch (err) {
       console.error('Error downloading poster:', err);
     } finally {
