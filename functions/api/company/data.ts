@@ -26,11 +26,20 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   if(!actor || !actor.company_id || !['perusahaan','admin_perusahaan','company_admin','finance','hr'].includes(actor.role)) return json({error:'Unauthorized'},401);
   const body=await request.json<any>(); const op=body.operation; const companyId=actor.company_id;
   if(op==='save-company-profile'){
-    if(!['perusahaan','admin_perusahaan','company_admin','finance','hr'].includes(String(actor.role||'').toLowerCase())) return json({error:'Akses profil perusahaan ditolak.'},403);
+    const actorRole=String(actor.role||'').toLowerCase();
     const d=body.data||{};
     const allowed=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor'];
     const profile:any={};
     for(const key of allowed) if(d[key]!==undefined) profile[key]=d[key];
+    if(actorRole==='auditor'){
+      const userRow=await env.DB.prepare('SELECT profile_json FROM users WHERE id=? AND company_id=? LIMIT 1').bind(actor.id,actor.company_id).first<any>();
+      let currentUserProfile:any={}; try{currentUserProfile=JSON.parse(userRow?.profile_json||'{}')}catch{}
+      const nextUserProfile={...currentUserProfile,...profile};
+      await env.DB.prepare('UPDATE users SET profile_json=?,full_name=COALESCE(?,full_name),phone=COALESCE(?,phone),updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?')
+        .bind(JSON.stringify(nextUserProfile),profile.picName??null,profile.telepon??null,actor.id,actor.company_id).run();
+      return json({ok:true,profile:nextUserProfile});
+    }
+    if(!['perusahaan','admin_perusahaan','company_admin','finance','hr'].includes(actorRole)) return json({error:'Akses profil perusahaan ditolak.'},403);
     if(profile.namaPT!==undefined && !String(profile.namaPT).trim()) return json({error:'Nama perusahaan wajib diisi.'},400);
     const row=await env.DB.prepare('SELECT profile_json,company_name FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
     if(!row) return json({error:'Data perusahaan tidak ditemukan.'},404);
