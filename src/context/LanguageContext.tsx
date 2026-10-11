@@ -102,7 +102,7 @@ function translateText(input: string, lang: Language): string {
   const phrases = Object.keys(PHRASES).sort((a,b)=>b.length-a.length);
   for (const phrase of phrases) {
     if (!phrase || !PHRASES[phrase]) continue;
-    result = result.replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (match) => {
+    result = result.replace(new RegExp('\\b' + phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\result = result.replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (match) => {') + '\\b', 'gi'), (match) => {
       const translated = PHRASES[phrase];
       return match === match.toUpperCase() ? translated.toUpperCase() : match[0] === match[0].toUpperCase() ? translated[0].toUpperCase()+translated.slice(1) : translated;
     });
