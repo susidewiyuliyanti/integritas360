@@ -79,7 +79,7 @@ export async function renderPosterToCanvas(options: PosterOptions, qrDataUrl?: s
 
   ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 30px "Plus Jakarta Sans", sans-serif'; ctx.fillText('SCAN QR CODE DI ATAS', 540, 1380);
   ctx.fillStyle = '#ffffff'; ctx.font = '500 22px "Plus Jakarta Sans", sans-serif'; ctx.fillText('atau akses langsung portal laporan:', 540, 1420);
-  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 22px "Plus Jakarta Sans", monospace'; ctx.fillText(resolvePublicReportUrl(companyId), 540, 1455);
+  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 22px "Plus Jakarta Sans", monospace'; ctx.fillText(resolvePublicReportUrl(companyId, options.customUrl), 540, 1455);
 
   const guarantees = [
     { title: '100% ANONIM', sub: 'Tanpa menampilkan identitas pelapor' },
