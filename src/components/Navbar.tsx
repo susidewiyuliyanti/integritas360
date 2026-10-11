@@ -46,19 +46,19 @@ export const Navbar: React.FC = () => {
 
         <nav aria-label="Navigasi utama" className="flex justify-end w-full md:w-auto">
           <details className="relative group">
-            <summary className="list-none flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold cursor-pointer select-none">
+            <summary className="list-none flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700/80 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold cursor-pointer select-none transition-colors">
               <Menu className="w-4 h-4 text-amber-400" />
               <span>Menu</span>
               <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
             </summary>
-            <div className="absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl shadow-black/40 flex flex-col gap-1">
+            <div className="absolute right-0 top-full z-50 mt-2 w-52 max-w-[calc(100vw-1.5rem)] rounded-xl border border-slate-700/80 bg-slate-900/98 p-1.5 shadow-xl shadow-black/30 backdrop-blur-xl flex flex-col gap-0.5">
           <button
             type="button"
             onClick={toggleLanguage}
             aria-label={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
             title={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
             data-no-translate
-            className="px-2.5 sm:px-3 py-2 text-xs font-bold rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors cursor-pointer min-h-10 flex items-center gap-1.5"
+            className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-md border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/15 text-amber-300 transition-colors cursor-pointer min-h-8 flex items-center gap-1.5"
           >
             <Languages className="w-4 h-4" />
             <span>{language === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
@@ -66,14 +66,14 @@ export const Navbar: React.FC = () => {
           <button
             id="nav-btn-studi-kasus"
             onClick={() => navigate('/studi-kasus')}
-            className={`px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer min-h-10 ${path === '/studi-kasus' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'}`}
+            className={`w-full text-left px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer min-h-8 ${path === '/studi-kasus' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold' : 'text-slate-300 hover:text-white hover:bg-slate-800/60 border border-transparent'}`}
           >
             Studi Kasus
           </button>
 
           <button
             onClick={handleOpenReport}
-            className={`px-2.5 sm:px-3 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer min-h-10 ${path.startsWith('/lapor') ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/40'}`}
+            className={`w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 cursor-pointer min-h-8 ${path.startsWith('/lapor') ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/40'}`}
             title="Pelaporan anonim dan terenkripsi"
           >
             <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-red-400" />
@@ -81,8 +81,8 @@ export const Navbar: React.FC = () => {
           </button>
 
           {user ? (
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
+            <div className="flex flex-col items-stretch gap-1">
+              <div className="flex items-center gap-2 px-2.5 py-1.5 mb-0.5 rounded-md bg-slate-800/70 border border-slate-700/50">
                 {isOwner ? (
                   <>
                     <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
@@ -115,29 +115,29 @@ export const Navbar: React.FC = () => {
               </div>
 
               {isOwner && path !== '/owner' && (
-                <button onClick={() => navigate('/owner')} className="px-2.5 py-2 text-xs font-semibold rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors flex items-center gap-1.5 cursor-pointer min-h-10">
+                <button onClick={() => navigate('/owner')} className="w-full text-left px-2.5 py-1.5 text-xs font-medium rounded-md bg-red-500/10 hover:bg-red-500/15 text-red-300 border border-red-500/20 transition-colors flex items-center gap-1.5 cursor-pointer min-h-8">
                   <LayoutDashboard className="w-3.5 h-3.5 shrink-0" /><span>Owner Panel</span>
                 </button>
               )}
               {role === 'admin_perusahaan' && path !== '/admin-perusahaan' && (
-                <button onClick={() => navigate('/admin-perusahaan')} className="px-2.5 py-2 text-xs font-semibold rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center gap-1.5 cursor-pointer min-h-10">
+                <button onClick={() => navigate('/admin-perusahaan')} className="w-full text-left px-2.5 py-1.5 text-xs font-medium rounded-md bg-cyan-500/10 hover:bg-cyan-500/15 text-cyan-300 border border-cyan-500/20 transition-colors flex items-center gap-1.5 cursor-pointer min-h-8">
                   <ShieldCheck className="w-3.5 h-3.5 shrink-0" /><span>Dashboard Admin PT</span>
                 </button>
               )}
               {role === 'perusahaan' && path !== '/perusahaan' && (
-                <button onClick={() => navigate('/perusahaan')} className="px-2.5 py-2 text-xs font-semibold rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-colors flex items-center gap-1.5 cursor-pointer min-h-10">
+                <button onClick={() => navigate('/perusahaan')} className="w-full text-left px-2.5 py-1.5 text-xs font-medium rounded-md bg-blue-500/10 hover:bg-blue-500/15 text-blue-300 border border-blue-500/20 transition-colors flex items-center gap-1.5 cursor-pointer min-h-8">
                   <Building2 className="w-3.5 h-3.5 shrink-0" /><span>perusahaan</span>
                 </button>
               )}
               {role === 'auditor' && path !== '/auditor' && (
-                <button onClick={() => navigate('/auditor')} className="px-2.5 py-2 text-xs font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-colors flex items-center gap-1.5 cursor-pointer min-h-10">
+                <button onClick={() => navigate('/auditor')} className="w-full text-left px-2.5 py-1.5 text-xs font-medium rounded-md bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-300 border border-emerald-500/20 transition-colors flex items-center gap-1.5 cursor-pointer min-h-8">
                   <Eye className="w-3.5 h-3.5 shrink-0" /><span>Auditor</span>
                 </button>
               )}
 
               <button
                 onClick={() => navigate('/profile')}
-                className={`px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer min-h-10 ${path === '/profile' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'}`}
+                className={`w-full text-left px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer min-h-8 ${path === '/profile' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'}`}
               >
                 {profile?.photoURL ? (
                   <img src={profile.photoURL} alt="Foto Profil" className="w-4 h-4 rounded-full object-cover border border-amber-400/60" />
@@ -149,13 +149,13 @@ export const Navbar: React.FC = () => {
                 </span>
               </button>
 
-              <button onClick={handleLogout} title="Keluar" aria-label="Keluar" className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors border border-transparent hover:border-red-800/40 cursor-pointer min-h-10 min-w-10 flex items-center justify-center">
-                <LogOut className="w-4 h-4" />
+              <button onClick={handleLogout} title="Keluar" aria-label="Keluar" className="w-full px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors border border-transparent hover:border-red-800/40 cursor-pointer min-h-8 flex items-center justify-start gap-2">
+                <LogOut className="w-3.5 h-3.5" /><span>Keluar</span>
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button id="nav-btn-masuk-daftar" onClick={() => navigate('/login')} className="px-3 py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-md shadow-amber-500/20 transition-all cursor-pointer flex items-center gap-1.5 min-h-10" title="Khusus Akun Perusahaan & Auditor (Pelapor tidak perlu login)">
+              <button id="nav-btn-masuk-daftar" onClick={() => navigate('/login')} className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-md bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 transition-all cursor-pointer flex items-center gap-1.5 min-h-8" title="Khusus Akun Perusahaan & Auditor (Pelapor tidak perlu login)">
                 <Building2 className="w-3.5 h-3.5 shrink-0" />
                 <span>Masuk</span>
               </button>
