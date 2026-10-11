@@ -69,6 +69,18 @@ export const SuperAdminDashboard: React.FC = () => {
   const [emailHistory, setEmailHistory] = useState<{to:string;subject:string;body:string;status:string;sentAt:string}[]>([]);
   const [selectAllTenants, setSelectAllTenants] = useState(false);
   const [emailSearch, setEmailSearch] = useState('');
+  // Manual company input state (for sales prospecting)
+  const [manualCompanies, setManualCompanies] = useState<Company[]>(()=>{
+    try { const saved = localStorage.getItem('integritas360_manual_companies'); return saved ? JSON.parse(saved) : []; } catch { return []; }
+  });
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const [manualEmail, setManualEmail] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
+  const [manualPic, setManualPic] = useState('');
+  const [manualSector, setManualSector] = useState('');
+  const [manualAddress, setManualAddress] = useState('');
+  const [manualBusy, setManualBusy] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -285,6 +297,24 @@ export const SuperAdminDashboard: React.FC = () => {
         setSelectAllTenants={setSelectAllTenants}
         emailSearch={emailSearch}
         setEmailSearch={setEmailSearch}
+        manualCompanies={manualCompanies}
+        setManualCompanies={setManualCompanies}
+        showManualForm={showManualForm}
+        setShowManualForm={setShowManualForm}
+        manualName={manualName}
+        setManualName={setManualName}
+        manualEmail={manualEmail}
+        setManualEmail={setManualEmail}
+        manualPhone={manualPhone}
+        setManualPhone={setManualPhone}
+        manualPic={manualPic}
+        setManualPic={setManualPic}
+        manualSector={manualSector}
+        setManualSector={setManualSector}
+        manualAddress={manualAddress}
+        setManualAddress={setManualAddress}
+        manualBusy={manualBusy}
+        setManualBusy={setManualBusy}
       />}
       <footer className="text-xs text-slate-500 flex flex-wrap gap-2 items-center"><Users className="w-4 h-4"/> Panel khusus Super Admin. Jangan bagikan akses ini kepada akun tenant.</footer>
     </main>
@@ -529,6 +559,24 @@ interface SalesEmailPanelProps {
   setSelectAllTenants: (v:boolean)=>void;
   emailSearch: string;
   setEmailSearch: (v:string)=>void;
+  manualCompanies: Company[];
+  setManualCompanies: React.Dispatch<React.SetStateAction<Company[]>>;
+  showManualForm: boolean;
+  setShowManualForm: (v:boolean)=>void;
+  manualName: string;
+  setManualName: (v:string)=>void;
+  manualEmail: string;
+  setManualEmail: (v:string)=>void;
+  manualPhone: string;
+  setManualPhone: (v:string)=>void;
+  manualPic: string;
+  setManualPic: (v:string)=>void;
+  manualSector: string;
+  setManualSector: (v:string)=>void;
+  manualAddress: string;
+  setManualAddress: (v:string)=>void;
+  manualBusy: boolean;
+  setManualBusy: (v:boolean)=>void;
 }
 
 const EMAIL_TEMPLATES:Record<string,{subject:string;body:string}> = {
@@ -554,20 +602,32 @@ const SalesEmailPanel: React.FC<SalesEmailPanelProps> = ({
   companies, emailTemplate, setEmailTemplate, emailSubject, setEmailSubject, emailBody, setEmailBody,
   selectedTenants, setSelectedTenants, emailSending, setEmailSending, emailResult, setEmailResult,
   emailError, setEmailError, emailHistory, setEmailHistory, selectAllTenants, setSelectAllTenants,
-  emailSearch, setEmailSearch
+  emailSearch, setEmailSearch,
+  manualCompanies, setManualCompanies, showManualForm, setShowManualForm,
+  manualName, setManualName, manualEmail, setManualEmail, manualPhone, setManualPhone,
+  manualPic, setManualPic, manualSector, setManualSector, manualAddress, setManualAddress,
+  manualBusy, setManualBusy
 }) => {
   const [copied, setCopied] = useState(false);
+  const [activeTenantTab, setActiveTenantTab] = useState<'registered'|'manual'>('registered');
 
   // Filter tenant berdasarkan search
+  // Gabungkan companies dari D1 + manual companies untuk sales email
+  const allTenantOptions = useMemo(()=>{
+    const manual = manualCompanies.map((c,i)=>({...c, _source:'manual', _manualId:`manual-${i}`}));
+    const registered = companies.map(c=>({...c, _source:'registered', _manualId:String(c.company_id||c.id||'')}));
+    return [...registered, ...manual];
+  }, [companies, manualCompanies]);
+
   const filteredTenants = useMemo(()=>{
-    if (!emailSearch.trim()) return companies;
+    if (!emailSearch.trim()) return allTenantOptions;
     const q = emailSearch.toLowerCase();
-    return companies.filter(c=>
+    return allTenantOptions.filter(c=>
       String(c.company_name||c.namaPT||'').toLowerCase().includes(q) ||
       String(c.email||c.company_email||'').toLowerCase().includes(q) ||
       String(c.company_id||c.id||'').toLowerCase().includes(q)
     );
-  }, [companies, emailSearch]);
+  }, [allTenantOptions, emailSearch]);
 
   // Apply template
   const applyTemplate = (templateKey:'welcome'|'deposit_reminder'|'follow_up'|'custom') => {
@@ -619,7 +679,7 @@ const SalesEmailPanel: React.FC<SalesEmailPanelProps> = ({
     setEmailError('');
     setEmailResult('');
 
-    const targets = filteredTenants.filter(c=>selectedTenants.has(String(c.company_id||c.id||'')));
+    const targets = allTenantOptions.filter(c=>selectedTenants.has(String((c as any)._manualId || c.company_id || c.id || '')));
     const results:{to:string;subject:string;body:string;status:string;sentAt:string}[] = [];
     let successCount = 0;
     let failCount = 0;
@@ -733,28 +793,83 @@ const SalesEmailPanel: React.FC<SalesEmailPanelProps> = ({
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold flex items-center gap-2"><Users className="w-4 h-4 text-blue-400"/>Pilih Tenant ({selectedTenants.size} dipilih)</h3>
-            <button onClick={toggleSelectAll} className="text-xs flex items-center gap-1 text-slate-400 hover:text-blue-400">
-              {selectAllTenants ? <><CheckSquare className="w-3 h-3"/> Batal Pilih Semua</> : <><Square className="w-3 h-3"/> Pilih Semua</>}
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={()=>setShowManualForm(!showManualForm)} className="text-xs rounded-lg border border-blue-700 bg-blue-500/10 px-2 py-1 text-blue-400 hover:bg-blue-500/20 flex items-center gap-1">
+                <Sparkles className="w-3 h-3"/> + Tambah Manual
+              </button>
+              <button onClick={toggleSelectAll} className="text-xs flex items-center gap-1 text-slate-400 hover:text-blue-400">
+                {selectAllTenants ? <><CheckSquare className="w-3 h-3"/> Batal Pilih Semua</> : <><Square className="w-3 h-3"/> Pilih Semua</>}
+              </button>
+            </div>
           </div>
+
+          {/* Tab: Registered vs Manual */}
+          <div className="flex gap-1 mb-3">
+            <button onClick={()=>setActiveTenantTab('registered')} className={`text-xs px-3 py-1.5 rounded-lg ${activeTenantTab==='registered'?'bg-blue-500/15 text-blue-400':'text-slate-500 hover:text-slate-300'}`}>Terdaftar ({companies.length})</button>
+            <button onClick={()=>setActiveTenantTab('manual')} className={`text-xs px-3 py-1.5 rounded-lg ${activeTenantTab==='manual'?'bg-amber-500/15 text-amber-400':'text-slate-500 hover:text-slate-300'}`}>Manual ({manualCompanies.length})</button>
+          </div>
+
+          {/* Form Tambah Manual */}
+          {showManualForm && <div className="rounded-xl border border-amber-700/30 bg-amber-500/5 p-4 mb-3 space-y-3">
+            <h4 className="text-sm font-semibold text-amber-400 flex items-center gap-2"><Sparkles className="w-3 h-3"/>Tambah Perusahaan (Sales Prospecting)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input value={manualName} onChange={e=>setManualName(e.target.value)} placeholder="Nama Perusahaan *" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
+              <input value={manualEmail} onChange={e=>setManualEmail(e.target.value)} placeholder="Email *" type="email" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
+              <input value={manualPhone} onChange={e=>setManualPhone(e.target.value)} placeholder="Telepon / WhatsApp" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
+              <input value={manualPic} onChange={e=>setManualPic(e.target.value)} placeholder="Nama PIC" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
+              <input value={manualSector} onChange={e=>setManualSector(e.target.value)} placeholder="Sektor / Industri" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
+              <input value={manualAddress} onChange={e=>setManualAddress(e.target.value)} placeholder="Alamat / Kota" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={()=>{
+                if (!manualName.trim() || !manualEmail.trim()) return;
+                const newCompany:Company = {
+                  company_name: manualName.trim(),
+                  namaPT: manualName.trim(),
+                  email: manualEmail.trim(),
+                  company_email: manualEmail.trim(),
+                  telepon: manualPhone.trim(),
+                  picName: manualPic.trim(),
+                  sektor: manualSector.trim(),
+                  alamat: manualAddress.trim(),
+                  status: 'PROSPECT',
+                  company_id: `PROSPECT_${Date.now()}`,
+                  created_at: new Date().toISOString(),
+                };
+                const updated = [...manualCompanies, newCompany];
+                setManualCompanies(updated);
+                localStorage.setItem('integritas360_manual_companies', JSON.stringify(updated));
+                setManualName(''); setManualEmail(''); setManualPhone(''); setManualPic(''); setManualSector(''); setManualAddress('');
+              }} disabled={!manualName.trim() || !manualEmail.trim() || manualBusy} className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-50">
+                {manualBusy ? 'Menyimpan...' : 'Simpan ke List'}
+              </button>
+              <button onClick={()=>setShowManualForm(false)} className="rounded-lg border border-slate-700 px-4 py-2 text-xs text-slate-400 hover:text-slate-200">Batal</button>
+            </div>
+          </div>}
+
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"/>
             <input value={emailSearch} onChange={e=>setEmailSearch(e.target.value)} placeholder="Cari tenant..." className="w-full rounded-xl border border-slate-700 bg-slate-950 pl-9 pr-3 py-2 text-sm text-white outline-none focus:border-blue-500"/>
           </div>
           <div className="max-h-[300px] overflow-y-auto space-y-1">
             {filteredTenants.length === 0 && <p className="text-sm text-slate-500 text-center py-4">Tidak ada tenant.</p>}
-            {filteredTenants.map((c,i)=>{
-              const id = String(c.company_id||c.id||'');
+            {filteredTenants.filter(c=>activeTenantTab==='registered' ? (c as any)._source!=='manual' : (c as any)._source==='manual').map((c,i)=>{
+              const id = String((c as any)._manualId || c.company_id || c.id || '');
               const isSelected = selectedTenants.has(id);
-              const email = String(c.email||c.company_email||'-');
-              return <button key={id||i} onClick={()=>toggleTenant(id)} className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${isSelected?'border-blue-500 bg-blue-500/10':'border-slate-800 bg-slate-950 hover:border-slate-700'}`}>
+              const email = String(c.email || c.company_email || '-');
+              const isManual = (c as any)._source === 'manual';
+              return <button key={id||i} onClick={()=>toggleTenant(id)} className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${isSelected?'border-blue-500 bg-blue-500/10':isManual?'border-amber-800 bg-amber-500/5 hover:border-amber-700':'border-slate-800 bg-slate-950 hover:border-slate-700'}`}>
                 <div className={`rounded w-5 h-5 flex items-center justify-center border ${isSelected?'bg-blue-500 border-blue-500':'border-slate-600'}`}>
                   {isSelected && <Check className="w-3 h-3 text-slate-950"/>}
                 </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{c.company_name||c.namaPT||'-'}</div>
-                  <div className="text-[10px] text-slate-500 truncate">{email} · {c.status||'-'}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate flex items-center gap-2">
+                    {c.company_name || c.namaPT || '-'}
+                    {isManual && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">PROSPECT</span>}
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate">{email} · {c.status || '-'} {isManual && c.alamat ? `· ${c.alamat}` : ''}</div>
                 </div>
+                {isManual && <button onClick={(e)=>{e.stopPropagation(); const updated = manualCompanies.filter((_,idx)=>`manual-${idx}`!==id); setManualCompanies(updated); localStorage.setItem('integritas360_manual_companies', JSON.stringify(updated)); setSelectedTenants(prev=>{const next=new Set(prev);next.delete(id);return next;});}} className="text-slate-600 hover:text-red-400 p-1"><ShieldAlert className="w-3 h-3"/></button>}
               </button>;
             })}
           </div>
