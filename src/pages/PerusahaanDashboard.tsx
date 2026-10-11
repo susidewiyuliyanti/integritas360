@@ -62,13 +62,6 @@ export const PerusahaanDashboard: React.FC = () => {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // Modal Lock / Unlock Saldo State
-  const [showLockModal, setShowLockModal] = useState(false);
-  const [lockAmount, setLockAmount] = useState<number>(1000000);
-  const [lockActionType, setLockActionType] = useState<'lock' | 'unlock'>('lock');
-  const [processingLock, setProcessingLock] = useState(false);
-  const [lockError, setLockError] = useState('');
-
   // Modal Deposit Saldo State (QRIS & NOWPayments)
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showNowPaymentsModal, setShowNowPaymentsModal] = useState(false);
@@ -246,34 +239,9 @@ export const PerusahaanDashboard: React.FC = () => {
   const namaPT = companyProfile?.namaPT || 'PT Anda';
   // Canonical tenant funds come from the companies row (D1 deposit_balance).
   const saldoTerbuka = Number((companyProfile as any)?.deposit_balance ?? companyProfile?.danaTersedia ?? companyProfile?.saldo ?? 0);
-  const danaTerkunci = Number((companyProfile as any)?.locked_balance ?? companyProfile?.danaTerkunci ?? 0);
   const danaTersedia = saldoTerbuka;
-  const totalAset = saldoTerbuka + danaTerkunci;
 
-  // HANDLER: KUNCI / BUKA SALDO PERUSAHAAN
-  const handleLockSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLockError('');
-    if (!user || lockAmount <= 0) return;
-
-    if (lockActionType === 'lock') {
-      if (lockAmount > saldoTerbuka) {
-        setLockError(`Saldo terbuka tidak mencukupi untuk dikunci. Saldo terbuka saat ini: Rp ${saldoTerbuka.toLocaleString('id-ID')}`);
-        return;
-      }
-    } else {
-      if (lockAmount > danaTerkunci) {
-        setLockError(`Dana terkunci tidak mencukupi untuk dibuka. Dana terkunci saat ini: Rp ${danaTerkunci.toLocaleString('id-ID')}`);
-        return;
-      }
-    }
-
-    try {
-      setProcessingLock(true);
-      const userRef = doc(db, 'users', (user.uid || user.id));
-
-      if (lockActionType === 'lock') {
-        // Pindahkan dari Saldo Terbuka -> Dana Terkunci & Dana Tersedia
+  // Pindahkan dari Saldo Terbuka -> Dana Terkunci & Dana Tersedia
         await updateDoc(userRef, {
           saldo: increment(-lockAmount),
           danaTerkunci: increment(lockAmount),
