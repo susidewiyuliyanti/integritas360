@@ -96,12 +96,11 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     }
 
     if (!identityReady) { setLoading(true); return; }
+    if (error) { setQrDataUrl(''); setPreviewDataUrl(''); setLoading(false); return; }
     let isMounted = true;
     async function preparePoster() {
       try {
         setLoading(true);
-        setError('');
-        if (error) throw new Error(error);
         if (!companyId) throw new Error('ID perusahaan tidak tersedia di database D1. QR Code tidak dapat dibuat.');
         const qrUrl = await generateQrCodeDataUrl(companyId, company.customUrl);
         if (!isMounted) return;
