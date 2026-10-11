@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   doc,
   onSnapshot,
@@ -68,6 +68,7 @@ export const PerusahaanDashboard: React.FC = () => {
   const [depositAmount, setDepositAmount] = useState<number>(5000000);
   const [depositMethod, setDepositMethod] = useState('QRIS Statis Nasional (INTEGRITAS360)');
   const [processingDeposit, setProcessingDeposit] = useState(false);
+  const autoRewardAttempts = useRef<Set<string>>(new Set());
 
   // Modal Kebijakan Reward (Etik & Finansial min 2%)
   const [showRewardPolicyModal, setShowRewardPolicyModal] = useState(false);
@@ -412,6 +413,8 @@ export const PerusahaanDashboard: React.FC = () => {
   // Reward otomatis diproses dari saldo aktif perusahaan saat laporan berstatus VALID.
   const handleReleaseReward = async (report: WhistleblowingReport, isAuto = true) => {
     if (!user || !report.id || report.rewardReleased) return;
+    if (isAuto && autoRewardAttempts.current.has(report.id)) return;
+    if (isAuto) autoRewardAttempts.current.add(report.id);
     const kerugian = Number(report.estimasiKerugian || 0);
     const minReward = report.tipePelanggaran === 'finansial'
       ? Math.round(kerugian * 0.02)
@@ -454,7 +457,7 @@ export const PerusahaanDashboard: React.FC = () => {
         handleReleaseReward(rep, true);
       }
     });
-  }, [reports]);
+  }, [reports, actionLoadingId]);
 
   // Save Nominal Reward (Optional adjustment by company)
   const handleSaveReward = async (report: WhistleblowingReport) => {
@@ -837,7 +840,6 @@ export const PerusahaanDashboard: React.FC = () => {
                 const kerugian = Number(report.estimasiKerugian || 0);
                 const min2Persen = Math.round(kerugian * 0.02);
                 const currentReward = report.rewardAmount !== undefined ? report.rewardAmount : (isFinansial ? min2Persen : 5000000);
-                const auditorFee = Number(report.biayaAuditor || 150000);
 
                 const isNeedsTake = report.companyCaseStatus === 'menunggu_ambil' || (report.status === 'valid' && !report.takenAt);
                 const isTakenInProgress = report.companyCaseStatus === 'kasus_diambil' && !report.rewardReleased;
@@ -1074,10 +1076,6 @@ export const PerusahaanDashboard: React.FC = () => {
                               <div className="flex flex-wrap items-center justify-between text-slate-300">
                                 <span>Nominal Reward Pelapor:</span>
                                 <span className="font-mono font-bold text-amber-400">Rp {currentReward.toLocaleString('id-ID')}</span>
-                              </div>
-                              <div className="flex flex-wrap items-center justify-between text-slate-300">
-                                <span>Biaya Jasa Auditor Independen:</span>
-                                <span className="font-mono font-bold text-emerald-400">Rp {auditorFee.toLocaleString('id-ID')}</span>
                               </div>
                               <div className="flex flex-wrap items-center justify-between font-bold text-white pt-1 border-t border-slate-800">
                                 <span>Reward yang diproses dari saldo aktif:</span>
