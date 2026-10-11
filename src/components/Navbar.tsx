@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 import { BrandLogo } from './BrandLogo';
-import { ShieldCheck, LogOut, UserCircle, Building2, Eye, LayoutDashboard, ShieldAlert, CheckCircle2, Languages } from 'lucide-react';
+import { ShieldCheck, LogOut, UserCircle, Building2, Eye, LayoutDashboard, ShieldAlert, CheckCircle2, Languages, Menu, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export const Navbar: React.FC = () => {
@@ -44,7 +44,14 @@ export const Navbar: React.FC = () => {
           </div>
         </button>
 
-        <nav aria-label="Navigasi utama" className="flex flex-wrap items-center gap-1.5 sm:gap-2 md:justify-end w-full md:w-auto">
+        <nav aria-label="Navigasi utama" className="flex justify-end w-full md:w-auto">
+          <details className="relative group">
+            <summary className="list-none flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-sm font-semibold cursor-pointer select-none">
+              <Menu className="w-4 h-4 text-amber-400" />
+              <span>Menu</span>
+              <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl shadow-black/40 flex flex-col gap-1">
           <button
             type="button"
             onClick={toggleLanguage}
@@ -154,6 +161,8 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
           )}
+            </div>
+          </details>
         </nav>
       </div>
     </header>
