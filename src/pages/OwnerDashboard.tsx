@@ -361,50 +361,56 @@ export const OwnerDashboard: React.FC = () => {
       setReports(list);
     });
 
-    // 4. Financial Transactions
-    const qTx = collection(db, 'transactions');
-    const unsubTx = onSnapshot(qTx, (snapshot) => {
-      const list: AdminTransaction[] = [];
-      snapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        list.push({
-          id: docSnap.id,
-          userId: d.userId,
+    // 4. Financial Transactions — canonical source is Cloudflare D1, not legacy Firestore.
+    let cancelled = false;
+    const loadD1Transactions = async () => {
+      try {
+        const response = await fetch('/api/admin/overview', { credentials: 'include', cache: 'no-store' });
+        if (!response.ok) throw new Error('Tidak dapat memuat transaksi D1.');
+        const payload = await response.json();
+        const list: AdminTransaction[] = (Array.isArray(payload.transactions) ? payload.transactions : []).map((d: any) => ({
+          id: String(d.id),
+          userId: d.user_id || d.userId,
           type: d.type,
           amount: Number(d.amount || 0),
           status: d.status || 'pending',
-          keterangan: d.keterangan || '',
+          keterangan: d.keterangan || d.description || d.metadata?.keterangan || '',
           method: d.method || d.metode,
           metode: d.metode || d.method,
-          cryptoCurrency: d.cryptoCurrency,
-          cryptoAmount: d.cryptoAmount !== undefined ? Number(d.cryptoAmount) : undefined,
-          txHash: d.txHash,
-          paymentProofName: d.paymentProofName,
-          paymentProofType: d.paymentProofType,
-          paymentProofDataUrl: d.paymentProofDataUrl,
-          bankName: d.bankName || d.bankDetails?.bankName,
-          accountNumber: d.accountNumber || d.bankDetails?.accountNumber,
-          holderName: d.holderName || d.bankDetails?.holderName,
-          bankDetails: d.bankDetails,
-          claimReportToken: d.claimReportToken,
-          claimReportId: d.claimReportId,
-          companyName: d.companyName,
-          whatsapp: d.whatsapp,
-          userEmail: d.userEmail,
-          catatanAdmin: d.catatanAdmin,
-          createdAt: d.createdAt
-        });
-      });
-      list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setTransactions(list);
-    });
+          cryptoCurrency: d.cryptoCurrency || d.metadata?.cryptoCurrency,
+          cryptoAmount: d.cryptoAmount !== undefined ? Number(d.cryptoAmount) : (d.metadata?.cryptoAmount !== undefined ? Number(d.metadata.cryptoAmount) : undefined),
+          txHash: d.txHash || d.tx_hash || d.metadata?.txHash,
+          paymentProofName: d.paymentProofName || d.metadata?.paymentProofName || d.metadata?.buktiKonfirmasi?.fileName,
+          paymentProofType: d.paymentProofType || d.metadata?.paymentProofType,
+          paymentProofDataUrl: d.paymentProofDataUrl || d.metadata?.paymentProofDataUrl || d.metadata?.buktiKonfirmasi?.dataUrl,
+          bankName: d.bankName || d.bankDetails?.bankName || d.metadata?.bankName,
+          accountNumber: d.accountNumber || d.bankDetails?.accountNumber || d.metadata?.accountNumber,
+          holderName: d.holderName || d.bankDetails?.holderName || d.metadata?.holderName,
+          bankDetails: d.bankDetails || d.metadata?.bankDetails,
+          claimReportToken: d.claimReportToken || d.metadata?.claimReportToken,
+          claimReportId: d.claimReportId || d.report_id || d.metadata?.claimReportId,
+          companyName: d.company_name || d.companyName || d.metadata?.companyName || d.metadata?.userName,
+          whatsapp: d.whatsapp || d.metadata?.whatsapp,
+          userEmail: d.user_email || d.userEmail || d.email || d.metadata?.email,
+          catatanAdmin: d.catatanAdmin || d.metadata?.catatanAdmin,
+          createdAt: d.created_at ? { seconds: Math.floor(new Date(d.created_at).getTime() / 1000) } : d.createdAt
+        }));
+        if (!cancelled) setTransactions(list.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)));
+      } catch (error) {
+        console.error('D1 admin transactions load failed:', error);
+        if (!cancelled) showToast('Transaksi dari database utama gagal dimuat.', 'error');
+      }
+    };
+    void loadD1Transactions();
+    const transactionRefresh = window.setInterval(() => void loadD1Transactions(), 10000);
 
     return () => {
+      cancelled = true;
+      window.clearInterval(transactionRefresh);
       unsubPerusahaan();
       unsubAuditor();
       unsubAdminPerusahaan();
       unsubReports();
-      unsubTx();
     };
   }, [user]);
 
@@ -995,17 +1001,23 @@ export const OwnerDashboard: React.FC = () => {
   const handleApproveTransaction = async (tx: AdminTransaction) => {
     try {
       setProcessingAction(true);
-      const txRef = doc(db, 'transactions', tx.id);
-
       if (tx.type === 'deposit') {
-        await updateDoc(txRef, {
-          status: 'selesai',
-          processedAt: serverTimestamp(),
-          processedBy: user?.email || OWNER_EMAIL
+        const response = await fetch('/api/admin/overview', {
+          method: 'POST', credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'approve-deposit', id: tx.id })
         });
-
-        showToast('Deposit disetujui. Saldo aktif perusahaan telah ditambahkan satu kali.');
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || 'Gagal menyetujui deposit pada D1.');
+        showToast('Deposit disetujui di D1. Saldo tenant ditambahkan satu kali.');
+        const refreshed = await fetch('/api/admin/overview', { credentials: 'include', cache: 'no-store' });
+        if (refreshed.ok) {
+          const payload = await refreshed.json();
+          const d1Rows = Array.isArray(payload.transactions) ? payload.transactions : [];
+          setTransactions(d1Rows.map((d:any) => ({ ...d, id:String(d.id), userId:d.user_id||d.userId, amount:Number(d.amount||0), status:d.status||'pending', method:d.method||d.metode, paymentProofName:d.paymentProofName||d.metadata?.paymentProofName||d.metadata?.buktiKonfirmasi?.fileName, paymentProofDataUrl:d.paymentProofDataUrl||d.metadata?.paymentProofDataUrl||d.metadata?.buktiKonfirmasi?.dataUrl, companyName:d.company_name||d.companyName||d.metadata?.companyName||d.metadata?.userName, userEmail:d.user_email||d.userEmail||d.email, createdAt:d.created_at?{seconds:Math.floor(new Date(d.created_at).getTime()/1000)}:d.createdAt })));
+        }
       } else if (tx.type === 'withdrawal') {
+        const txRef = doc(db, 'transactions', tx.id);
         await updateDoc(txRef, {
           status: 'selesai',
           processedAt: serverTimestamp(),
@@ -1061,13 +1073,23 @@ export const OwnerDashboard: React.FC = () => {
         });
         showToast('Dokumen ditolak dengan catatan.');
       } else if (rejectionTarget.type === 'transaksi') {
-        const txRef = doc(db, 'transactions', rejectionTarget.id);
-        await updateDoc(txRef, {
-          status: 'ditolak',
-          catatanAdmin: rejectionReason.trim(),
-          processedAt: serverTimestamp(),
-          processedBy: user?.email || OWNER_EMAIL
-        });
+        if (rejectionTarget.subId === 'deposit') {
+          const response = await fetch('/api/admin/overview', {
+            method: 'POST', credentials: 'include',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ action: 'reject-deposit', id: rejectionTarget.id, reason: rejectionReason.trim() })
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result.ok) throw new Error(result.error || 'Gagal menolak deposit pada D1.');
+        } else {
+          const txRef = doc(db, 'transactions', rejectionTarget.id);
+          await updateDoc(txRef, {
+            status: 'ditolak',
+            catatanAdmin: rejectionReason.trim(),
+            processedAt: serverTimestamp(),
+            processedBy: user?.email || OWNER_EMAIL
+          });
+        }
 
         // Refund withdrawal balance
         if (rejectionTarget.subId === 'withdrawal' && rejectionTarget.userId && rejectionTarget.nominal) {
