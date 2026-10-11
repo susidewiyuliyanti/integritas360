@@ -25,6 +25,26 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   const actor=await sessionUser(request,env);
   if(!actor || !actor.company_id || !['perusahaan','admin_perusahaan','company_admin','finance','hr'].includes(actor.role)) return json({error:'Unauthorized'},401);
   const body=await request.json<any>(); const op=body.operation; const companyId=actor.company_id;
+  if(op==='save-company-profile'){
+    if(!['perusahaan','admin_perusahaan','company_admin','finance','hr'].includes(String(actor.role||'').toLowerCase())) return json({error:'Akses profil perusahaan ditolak.'},403);
+    const d=body.data||{};
+    const allowed=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor'];
+    const profile:any={};
+    for(const key of allowed) if(d[key]!==undefined) profile[key]=d[key];
+    if(profile.namaPT!==undefined && !String(profile.namaPT).trim()) return json({error:'Nama perusahaan wajib diisi.'},400);
+    const row=await env.DB.prepare('SELECT profile_json,company_name FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
+    if(!row) return json({error:'Data perusahaan tidak ditemukan.'},404);
+    let current:any={}; try{current=JSON.parse(row.profile_json||'{}')}catch{}
+    const next={...current,...profile};
+    const name=String(next.namaPT||row.company_name||'').trim();
+    await env.DB.prepare('UPDATE companies SET company_name=?,profile_json=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=?')
+      .bind(name,JSON.stringify(next),companyId).run();
+    await env.DB.prepare('UPDATE users SET full_name=COALESCE(?,full_name),phone=COALESCE(?,phone),updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?')
+      .bind(profile.picName??null,profile.telepon??null,actor.id,companyId).run();
+    await env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
+      .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'COMPANY_PROFILE_UPDATED','company',companyId,JSON.stringify({fields:Object.keys(profile)})).run();
+    return json({ok:true,profile:next});
+  }
   if(op==='create-user'){
     const d=body.data||{}; const email=String(d.email||'').trim().toLowerCase(); const password=String(d.password||'');
     const requestedRole=String(d.role||'company_user').toLowerCase();
