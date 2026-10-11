@@ -1179,7 +1179,7 @@ export const PerusahaanDashboard: React.FC = () => {
         onClose={() => setIsPosterModalOpen(false)}
         company={{
           uid: String(companyProfile?.company_id || companyProfile?.perusahaanId || (companyProfile as any)?.companyId || (user?.uid || user?.id) || ''),
-          namaPT: companyProfile?.namaPT || (companyProfile as any)?.company_name || (authProfile as any)?.company_name || 'PT Anda',
+          namaPT: companyProfile?.namaPT || (companyProfile as any)?.company_name || 'PT Anda',
           danaTersedia: Number((companyProfile as any)?.deposit_balance ?? (companyProfile as any)?.danaTersedia ?? 0),
           rewardBalance: Number((companyProfile as any)?.deposit_balance ?? (companyProfile as any)?.danaTersedia ?? 0),
           sektor: companyProfile?.sektor,

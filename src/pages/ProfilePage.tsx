@@ -80,7 +80,9 @@ export const ProfilePage: React.FC = () => {
   const { navigate } = useNavigation();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'keuangan' | 'riwayat'>('keuangan');
-  const [profileData, setProfileData] = useState<UserProfile | null>(authProfile);
+  // Inisialisasi dengan null — data profile harus selalu dari D1 fetch, bukan dari authProfile
+  // yang bisa berbeda (users table vs companies table).
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
 
   // Form Edit Profile State (Perusahaan & Umum)
