@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
-import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity, KeyRound, Bot, MessageSquare, TrendingUp, Target, Sparkles, Send, User, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
+import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity, KeyRound, Bot, MessageSquare, TrendingUp, Target, Sparkles, Send, User, ChevronDown, ChevronUp, Lightbulb, Mail, MailOpen, CheckSquare, Square, Copy, Check } from 'lucide-react';
 
 type Company = Record<string, any>;
 type Report = Record<string, any>;
@@ -18,7 +18,7 @@ const date = (v: unknown) => {
 export const SuperAdminDashboard: React.FC = () => {
   const { user, loading, logout } = useAuth();
   const { navigate } = useNavigation();
-  const [tab, setTab] = useState<'overview'|'tenants'|'reports'|'transactions'|'audit'|'security'|'ai-sales'>('overview');
+  const [tab, setTab] = useState<'overview'|'tenants'|'reports'|'transactions'|'audit'|'security'|'ai-sales'|'sales-email'>('overview');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -57,6 +57,18 @@ export const SuperAdminDashboard: React.FC = () => {
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiExpanded, setAiExpanded] = useState(true);
+
+  // Sales Email state
+  const [emailTemplate, setEmailTemplate] = useState<'welcome'|'deposit_reminder'|'follow_up'|'custom'>('welcome');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [selectedTenants, setSelectedTenants] = useState<Set<string>>(new Set());
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailHistory, setEmailHistory] = useState<{to:string;subject:string;body:string;status:string;sentAt:string}[]>([]);
+  const [selectAllTenants, setSelectAllTenants] = useState(false);
+  const [emailSearch, setEmailSearch] = useState('');
 
   useEffect(() => {
     if (loading) return;
@@ -117,6 +129,7 @@ export const SuperAdminDashboard: React.FC = () => {
     ['audit','History & Audit Log',History],
     ['security','Keamanan Akun',KeyRound],
     ['ai-sales','AI Sales Agent',Bot],
+    ['sales-email','Sales Email',Mail],
   ] as const;
 
   return <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -249,6 +262,29 @@ export const SuperAdminDashboard: React.FC = () => {
         setAiLoading={setAiLoading}
         aiExpanded={aiExpanded}
         setAiExpanded={setAiExpanded}
+      />}
+      {tab==='sales-email' && <SalesEmailPanel
+        companies={companies}
+        emailTemplate={emailTemplate}
+        setEmailTemplate={setEmailTemplate}
+        emailSubject={emailSubject}
+        setEmailSubject={setEmailSubject}
+        emailBody={emailBody}
+        setEmailBody={setEmailBody}
+        selectedTenants={selectedTenants}
+        setSelectedTenants={setSelectedTenants}
+        emailSending={emailSending}
+        setEmailSending={setEmailSending}
+        emailResult={emailResult}
+        setEmailResult={setEmailResult}
+        emailError={emailError}
+        setEmailError={setEmailError}
+        emailHistory={emailHistory}
+        setEmailHistory={setEmailHistory}
+        selectAllTenants={selectAllTenants}
+        setSelectAllTenants={setSelectAllTenants}
+        emailSearch={emailSearch}
+        setEmailSearch={setEmailSearch}
       />}
       <footer className="text-xs text-slate-500 flex flex-wrap gap-2 items-center"><Users className="w-4 h-4"/> Panel khusus Super Admin. Jangan bagikan akses ini kepada akun tenant.</footer>
     </main>
@@ -467,5 +503,281 @@ const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
         ))}
       </div>
     </section>
+  </div>;
+};
+
+/* ── Sales Email Panel ── */
+interface SalesEmailPanelProps {
+  companies: Company[];
+  emailTemplate: 'welcome'|'deposit_reminder'|'follow_up'|'custom';
+  setEmailTemplate: (v:'welcome'|'deposit_reminder'|'follow_up'|'custom')=>void;
+  emailSubject: string;
+  setEmailSubject: (v:string)=>void;
+  emailBody: string;
+  setEmailBody: (v:string)=>void;
+  selectedTenants: Set<string>;
+  setSelectedTenants: React.Dispatch<React.SetStateAction<Set<string>>>;
+  emailSending: boolean;
+  setEmailSending: (v:boolean)=>void;
+  emailResult: string;
+  setEmailResult: (v:string)=>void;
+  emailError: string;
+  setEmailError: (v:string)=>void;
+  emailHistory: {to:string;subject:string;body:string;status:string;sentAt:string}[];
+  setEmailHistory: React.Dispatch<React.SetStateAction<{to:string;subject:string;body:string;status:string;sentAt:string}[]>>;
+  selectAllTenants: boolean;
+  setSelectAllTenants: (v:boolean)=>void;
+  emailSearch: string;
+  setEmailSearch: (v:string)=>void;
+}
+
+const EMAIL_TEMPLATES:Record<string,{subject:string;body:string}> = {
+  welcome: {
+    subject: 'Selamat Datang di Integritas360 — Mulai Perjalanan Anti-Korupsi Anda',
+    body: `Halo {{namaPT}},\n\nSelamat bergabung dengan Integritas360! Platform SaaS pertama di Indonesia untuk melaporkan dan menginvestigasi tindak pidana korupsi secara anonim dan terenkripsi.\n\nLangkah selanjutnya:\n1. Login ke dashboard tenant Anda\n2. Lakukan deposit untuk mengaktifkan fitur reward\n3. Bagikan QR code poster ke karyawan Anda\n\nJika ada pertanyaan, tim sales kami siap membantu.\n\nSalam,\nTim Integritas360`,
+  },
+  deposit_reminder: {
+    subject: 'Pengingat Deposit — Aktifkan Fitur Reward Integritas360',
+    body: `Halo {{namaPT}},\n\nKami noticed bahwa akun Anda belum melakukan deposit. Deposit diperlukan untuk mengaktifkan fitur reward bagi whistleblower yang melaporkan kasus korupsi.\n\nKeuntungan deposit:\n✓ Reward otomatis untuk laporan VALID\n✓ Prioritas investigasi\n✓ Dashboard analytics lengkap\n\nSilakan lakukan deposit melalui dashboard Anda atau hubungi tim sales kami.\n\nSalam,\nTim Integritas360`,
+  },
+  follow_up: {
+    subject: 'Follow-up — Bagaimana Pengalaman Anda dengan Integritas360?',
+    body: `Halo {{namaPT}},\n\nKami ingin memastikan Anda mendapatkan pengalaman terbaik dengan Integritas360.\n\nBeberapa hal yang bisa kami bantu:\n• Training penggunaan platform\n• Konsultasi kebijakan anti-korupsi\n• Customisasi reward structure\n• Integrasi dengan sistem HR Anda\n\nJadwalkan call dengan tim sales kami untuk diskusi lebih lanjut.\n\nSalam,\nTim Integritas360`,
+  },
+  custom: {
+    subject: '',
+    body: '',
+  },
+};
+
+const SalesEmailPanel: React.FC<SalesEmailPanelProps> = ({
+  companies, emailTemplate, setEmailTemplate, emailSubject, setEmailSubject, emailBody, setEmailBody,
+  selectedTenants, setSelectedTenants, emailSending, setEmailSending, emailResult, setEmailResult,
+  emailError, setEmailError, emailHistory, setEmailHistory, selectAllTenants, setSelectAllTenants,
+  emailSearch, setEmailSearch
+}) => {
+  const [copied, setCopied] = useState(false);
+
+  // Filter tenant berdasarkan search
+  const filteredTenants = useMemo(()=>{
+    if (!emailSearch.trim()) return companies;
+    const q = emailSearch.toLowerCase();
+    return companies.filter(c=>
+      String(c.company_name||c.namaPT||'').toLowerCase().includes(q) ||
+      String(c.email||c.company_email||'').toLowerCase().includes(q) ||
+      String(c.company_id||c.id||'').toLowerCase().includes(q)
+    );
+  }, [companies, emailSearch]);
+
+  // Apply template
+  const applyTemplate = (templateKey:'welcome'|'deposit_reminder'|'follow_up'|'custom') => {
+    setEmailTemplate(templateKey);
+    if (templateKey !== 'custom') {
+      const t = EMAIL_TEMPLATES[templateKey];
+      setEmailSubject(t.subject);
+      setEmailBody(t.body);
+    } else {
+      setEmailSubject('');
+      setEmailBody('');
+    }
+  };
+
+  // Toggle select tenant
+  const toggleTenant = (id:string) => {
+    setSelectedTenants(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  // Toggle select all
+  const toggleSelectAll = () => {
+    if (selectAllTenants) {
+      setSelectedTenants(new Set());
+    } else {
+      setSelectedTenants(new Set(filteredTenants.map(c=>String(c.company_id||c.id||'')).filter(Boolean)));
+    }
+    setSelectAllTenants(!selectAllTenants);
+  };
+
+  // Personalize body untuk tenant tertentu
+  const personalizeBody = (body:string, tenant:Company) => {
+    return body
+      .replace(/\{\{namaPT\}\}/g, String(tenant.company_name||tenant.namaPT||'Perusahaan Anda'))
+      .replace(/\{\{email\}\}/g, String(tenant.email||tenant.company_email||''))
+      .replace(/\{\{companyId\}\}/g, String(tenant.company_id||tenant.id||''));
+  };
+
+  // Kirim email
+  const handleSendEmail = async () => {
+    if (selectedTenants.size === 0) { setEmailError('Pilih minimal 1 tenant.'); return; }
+    if (!emailSubject.trim()) { setEmailError('Subject email wajib diisi.'); return; }
+    if (!emailBody.trim()) { setEmailError('Isi email wajib diisi.'); return; }
+
+    setEmailSending(true);
+    setEmailError('');
+    setEmailResult('');
+
+    const targets = filteredTenants.filter(c=>selectedTenants.has(String(c.company_id||c.id||'')));
+    const results:{to:string;subject:string;body:string;status:string;sentAt:string}[] = [];
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const tenant of targets) {
+      const toEmail = String(tenant.email||tenant.company_email||'');
+      if (!toEmail || !toEmail.includes('@')) { failCount++; continue; }
+
+      const personalizedBody = personalizeBody(emailBody, tenant);
+      const personalizedSubject = personalizeBody(emailSubject, tenant);
+
+      try {
+        // Kirim via API backend
+        const res = await fetch('/api/admin/send-email', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({to:toEmail, subject:personalizedSubject, body:personalizedBody, companyId:String(tenant.company_id||tenant.id||'')})
+        });
+        const data = await res.json().catch(()=>({}));
+        if (res.ok && data.ok) {
+          successCount++;
+          results.push({to:toEmail, subject:personalizedSubject, body:personalizedBody, status:'terkirim', sentAt:new Date().toISOString()});
+        } else {
+          failCount++;
+          results.push({to:toEmail, subject:personalizedSubject, body:personalizedBody, status:'gagal: '+(data.error||'Unknown'), sentAt:new Date().toISOString()});
+        }
+      } catch (e) {
+        failCount++;
+        results.push({to:toEmail, subject:personalizedSubject, body:personalizedBody, status:'gagal: Network error', sentAt:new Date().toISOString()});
+      }
+    }
+
+    setEmailHistory(prev=>[...results, ...prev]);
+    setEmailResult(`${successCount} email terkirim, ${failCount} gagal.`);
+    setEmailSending(false);
+    setSelectedTenants(new Set());
+    setSelectAllTenants(false);
+  };
+
+  // Copy template
+  const copyTemplate = () => {
+    navigator.clipboard.writeText(emailBody).then(()=>{setCopied(true); setTimeout(()=>setCopied(false),2000);});
+  };
+
+  return <div className="space-y-6">
+    {/* Header */}
+    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="rounded-xl bg-blue-500/15 p-2 text-blue-400"><Mail className="w-5 h-5"/></div>
+        <div>
+          <h2 className="font-bold text-lg">Sales Email</h2>
+          <p className="text-xs text-slate-400">Kirim email ke tenant dari dashboard Super Admin · Personalisasi otomatis · History tersimpan</p>
+        </div>
+      </div>
+    </section>
+
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Kolom Kiri: Template & Form */}
+      <div className="space-y-5">
+        {/* Template Selector */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h3 className="font-bold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400"/>Pilih Template</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              {key:'welcome' as const, label:'Welcome', desc:'Email selamat datang'},
+              {key:'deposit_reminder' as const, label:'Deposit Reminder', desc:'Pengingat deposit'},
+              {key:'follow_up' as const, label:'Follow-up', desc:'Tindak lanjut'},
+              {key:'custom' as const, label:'Custom', desc:'Email manual'},
+            ].map(t=>(
+              <button key={t.key} onClick={()=>applyTemplate(t.key)} className={`rounded-xl border p-3 text-left transition-colors ${emailTemplate===t.key?'border-blue-500 bg-blue-500/10':'border-slate-700 bg-slate-950 hover:border-slate-600'}`}>
+                <div className={`text-sm font-semibold ${emailTemplate===t.key?'text-blue-400':''}`}>{t.label}</div>
+                <div className="text-[10px] text-slate-500">{t.desc}</div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Email Form */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5 space-y-4">
+          <h3 className="font-bold flex items-center gap-2"><MailOpen className="w-4 h-4 text-blue-400"/>Komposisi Email</h3>
+
+          <div>
+            <label className="text-sm text-slate-300">Subject</label>
+            <input value={emailSubject} onChange={e=>setEmailSubject(e.target.value)} placeholder="Subject email..." className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500"/>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-slate-300">Isi Email</label>
+              <button onClick={copyTemplate} className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-blue-400">
+                {copied ? <><Check className="w-3 h-3"/> Tersalin</> : <><Copy className="w-3 h-3"/> Salin</>}
+              </button>
+            </div>
+            <textarea value={emailBody} onChange={e=>setEmailBody(e.target.value)} placeholder="Tulis isi email..." rows={12} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-500 resize-y font-mono leading-relaxed"/>
+            <p className="text-[10px] text-slate-500 mt-1">Gunakan {'{{namaPT}}'}, {'{{email}}'}, {'{{companyId}}'} untuk personalisasi otomatis per tenant.</p>
+          </div>
+
+          {emailError && <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{emailError}</div>}
+          {emailResult && <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">{emailResult}</div>}
+
+          <button onClick={handleSendEmail} disabled={emailSending || selectedTenants.size===0} className="w-full rounded-xl bg-blue-500 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <Send className="w-4 h-4"/> {emailSending ? 'Mengirim...' : `Kirim ke ${selectedTenants.size} Tenant`}
+          </button>
+        </section>
+      </div>
+
+      {/* Kolom Kanan: Tenant List & History */}
+      <div className="space-y-5">
+        {/* Tenant Selection */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold flex items-center gap-2"><Users className="w-4 h-4 text-blue-400"/>Pilih Tenant ({selectedTenants.size} dipilih)</h3>
+            <button onClick={toggleSelectAll} className="text-xs flex items-center gap-1 text-slate-400 hover:text-blue-400">
+              {selectAllTenants ? <><CheckSquare className="w-3 h-3"/> Batal Pilih Semua</> : <><Square className="w-3 h-3"/> Pilih Semua</>}
+            </button>
+          </div>
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"/>
+            <input value={emailSearch} onChange={e=>setEmailSearch(e.target.value)} placeholder="Cari tenant..." className="w-full rounded-xl border border-slate-700 bg-slate-950 pl-9 pr-3 py-2 text-sm text-white outline-none focus:border-blue-500"/>
+          </div>
+          <div className="max-h-[300px] overflow-y-auto space-y-1">
+            {filteredTenants.length === 0 && <p className="text-sm text-slate-500 text-center py-4">Tidak ada tenant.</p>}
+            {filteredTenants.map((c,i)=>{
+              const id = String(c.company_id||c.id||'');
+              const isSelected = selectedTenants.has(id);
+              const email = String(c.email||c.company_email||'-');
+              return <button key={id||i} onClick={()=>toggleTenant(id)} className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${isSelected?'border-blue-500 bg-blue-500/10':'border-slate-800 bg-slate-950 hover:border-slate-700'}`}>
+                <div className={`rounded w-5 h-5 flex items-center justify-center border ${isSelected?'bg-blue-500 border-blue-500':'border-slate-600'}`}>
+                  {isSelected && <Check className="w-3 h-3 text-slate-950"/>}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">{c.company_name||c.namaPT||'-'}</div>
+                  <div className="text-[10px] text-slate-500 truncate">{email} · {c.status||'-'}</div>
+                </div>
+              </button>;
+            })}
+          </div>
+        </section>
+
+        {/* Email History */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h3 className="font-bold mb-3 flex items-center gap-2"><History className="w-4 h-4 text-blue-400"/>History Email ({emailHistory.length})</h3>
+          <div className="max-h-[250px] overflow-y-auto space-y-2">
+            {emailHistory.length === 0 && <p className="text-sm text-slate-500 text-center py-4">Belum ada email dikirim.</p>}
+            {emailHistory.map((h,i)=>{
+              const isSuccess = h.status === 'terkirim';
+              return <div key={i} className={`rounded-xl border p-3 text-sm ${isSuccess?'border-emerald-800 bg-emerald-500/5':'border-red-800 bg-red-500/5'}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium truncate max-w-[60%]">{h.subject}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${isSuccess?'bg-emerald-500/15 text-emerald-400':'bg-red-500/15 text-red-400'}`}>{h.status}</span>
+                </div>
+                <div className="text-[10px] text-slate-500 mt-1">To: {h.to} · {new Date(h.sentAt).toLocaleString('id-ID')}</div>
+              </div>;
+            })}
+          </div>
+        </section>
+      </div>
+    </div>
   </div>;
 };
