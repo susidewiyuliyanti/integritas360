@@ -413,8 +413,9 @@ export const PerusahaanDashboard: React.FC = () => {
   // Reward otomatis diproses dari saldo aktif perusahaan saat laporan berstatus VALID.
   const handleReleaseReward = async (report: WhistleblowingReport, isAuto = true) => {
     if (!user || !report.id || report.rewardReleased) return;
-    if (isAuto && autoRewardAttempts.current.has(report.id)) return;
-    if (isAuto) autoRewardAttempts.current.add(report.id);
+    const attemptKey = `${report.id}:${saldoTerbuka}`;
+    if (isAuto && autoRewardAttempts.current.has(attemptKey)) return;
+    if (isAuto) autoRewardAttempts.current.add(attemptKey);
     const kerugian = Number(report.estimasiKerugian || 0);
     const minReward = report.tipePelanggaran === 'finansial'
       ? Math.round(kerugian * 0.02)
@@ -457,7 +458,7 @@ export const PerusahaanDashboard: React.FC = () => {
         handleReleaseReward(rep, true);
       }
     });
-  }, [reports, actionLoadingId]);
+  }, [reports, actionLoadingId, saldoTerbuka]);
 
   // Save Nominal Reward (Optional adjustment by company)
   const handleSaveReward = async (report: WhistleblowingReport) => {
