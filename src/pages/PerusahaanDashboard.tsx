@@ -310,28 +310,22 @@ export const PerusahaanDashboard: React.FC = () => {
 
     try {
       setSavingPolicy(true);
-      const userRef = doc(db, 'users', (user.uid || user.id));
-      await updateDoc(userRef, {
-        kebijakanReward: {
-          rewardKasusEtik: Number(policyEtikNominal),
-          persenFinansial: Number(policyFinansialPersen),
-          minPersenFinansial: 2
-        }
+      const kebijakanReward = {
+        rewardKasusEtik: Number(policyEtikNominal),
+        persenFinansial: Number(policyFinansialPersen),
+        minPersenFinansial: 2
+      };
+      const response = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ operation: 'save-company-profile', data: { kebijakanReward } })
       });
-
-      if (effectiveCompanyId) {
-        try {
-          await updateDoc(doc(db, 'companies', effectiveCompanyId), {
-            kebijakanReward: {
-              rewardKasusEtik: Number(policyEtikNominal),
-              persenFinansial: Number(policyFinansialPersen),
-              minPersenFinansial: 2
-            }
-          });
-        } catch (compErr) {
-          console.warn('Sync company kebijakanReward warning:', compErr);
-        }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.error || 'Kebijakan reward gagal disimpan ke database D1.');
       }
+      setCompanyProfile((prev) => prev ? ({ ...prev, kebijakanReward }) : prev);
 
       setShowRewardPolicyModal(false);
       setActionFeedback({
