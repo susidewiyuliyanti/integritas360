@@ -998,14 +998,7 @@ export const OwnerDashboard: React.FC = () => {
           processedBy: user?.email || OWNER_EMAIL
         });
 
-        if (tx.userId) {
-          const userRef = doc(db, 'users', tx.userId);
-          await updateDoc(userRef, {
-            saldo: increment(tx.amount),
-            danaTersedia: increment(tx.amount)
-          });
-        }
-        showToast('Deposit saldo berhasil disetujui & ditambahkan ke akun!');
+        showToast('Deposit disetujui. Saldo aktif perusahaan telah ditambahkan satu kali.');
       } else if (tx.type === 'withdrawal') {
         await updateDoc(txRef, {
           status: 'selesai',
