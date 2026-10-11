@@ -7,7 +7,6 @@ import {
   ExternalLink,
   ShieldCheck,
   AlertCircle,
-  KeyRound,
   RefreshCw,
   QrCode,
   ArrowDownLeft,
@@ -128,37 +127,7 @@ export const NowPaymentsModal: React.FC<NowPaymentsModalProps> = ({
           </button>
         </div>
 
-        {/* API Key Configuration Section */}
-        <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
-              NOWPayments API Key Integration
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-              className="text-[11px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
-            >
-              {showApiKeyInput ? 'Sembunyikan' : 'Kelola API Key'}
-            </button>
-          </div>
-
-          {showApiKeyInput && (
-            <div className="space-y-1 pt-1">
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Masukkan API Key NOWPayments (atau gunakan default sistem)"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
-              />
-              <p className="text-[10px] text-slate-500">
-                API Key dapat diambil dari dashboard <strong>nowpayments.io</strong> atau diatur di env <code>VITE_NOWPAYMENTS_API_KEY</code>.
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Konfigurasi API Key disembunyikan dari form deposit */}
 
         {/* Coin Selection Tabs */}
         <div>
