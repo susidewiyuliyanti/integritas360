@@ -1251,22 +1251,8 @@ export const PerusahaanDashboard: React.FC = () => {
                     <QrisStaticCard nominal={depositAmount} companyName={companyProfile?.namaPT || (companyProfile as any)?.company_name || (authProfile as any)?.company_name || namaPT} rewardBalance={Number((companyProfile as any)?.rewardBalance ?? (companyProfile as any)?.saldoReward ?? (companyProfile as any)?.reward_balance ?? (companyProfile as any)?.danaTersedia ?? 0)} />
                   </>
                 ) : (
-                  <div className="w-full space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
-                    <div className="font-bold text-amber-400 flex items-center gap-2">
-                      <CreditCard className="w-4 h-4" /> Rekening Resmi PT INTEGRITAS360
-                    </div>
-                    <div className="space-y-2 text-slate-300">
-                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400 uppercase">Bank Central Asia (BCA)</div>
-                        <div className="text-sm font-mono font-bold text-white">882-019-3821</div>
-                        <div className="text-[11px] text-slate-400">a.n. PT INTEGRITAS TIGA ENAM PULUH</div>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="text-[10px] text-slate-400 uppercase">Bank Mandiri</div>
-                        <div className="text-sm font-mono font-bold text-white">131-00-998822-1</div>
-                        <div className="text-[11px] text-slate-400">a.n. PT INTEGRITAS TIGA ENAM PULUH</div>
-                      </div>
-                    </div>
+                  <div className="w-full p-4 rounded-2xl border border-cyan-500/30 bg-cyan-950/20 text-xs text-cyan-100">
+                    Pembayaran crypto dilakukan melalui jendela NOWPayments. Pilih QRIS untuk melihat kode QR dan mengajukan deposit QRIS.
                   </div>
                 )}
               </div>
@@ -1312,21 +1298,10 @@ export const PerusahaanDashboard: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Metode Pembayaran
-                  </label>
-                  <select
-                    value={depositMethod}
-                    onChange={(e) => setDepositMethod(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="QRIS Statis Nasional (INTEGRITAS360)">
-                      QRIS Statis Nasional (Semua Bank & E-Wallet)
-                    </option>
-                    <option value="NOWPayments (Crypto Gateway USDT/BTC/ETH)">
-                      NOWPayments Crypto Gateway (USDT, BTC, ETH, SOL, TRX)
-                    </option>
-                  </select>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Metode Pembayaran</label>
+                  <div className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
+                    QRIS Statis Nasional (Semua Bank &amp; E-Wallet)
+                  </div>
                 </div>
 
                 {/* Admin Verification Requirement Notice */}
