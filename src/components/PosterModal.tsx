@@ -48,7 +48,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
             uid: String(row.company_id),
             companyId: String(row.company_id),
             company_id: String(row.company_id),
-            namaPT: String(row.company_name || row.namaPT || result.profile?.namaPT || '').trim(),
+            namaPT: String(row.company_name || row.namaPT || '').trim(),
             sektor: row.sektor || row.sector || company.sektor || 'Kepatuhan & Integritas',
             danaTersedia: Number(row.deposit_balance || 0),
             rewardBalance: Number(row.deposit_balance || 0)
