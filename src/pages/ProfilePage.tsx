@@ -847,7 +847,7 @@ export const ProfilePage: React.FC = () => {
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              {profileData?.role === 'auditor' ? 'Profil & Sertifikasi Auditor' : 'Profil Perusahaan & Legalitas'}
+              {profileData?.role === 'auditor' ? 'Profil & Sertifikasi Auditor' : 'Profile Perusahaan'}
             </button>
 
             <button
