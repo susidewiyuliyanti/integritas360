@@ -239,12 +239,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
           WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status)='selesai'
             AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
-            AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true'))`)
+            AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
+            AND NOT EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
           .bind(txId, companyId, companyId, rewardAmount, report.id, claimMeta, report.id, companyId),
         env.DB.prepare(`UPDATE reports SET reward_claim_status='pending', reward_claimed=1, payout_wallet=?, updated_at=CURRENT_TIMESTAMP
           WHERE id=? AND company_id=? AND lower(status)='selesai' AND COALESCE(reward_claimed,0)=0
           AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
-          AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')`)
+          AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
+          AND EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
           .bind(data.bankDetails?.accountNumber || '', report.id, companyId)
       ]);
       const inserted = Number((results?.[0] as any)?.meta?.changes ?? (results?.[0] as any)?.changes ?? 0);
