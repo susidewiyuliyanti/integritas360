@@ -92,6 +92,9 @@ interface AdminTransaction {
   cryptoCurrency?: string;
   cryptoAmount?: number;
   txHash?: string;
+  paymentProofName?: string;
+  paymentProofType?: string;
+  paymentProofDataUrl?: string;
   bankName?: string;
   accountNumber?: string;
   holderName?: string;
@@ -376,6 +379,9 @@ export const OwnerDashboard: React.FC = () => {
           cryptoCurrency: d.cryptoCurrency,
           cryptoAmount: d.cryptoAmount !== undefined ? Number(d.cryptoAmount) : undefined,
           txHash: d.txHash,
+          paymentProofName: d.paymentProofName,
+          paymentProofType: d.paymentProofType,
+          paymentProofDataUrl: d.paymentProofDataUrl,
           bankName: d.bankName || d.bankDetails?.bankName,
           accountNumber: d.accountNumber || d.bankDetails?.accountNumber,
           holderName: d.holderName || d.bankDetails?.holderName,
@@ -1744,6 +1750,19 @@ export const OwnerDashboard: React.FC = () => {
                           </span>
                         )}
                       </div>
+
+                      {tx.type === 'deposit' && tx.paymentProofDataUrl && (
+                        <a
+                          href={tx.paymentProofDataUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download={tx.paymentProofName || 'bukti-pembayaran'}
+                          className="inline-flex items-center gap-1.5 w-fit text-xs font-semibold text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          {'Lihat bukti pembayaran' + (tx.paymentProofName ? ' (' + tx.paymentProofName + ')' : '')}
+                        </a>
+                      )}
 
                       {tx.catatanAdmin && (
                         <p className="text-[11px] text-red-300 bg-red-950/40 border border-red-800/40 p-1.5 rounded-lg">
