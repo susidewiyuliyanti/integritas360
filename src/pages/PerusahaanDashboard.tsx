@@ -161,25 +161,22 @@ export const PerusahaanDashboard: React.FC = () => {
       unsubscribeComp = onSnapshot(compDocRef, (compSnap) => {
         if (compSnap.exists()) {
           const cData = compSnap.data();
-          setCompanyProfile((prev) => {
-              ...prev,
-              ...(prev || {} as UserProfile),
-              uid: (user.uid || user.id),
-              company_id: cData.company_id || effectiveCompanyId,
-              namaPT: cData.company_name || cData.namaPT || prev.namaPT || (authProfile as any)?.company_name || 'PT',
-              rewardBalance: Number(cData.rewardBalance ?? cData.saldoReward ?? cData.reward_balance ?? prev.rewardBalance ?? 0),
-              saldoReward: Number(cData.saldoReward ?? cData.rewardBalance ?? cData.reward_balance ?? prev.saldoReward ?? 0),
-              email: cData.company_email || prev.email || '',
-              danaTersedia: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-              deposit_balance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-              rewardBalance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-              saldoReward: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-              saldo: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
-              danaTerkunci: Number(cData.locked_balance ?? cData.danaTerkunci ?? 0),
-              status: cData.status || 'ACTIVE',
-              isLocked: cData.status === 'SUSPENDED' || Boolean(cData.danaTerkunci && !cData.danaTersedia)
-            };
-          });
+          setCompanyProfile((prev) => ({
+            ...(prev || {} as UserProfile),
+            uid: (user.uid || user.id),
+            company_id: cData.company_id || effectiveCompanyId,
+            namaPT: cData.company_name || cData.namaPT || prev?.namaPT || (authProfile as any)?.company_name || 'PT',
+            email: cData.company_email || prev?.email || '',
+            danaTersedia: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+            deposit_balance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+            rewardBalance: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+            saldoReward: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+            saldo: Number(cData.deposit_balance ?? cData.danaTersedia ?? 0),
+            danaTerkunci: Number(cData.locked_balance ?? cData.danaTerkunci ?? 0),
+            locked_balance: Number(cData.locked_balance ?? cData.danaTerkunci ?? 0),
+            status: cData.status || 'ACTIVE',
+            isLocked: cData.status === 'SUSPENDED',
+          }));
         }
       });
     }
