@@ -15,9 +15,28 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
   const [error, setError] = useState<string>('');
   const [downloading, setDownloading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [liveRewardBalance, setLiveRewardBalance] = useState<number | null>(null);
 
   const companyId = resolveCompanyId(company);
   const laporUrl = companyId ? resolvePublicReportUrl(companyId, company.customUrl) : '';
+  const liveCompany: PosterOptions = { ...company, danaTersedia: liveRewardBalance ?? company.danaTersedia, rewardBalance: liveRewardBalance ?? company.rewardBalance };
+
+  useEffect(() => {
+    if (!isOpen) { setLiveRewardBalance(null); return; }
+    let active = true;
+    const refreshBalance = async () => {
+      try {
+        const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        const balance = Number(data?.company?.deposit_balance);
+        if (active && Number.isFinite(balance) && balance >= 0) setLiveRewardBalance(balance);
+      } catch (err) { console.warn('Gagal menyegarkan saldo reward perusahaan:', err); }
+    };
+    void refreshBalance();
+    const timer = window.setInterval(refreshBalance, 10000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -38,7 +57,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
         if (!isMounted) return;
         setQrDataUrl(qrUrl);
 
-        const canvas = await renderPosterToCanvas({ ...company, uid: companyId }, qrUrl);
+        const canvas = await renderPosterToCanvas({ ...liveCompany, uid: companyId }, qrUrl);
         if (!isMounted) return;
         setPreviewDataUrl(canvas.toDataURL('image/png'));
       } catch (err) {
@@ -58,7 +77,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     return () => {
       isMounted = false;
     };
-  }, [isOpen, companyId, company.customUrl, company.namaPT, company.danaTersedia, company.rewardBalance, company.sektor]);
+  }, [isOpen, companyId, company.customUrl, company.namaPT, company.danaTersedia, company.rewardBalance, company.sektor, liveRewardBalance]);
 
   if (!isOpen) return null;
 
@@ -66,7 +85,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     if (!qrDataUrl || downloading) return;
     try {
       setDownloading(true);
-      await downloadPoster({ ...company, uid: companyId }, qrDataUrl || undefined);
+      await downloadPoster({ ...liveCompany, uid: companyId }, qrDataUrl || undefined);
     } catch (err) {
       console.error('Error downloading poster:', err);
     } finally {
@@ -137,7 +156,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Total Reward Tersedia</span>
-                  <span className="font-mono font-bold text-emerald-400">Rp {Number(company.danaTersedia ?? company.rewardBalance ?? 0).toLocaleString('id-ID')}</span>
+                  <span className="font-mono font-bold text-emerald-400">Rp {Number(liveCompany.danaTersedia ?? liveCompany.rewardBalance ?? 0).toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>QR Resolusi</span>
