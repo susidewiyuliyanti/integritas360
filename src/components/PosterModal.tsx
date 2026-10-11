@@ -53,8 +53,8 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
           };
           if (!canonical.namaPT) throw new Error('Nama perusahaan tidak ditemukan di database D1.');
           if (active) setResolvedCompany(canonical);
-        } else if (!response.ok) {
-          throw new Error(result?.error || 'Tidak dapat memverifikasi perusahaan dari database D1.');
+        } else {
+          throw new Error(result?.error || 'Akun ini tidak terhubung ke perusahaan yang terdaftar di database D1.');
         }
       } catch (err) {
         console.error('Gagal memverifikasi identitas tenant untuk QR:', err);
