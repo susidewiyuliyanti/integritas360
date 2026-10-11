@@ -378,11 +378,14 @@ export const PerusahaanDashboard: React.FC = () => {
       // Deadline 24 jam ke depan
       const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-      await updateDoc(doc(db, 'reports', report.id), {
-        companyCaseStatus: 'kasus_diambil',
-        takenAt: serverTimestamp(),
-        autoReleaseDeadline: deadline
+      const response = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ operation: 'take-case', id: report.id })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan status kasus ke D1.');
 
       setActionFeedback({
         type: 'success',
@@ -476,10 +479,14 @@ export const PerusahaanDashboard: React.FC = () => {
     try {
       setActionLoadingId(report.id);
       setActionFeedback(null);
-      await updateDoc(doc(db, 'reports', report.id), {
-        rewardAmount: cleanAmount,
-        rewardStatusPerusahaan: 'disetujui'
+      const response = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ operation: 'set-report-reward', id: report.id, rewardAmount: cleanAmount })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan reward ke D1.');
       setEditingRewardReportId(null);
       setRewardInputVal('');
       setActionFeedback({
