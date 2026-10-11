@@ -28,7 +28,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur border-b border-slate-800 text-white">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-16 py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-16 py-2 flex flex-row items-center justify-between md:flex-row md:items-center md:justify-between gap-2">
         <button onClick={() => navigate('/')} className="flex items-center gap-2 sm:gap-3 text-left focus:outline-none group cursor-pointer min-w-0 max-w-full">
           <BrandLogo size="md" className="group-hover:scale-105 transition-transform shrink-0" />
           <div className="min-w-0">
@@ -44,7 +44,7 @@ export const Navbar: React.FC = () => {
           </div>
         </button>
 
-        <nav aria-label="Navigasi utama" className="flex justify-end w-full md:w-auto">
+        <nav aria-label="Navigasi utama" className="flex justify-end w-auto md:w-auto shrink-0">
           <details className="relative group">
             <summary className="list-none flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-700/80 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold cursor-pointer select-none transition-colors">
               <Menu className="w-4 h-4 text-amber-400" />
