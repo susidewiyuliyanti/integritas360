@@ -23,8 +23,12 @@ export const onRequestGet=async({request,env}:{request:Request,env:Env})=>{
 };
 export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   const actor=await sessionUser(request,env);
-  if(!actor || !actor.company_id || !['perusahaan','admin_perusahaan','company_admin','finance','hr','auditor'].includes(String(actor.role||'').toLowerCase())) return json({error:'Unauthorized'},401);
-  const body=await request.json<any>(); const op=body.operation; const companyId=actor.company_id;
+  if(!actor || !actor.company_id) return json({error:'Unauthorized'},401);
+  const body=await request.json<any>(); const op=body.operation;
+  const actorRole=String(actor.role||'').toLowerCase();
+  const standardRoles=['perusahaan','admin_perusahaan','company_admin','finance','hr'];
+  if(!standardRoles.includes(actorRole) && !(actorRole==='auditor' && ['save-company-profile','update-user'].includes(String(op||'')))) return json({error:'Unauthorized'},401);
+  const companyId=actor.company_id;
   if(op==='save-company-profile'){
     const actorRole=String(actor.role||'').toLowerCase();
     const d=body.data||{};
@@ -196,6 +200,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     const id=String(body.id||''); const d=body.data||{};
     const target=await env.DB.prepare('SELECT id,role,profile_json FROM users WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
     if(!target) return json({error:'User tidak ditemukan'},404);
+    if(actorRole==='auditor' && (id!==actor.id || d.role!==undefined || d.status!==undefined)) return json({error:'Auditor hanya boleh memperbarui profilnya sendiri.'},403);
     if(d.role){
       const nextRole=String(d.role).toLowerCase();
       if(!['company_user','finance','hr','admin_perusahaan','company_admin'].includes(nextRole)) return json({error:'Role akun tidak diizinkan.'},400);
