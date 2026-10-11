@@ -77,7 +77,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
         const balance = Number(data?.company?.deposit_balance);
         if (active && Number.isFinite(balance) && balance >= 0) setLiveRewardBalance(balance);
         if (active && data?.company?.company_name) {
-          setResolvedCompany((prev) => ({ ...(prev || liveIdentity), namaPT: String(data.company.company_name), uid: String(data.company.company_id), company_id: String(data.company.company_id), companyId: String(data.company.company_id) }));
+          setResolvedCompany((prev) => ({ ...(prev || liveIdentity), namaPT: String(data.company.company_name), uid: String(data.company.company_id), company_id: String(data.company.company_id), companyId: String(data.company.company_id), danaTersedia: balance, rewardBalance: balance }));
         }
       } catch (err) { console.warn('Gagal menyegarkan saldo reward perusahaan:', err); }
     };
@@ -102,7 +102,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
       try {
         setLoading(true);
         if (!companyId) throw new Error('ID perusahaan tidak tersedia di database D1. QR Code tidak dapat dibuat.');
-        const qrUrl = await generateQrCodeDataUrl(companyId, company.customUrl);
+        const qrUrl = await generateQrCodeDataUrl(companyId, liveIdentity.customUrl);
         if (!isMounted) return;
         setQrDataUrl(qrUrl);
 
@@ -201,7 +201,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
               <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Nama Perusahaan Tenant</span>
-                  <span className="font-semibold text-white">{company.namaPT}</span>
+                  <span className="font-semibold text-white">{liveCompany.namaPT}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Total Reward Tersedia</span>
@@ -215,7 +215,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                   <span>Status Mesin</span>
                   <span className={`flex items-center gap-1 font-semibold ${error ? 'text-red-400' : 'text-emerald-400'}`}>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    {error ? 'QR ERROR' : 'QR READY'}
+                    {error ? 'QR ERROR' : loading ? 'MEMUAT QR' : 'QR SIAP'}
                   </span>
                 </div>
               </div>
