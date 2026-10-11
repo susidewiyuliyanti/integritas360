@@ -1643,7 +1643,7 @@ export const PerusahaanDashboard: React.FC = () => {
                     <p className="text-xs font-semibold text-slate-300 mb-2 text-center">
                       Pindai QRIS Statis Resmi (NMID: ID1026539516033)
                     </p>
-                    <QrisStaticCard nominal={depositAmount} />
+                    <QrisStaticCard nominal={depositAmount} companyName={namaPT} rewardBalance={Number((companyProfile as any)?.rewardBalance ?? (companyProfile as any)?.saldoReward ?? (companyProfile as any)?.danaTersedia ?? 0)} />
                   </>
                 ) : (
                   <div className="w-full space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
