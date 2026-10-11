@@ -216,19 +216,26 @@ export const PerusahaanDashboard: React.FC = () => {
 
     try {
       setProcessingDeposit(true);
-      await addDoc(collection(db, 'transactions'), {
-        userId: (user.uid || user.id),
-        userName: namaPT,
-        type: 'deposit',
-        amount: depositAmount,
-        status: 'pending',
-        metode: depositMethod,
-        paymentProofName: paymentProof.name,
-        paymentProofType: paymentProof.type,
-        paymentProofDataUrl: paymentProof.dataUrl,
-        keterangan: `Deposit saldo perusahaan via ${depositMethod}: Rp ${depositAmount.toLocaleString('id-ID')} (Menunggu verifikasi Administrator)`,
-        createdAt: serverTimestamp(),
+      const response = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'create-transaction',
+          data: {
+            userName: namaPT,
+            type: 'deposit',
+            amount: depositAmount,
+            method: depositMethod,
+            paymentProofName: paymentProof.name,
+            paymentProofType: paymentProof.type,
+            paymentProofDataUrl: paymentProof.dataUrl,
+            keterangan: `Deposit saldo perusahaan via ${depositMethod}: Rp ${depositAmount.toLocaleString('id-ID')} (Menunggu verifikasi Administrator)`
+          }
+        })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan deposit ke database.');
 
       setShowDepositModal(false);
       setPaymentProof(null);
@@ -261,22 +268,30 @@ export const PerusahaanDashboard: React.FC = () => {
 
     try {
       setProcessingDeposit(true);
-      await addDoc(collection(db, 'transactions'), {
-        userId: (user.uid || user.id),
-        userName: namaPT,
-        type: 'deposit',
-        amount: depositAmount,
-        status: 'pending',
-        metode: `NOWPayments (${cryptoInfo.cryptoCurrency})`,
-        cryptoCurrency: cryptoInfo.cryptoCurrency,
-        cryptoAmount: cryptoInfo.cryptoAmount,
-        txHash: cryptoInfo.txHash,
-        paymentProofName: paymentProof.name,
-        paymentProofType: paymentProof.type,
-        paymentProofDataUrl: paymentProof.dataUrl,
-        keterangan: `Deposit Crypto via NOWPayments: ${cryptoInfo.cryptoAmount} ${cryptoInfo.cryptoCurrency} (TXID: ${cryptoInfo.txHash}) - Menunggu verifikasi Administrator`,
-        createdAt: serverTimestamp(),
+      const method = `NOWPayments (${cryptoInfo.cryptoCurrency})`;
+      const response = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'create-transaction',
+          data: {
+            userName: namaPT,
+            type: 'deposit',
+            amount: depositAmount,
+            method,
+            cryptoCurrency: cryptoInfo.cryptoCurrency,
+            cryptoAmount: cryptoInfo.cryptoAmount,
+            txHash: cryptoInfo.txHash,
+            paymentProofName: paymentProof.name,
+            paymentProofType: paymentProof.type,
+            paymentProofDataUrl: paymentProof.dataUrl,
+            keterangan: `Deposit Crypto via NOWPayments: ${cryptoInfo.cryptoAmount} ${cryptoInfo.cryptoCurrency} (TXID: ${cryptoInfo.txHash}) - Menunggu verifikasi Administrator`
+          }
+        })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan konfirmasi deposit ke database.');
 
       setShowNowPaymentsModal(false);
       setShowDepositModal(false);
