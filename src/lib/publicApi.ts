@@ -50,7 +50,10 @@ export function onSnapshot(ref: Ref, next: (snapshot: any) => void, error?: (err
 
 export async function getDocs(ref: Ref) {
   const p = new URLSearchParams({ collection: ref.collection });
-  if (ref.where) {
+  if (ref.id) {
+    // Document listeners must request the exact D1 row, not an unfiltered collection.
+    p.set('idValue', String(ref.id));
+  } else if (ref.where) {
     if (ref.where.field === 'id') p.set('idValue', String(ref.where.value));
     else if (['reports','transactions','audit_logs'].includes(ref.collection) && ['companyId','company_id'].includes(ref.where.field)) p.set('companyId', String(ref.where.value));
     else { p.set('whereField', ref.where.field); p.set('whereValue', String(ref.where.value)); }
