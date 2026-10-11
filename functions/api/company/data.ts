@@ -129,6 +129,41 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     if(finalMeta.rewardReleaseOperationId!==operationId) return json({error:'Reward tidak diproses. Laporan mungkin sudah dirilis atau saldo tidak mencukupi.'},409);
     return json({ok:true,id,rewardAmount:requested,remainingBalance:Number((await env.DB.prepare('SELECT deposit_balance FROM companies WHERE company_id=?').bind(companyId).first<any>())?.deposit_balance||0)});
   }
+  if(op==='take-case'){
+    const id=String(body.id||'');
+    if(!id) return json({error:'ID laporan wajib diisi.'},400);
+    const report=await env.DB.prepare('SELECT * FROM reports WHERE id=? AND company_id=? LIMIT 1').bind(id,companyId).first<any>();
+    if(!report) return json({error:'Laporan tidak ditemukan pada tenant ini.'},404);
+    if(String(report.status||'').toLowerCase()!=='valid') return json({error:'Kasus hanya dapat diambil setelah laporan dinyatakan VALID.'},409);
+    let current:any={}; try{current=JSON.parse(report.metadata_json||'{}')}catch{}
+    if(current.companyCaseStatus==='kasus_diambil' || current.companyCaseStatus==='selesai') return json({error:'Kasus ini sudah diambil atau diselesaikan.'},409);
+    const deadline=new Date(Date.now()+24*60*60*1000).toISOString();
+    const next={...current,companyCaseStatus:'kasus_diambil',takenAt:new Date().toISOString(),autoReleaseDeadline:deadline};
+    await env.DB.prepare('UPDATE reports SET metadata_json=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?')
+      .bind(JSON.stringify(next),id,companyId).run();
+    await env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
+      .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'REPORT_CASE_TAKEN','report',id,JSON.stringify({autoReleaseDeadline:deadline})).run();
+    return json({ok:true,id,companyCaseStatus:'kasus_diambil',autoReleaseDeadline:deadline});
+  }
+  if(op==='set-report-reward'){
+    const id=String(body.id||'');
+    const amount=Number(body.rewardAmount);
+    if(!id) return json({error:'ID laporan wajib diisi.'},400);
+    if(!Number.isFinite(amount)||amount<=0) return json({error:'Nominal reward tidak valid.'},400);
+    const report=await env.DB.prepare('SELECT * FROM reports WHERE id=? AND company_id=? LIMIT 1').bind(id,companyId).first<any>();
+    if(!report) return json({error:'Laporan tidak ditemukan pada tenant ini.'},404);
+    if(String(report.status||'').toLowerCase()!=='valid') return json({error:'Reward hanya dapat diatur setelah laporan berstatus VALID.'},409);
+    const isFinancial=String(report.violation_type||'').toLowerCase().includes('finansial') || Number(report.estimated_loss||0)>0;
+    const minimum=isFinancial?Math.ceil(Number(report.estimated_loss||0)*0.02):100000;
+    if(amount<minimum) return json({error:isFinancial?'Reward kasus finansial minimal 2% dari estimasi kerugian.':'Reward kasus etik minimal Rp 100.000.'},400);
+    let current:any={}; try{current=JSON.parse(report.metadata_json||'{}')}catch{}
+    const next={...current,rewardAmount:amount,rewardStatusPerusahaan:'disetujui'};
+    await env.DB.prepare('UPDATE reports SET reward_amount=?,metadata_json=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?')
+      .bind(amount,JSON.stringify(next),id,companyId).run();
+    await env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
+      .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'REPORT_REWARD_UPDATED','report',id,JSON.stringify({rewardAmount:amount,minimum})).run();
+    return json({ok:true,id,rewardAmount:amount,rewardStatusPerusahaan:'disetujui'});
+  }
   if(op==='update-report'){
     const id=String(body.id||''); const d=body.data||{};
     if(!id) return json({error:'ID laporan wajib diisi.'},400);
