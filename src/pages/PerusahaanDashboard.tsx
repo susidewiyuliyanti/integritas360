@@ -540,7 +540,7 @@ export const PerusahaanDashboard: React.FC = () => {
         handleReleaseReward(rep, true);
       }
     });
-  }, [reports, actionLoadingId]);
+  }, [reports]);
 
   // Save Nominal Reward (Optional adjustment by company)
   const handleSaveReward = async (report: WhistleblowingReport) => {
