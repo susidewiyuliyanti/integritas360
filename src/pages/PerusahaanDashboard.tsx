@@ -1208,7 +1208,7 @@ export const PerusahaanDashboard: React.FC = () => {
             </div>
 
             {/* Payment Method Selector Tabs */}
-            <div className="grid grid-cols-3 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+            <div className="grid grid-cols-2 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
               <button
                 type="button"
                 onClick={() => setDepositTab('qris')}
@@ -1237,21 +1237,9 @@ export const PerusahaanDashboard: React.FC = () => {
                 <span>NOWPayments (Crypto)</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setDepositTab('bank')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  depositTab === 'bank'
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                <span>Transfer Bank / VA</span>
-              </button>
             </div>
 
-            {/* Content for QRIS or Bank Tab */}
+            {/* Konten QRIS; transaksi crypto dibuka melalui NOWPayments */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* Kolom Kiri: Visual Pembayaran */}
               <div className="flex flex-col items-center">
@@ -1338,9 +1326,6 @@ export const PerusahaanDashboard: React.FC = () => {
                     <option value="NOWPayments (Crypto Gateway USDT/BTC/ETH)">
                       NOWPayments Crypto Gateway (USDT, BTC, ETH, SOL, TRX)
                     </option>
-                    <option value="BCA Transfer Bank">BCA Transfer Rekening</option>
-                    <option value="Mandiri Transfer Bank">Mandiri Transfer Rekening</option>
-                    <option value="BRI Transfer Bank">BRI Transfer Rekening</option>
                   </select>
                 </div>
 
@@ -1351,7 +1336,7 @@ export const PerusahaanDashboard: React.FC = () => {
                     Ketentuan Verifikasi Administrator:
                   </div>
                   <p className="text-slate-300">
-                    Semua transaksi deposit melalui QRIS, Rekening Bank, maupun Crypto NOWPayments <strong>akan diverifikasi oleh Administrator</strong> sebelum saldo aktif ditambahkan ke akun Anda.
+                    Semua transaksi deposit melalui QRIS atau NOWPayments <strong>akan diverifikasi oleh Administrator</strong> sebelum saldo aktif ditambahkan ke akun Anda.
                   </p>
                 </div>
 
