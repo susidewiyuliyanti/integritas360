@@ -18,10 +18,9 @@ export const onRequestGet:PagesFunction<Env>=async({request,env})=>{
     try{userProfile=user.profile_json?JSON.parse(user.profile_json):{}}catch{}
     try{companyMetadata=user.company_metadata?JSON.parse(user.company_metadata):{}}catch{}
     try{companyProfile=user.company_profile_json?JSON.parse(user.company_profile_json):{}}catch{}
-    // The companies row is canonical. Old metadata must never override current D1 fields.
-    const registeredCompanyName=String(user.company_name||companyProfile.namaPT||companyMetadata.namaPT||'').trim();
-    const profile={...userMetadata,...userProfile,...companyMetadata,...companyProfile,uid:user.id,email:user.email,role:user.role,company_id:user.company_id,company_id_alias:user.company_id,company_name:user.company_name,namaPT:registeredCompanyName,perusahaanName:registeredCompanyName};
-    const company=user.cid?{...companyMetadata,...companyProfile,company_id:user.cid,company_name:user.company_name,namaPT:registeredCompanyName,perusahaanName:registeredCompanyName,email:user.company_email,status:user.company_status,deposit_balance:Number(user.deposit_balance||0),locked_balance:Number(user.locked_balance||0)}:null;
+    const registeredCompanyName=String(companyProfile.namaPT||companyMetadata.namaPT||user.company_name||'').trim();
+    const profile={...userMetadata,...userProfile,...companyProfile,uid:user.id,email:user.email,role:user.role,company_id:user.company_id,company_id_alias:user.company_id,company_name:user.company_name,namaPT:registeredCompanyName,perusahaanName:registeredCompanyName};
+    const company=user.cid?{...companyMetadata,...companyProfile,company_id:user.cid,company_name:user.company_name,namaPT:registeredCompanyName,perusahaanName:registeredCompanyName,email:user.company_email,status:user.company_status,deposit_balance:user.deposit_balance,locked_balance:user.locked_balance}:null;
     const companyUser=user.company_id?await env.DB.prepare('SELECT * FROM company_users WHERE user_id=? LIMIT 1').bind(user.id).first<any>():null;
     return json({ok:true,profile,company,companyUser});
   }catch(e){console.error('COMPANY_ME',e);return json({error:'Gagal mengambil profil perusahaan.'},500);}

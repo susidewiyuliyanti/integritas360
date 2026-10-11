@@ -143,197 +143,106 @@ export const ProfilePage: React.FC = () => {
 
   const hasInitializedForm = useRef(false);
 
-  // Realtime Profile Listener
+  // Canonical tenant profile from D1; avoid legacy Firebase overwriting saved values on refresh.
   useEffect(() => {
-    if (!user) {
-      hasInitializedForm.current = false;
-      return;
-    }
-
-    const userRef = doc(db, 'users', (user.uid || user.id));
-    const unsub = onSnapshot(
-      userRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const d = docSnap.data();
-          const isAud = d.role === 'auditor';
-          const p: UserProfile = {
-            uid: (user.uid || user.id),
-            email: d.email || user.email || '',
-            role: d.role || 'perusahaan',
-            perusahaanName: d.perusahaanName || d.namaPT || d.company_name || '',
-            company_name: d.company_name || d.namaPT || d.perusahaanName || '',
-            namaPT: d.namaPT || d.company_name || d.perusahaanName || '',
-            sektor: d.sektor || (isAud ? 'Audit Forensik & Investigasi Fraud' : 'Manufaktur & Bisnis'),
-            alamat: d.alamat || '',
-            deskripsi: d.deskripsi || '',
-            telepon: d.telepon || '',
-            npwp: d.npwp || '',
-            picName: d.picName || d.email || user.email || '',
-            nomorLisensi: d.nomorLisensi || '',
-            gelarProfesi: d.gelarProfesi || '',
-            spesialisasiAudit: d.spesialisasiAudit || d.sektor || 'Audit Forensik & Investigasi Fraud',
-            biayaJasaPerKasus: Math.max(100000, Number(d.biayaJasaPerKasus) || 150000),
-            danaTersedia: Number(d.danaTersedia || d.danaTerkunci || 0),
-            saldo: Number(d.saldo || 0),
-            danaTerkunci: Number(d.danaTerkunci || d.danaTersedia || 0),
-            statusVerifikasiDokumen: d.statusVerifikasiDokumen || 'belum_upload',
-            dokumenUrl: d.dokumenUrl || '',
-            dokumenNama: d.dokumenNama || '',
-            catatanVerifikasi: d.catatanVerifikasi || '',
-            photoURL: d.photoURL || user.photoURL || '',
-            rekeningBank: d.rekeningBank || { bankName: 'BCA', accountNumber: '', holderName: '' },
-            createdAt: d.createdAt,
-          };
-          setProfileData(p);
-          setPhotoURL(p.photoURL || '');
-          setDokumenNama(p.dokumenNama || '');
-          setDokumenUrl(p.dokumenUrl || '');
-          setStatusVerifikasiDokumen(p.statusVerifikasiDokumen || 'belum_upload');
-          setCatatanVerifikasi(p.catatanVerifikasi || '');
-
-          // Hanya inisialisasi input formulir saat pertama kali memuat dari Firestore,
-          // sehingga input/isian formulir perusahaan TIDAK ter-reset atau berubah ketika dokumen diunggah
-          if (!hasInitializedForm.current) {
-            hasInitializedForm.current = true;
-            setNamaPT(p.namaPT);
-            setSektor(p.sektor);
-            setAlamat(p.alamat);
-            setDeskripsi(p.deskripsi);
-            setTelepon(p.telepon || '');
-            setNpwp(p.npwp || '');
-            setPicName(p.picName || d.email || user.email || '');
-            setNomorLisensi(d.nomorLisensi || '');
-            setGelarProfesi(d.gelarProfesi || '');
-            setSpesialisasiAudit(d.spesialisasiAudit || d.sektor || 'Audit Forensik & Investigasi Fraud');
-            setBiayaJasaPerKasus(Math.max(100000, Number(d.biayaJasaPerKasus) || 150000));
-            if (p.rekeningBank) {
-              setBankName(p.rekeningBank.bankName || 'BCA');
-              setAccountNumber(p.rekeningBank.accountNumber || '');
-              setHolderName(p.rekeningBank.holderName || '');
-              setWithdrawBank(p.rekeningBank.bankName || 'BCA');
-              setWithdrawAccount(p.rekeningBank.accountNumber || '');
-              setWithdrawHolder(p.rekeningBank.holderName || '');
-            }
-          }
+    if (!user) { hasInitializedForm.current = false; return; }
+    let active = true;
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store', headers: { 'cache-control': 'no-cache' } });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result?.company?.company_id) throw new Error(result?.error || 'Profil tenant D1 tidak tersedia.');
+        const d = { ...(result.profile || {}), ...(result.company || {}) };
+        const balance = Number(d.deposit_balance ?? 0);
+        const p: UserProfile = {
+          ...d, uid: user.uid || user.id, email: d.email || user.email || '', role: result.profile?.role || user.role || 'perusahaan',
+          perusahaanName: d.company_name || d.namaPT || '', company_name: d.company_name || d.namaPT || '', namaPT: d.company_name || d.namaPT || '',
+          sektor: d.sektor || d.sector || 'Manufaktur & Bisnis', alamat: d.alamat || '', deskripsi: d.deskripsi || '', telepon: d.telepon || '', npwp: d.npwp || '', picName: d.picName || d.email || user.email || '',
+          nomorLisensi: d.nomorLisensi || '', gelarProfesi: d.gelarProfesi || '', spesialisasiAudit: d.spesialisasiAudit || d.sektor || 'Audit Forensik & Investigasi Fraud',
+          biayaJasaPerKasus: Math.max(100000, Number(d.biayaJasaPerKasus) || 150000),
+          danaTersedia: balance, saldo: balance, deposit_balance: balance, danaTerkunci: Number(d.locked_balance || 0),
+          statusVerifikasiDokumen: d.statusVerifikasiDokumen || 'belum_upload', dokumenUrl: d.dokumenUrl || '', dokumenNama: d.dokumenNama || '',
+          catatanVerifikasi: d.catatanVerifikasi || '', photoURL: d.photoURL || '',
+          rekeningBank: d.rekeningBank || { bankName: 'BCA', accountNumber: '', holderName: '' }
+        };
+        if (!active) return;
+        setProfileData(p); setPhotoURL(p.photoURL || ''); setDokumenNama(p.dokumenNama || ''); setDokumenUrl(p.dokumenUrl || '');
+        setStatusVerifikasiDokumen(p.statusVerifikasiDokumen || 'belum_upload'); setCatatanVerifikasi(p.catatanVerifikasi || '');
+        if (!hasInitializedForm.current) {
+          hasInitializedForm.current = true;
+          setNamaPT(p.namaPT || ''); setSektor(p.sektor || ''); setAlamat(p.alamat || ''); setDeskripsi(p.deskripsi || '');
+          setTelepon(p.telepon || ''); setNpwp(p.npwp || ''); setPicName(p.picName || '');
+          setNomorLisensi(p.nomorLisensi || ''); setGelarProfesi(p.gelarProfesi || '');
+          setSpesialisasiAudit(p.spesialisasiAudit || 'Audit Forensik & Investigasi Fraud');
+          setBiayaJasaPerKasus(Math.max(100000, Number(p.biayaJasaPerKasus) || 150000));
+          const b=p.rekeningBank || {bankName:'BCA',accountNumber:'',holderName:''};
+          setBankName(b.bankName || 'BCA'); setAccountNumber(b.accountNumber || ''); setHolderName(b.holderName || '');
+          setWithdrawBank(b.bankName || 'BCA'); setWithdrawAccount(b.accountNumber || ''); setWithdrawHolder(b.holderName || '');
         }
-      },
-      (err) => console.error('Error listening to user profile:', err)
-    );
+      } catch (err) { console.error('Gagal memuat profil tenant dari D1:', err); }
+    };
+    void loadProfile(); const timer=window.setInterval(()=>{void loadProfile();},10000);
+    return ()=>{active=false;window.clearInterval(timer);};
+  }, [user?.id, user?.uid, user?.email, user?.role]);
 
-    return () => unsub();
-  }, [user]);
-
-  // Realtime Transactions Listener
+  // Transaction history is tenant-scoped and loaded from D1.
   useEffect(() => {
     if (!user) return;
+    let active=true;
+    const loadTransactions=async()=>{
+      try{
+        const identityResponse=await fetch('/api/company/me',{credentials:'include',cache:'no-store'});
+        const identity=await identityResponse.json().catch(()=>({}));
+        const companyId=identity?.company?.company_id;
+        if(!identityResponse.ok||!companyId) throw new Error(identity?.error||'ID tenant tidak tersedia.');
+        const response=await fetch('/api/public/data?collection=transactions&companyId='+encodeURIComponent(companyId),{credentials:'include',cache:'no-store'});
+        const result=await response.json().catch(()=>({}));
+        if(!response.ok) throw new Error(result?.error||'Gagal memuat riwayat transaksi.');
+        const items=Array.isArray(result?.items)?result.items:[];
+        const list:WalletTransaction[]=items.filter((d:any)=>!['lock','unlock','potong_lock_reward','potong_lock_auditor'].includes(String(d.type||''))).map((d:any)=>({
+          id:String(d.id),userId:d.user_id||d.userId||'',type:d.type,amount:Number(d.amount||0),status:d.status||'pending',
+          keterangan:d.keterangan||d.description||'',metode:d.method||d.metode,bankDetails:d.bankDetails||d.bank_details,
+          createdAt:d.created_at||d.createdAt
+        })).sort((a:any,b:any)=>new Date(b.createdAt||0).getTime()-new Date(a.createdAt||0).getTime());
+        if(active) setTransactions(list);
+      }catch(err){console.error('Gagal memuat transaksi tenant dari D1:',err);}
+    };
+    void loadTransactions(); const timer=window.setInterval(()=>{void loadTransactions();},10000);
+    return ()=>{active=false;window.clearInterval(timer);};
+  },[user?.id,user?.uid]);
 
-    const q = query(collection(db, 'transactions'), where('userId', '==', (user.uid || user.id)));
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const list: WalletTransaction[] = [];
-        snapshot.forEach((snap) => {
-          const d = snap.data();
-          // Hide legacy lock/unlock entries: company funds now use the live tenant balance only.
-          if (['lock', 'unlock', 'potong_lock_reward', 'potong_lock_auditor'].includes(String(d.type || ''))) return;
-          list.push({
-            id: snap.id,
-            userId: d.userId,
-            type: d.type,
-            amount: Number(d.amount || 0),
-            status: d.status || 'selesai',
-            keterangan: d.keterangan || '',
-            metode: d.metode,
-            bankDetails: d.bankDetails,
-            createdAt: d.createdAt,
-          });
-        });
-        // Sort descending by createdAt or local fallback
-        list.sort((a, b) => {
-          const timeA = a.createdAt?.seconds || 0;
-          const timeB = b.createdAt?.seconds || 0;
-          return timeB - timeA;
-        });
-        setTransactions(list);
-      },
-      (err) => console.warn('Error fetching transactions:', err)
-    );
-
-    return () => unsub();
-  }, [user]);
-
-  // Handle Save Profile
+  // Tenant profile edits persist to canonical D1 company profile.
   const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
+    e.preventDefault(); if(!user) return;
     try {
-      setSavingProfile(true);
-      setProfileErrorMsg('');
-      setProfileSuccessMsg('');
-
-      const isAud = profileData?.role === 'auditor';
-      const cleanFee = Math.max(100000, Number(biayaJasaPerKasus) || 150000);
-
-      const userRef = doc(db, 'users', (user.uid || user.id));
-      const updateData: any = {
-        namaPT: namaPT.trim(),
-        alamat: alamat.trim(),
-        deskripsi: deskripsi.trim(),
-        telepon: telepon.trim(),
-        npwp: npwp.trim(),
-        picName: picName.trim(),
-        rekeningBank: {
-          bankName,
-          accountNumber: accountNumber.trim(),
-          holderName: holderName.trim(),
-        },
-      };
-
-      if (isAud) {
-        updateData.nomorLisensi = nomorLisensi.trim();
-        updateData.gelarProfesi = gelarProfesi.trim();
-        updateData.spesialisasiAudit = spesialisasiAudit.trim();
-        updateData.sektor = spesialisasiAudit.trim(); // sync for sector filters
-        updateData.biayaJasaPerKasus = cleanFee;
-      } else {
-        updateData.sektor = sektor.trim() || 'Lainnya';
+      setSavingProfile(true); setProfileErrorMsg(''); setProfileSuccessMsg('');
+      const isAud=profileData?.role==='auditor';
+      const cleanFee=Math.max(100000,Number(biayaJasaPerKasus)||150000);
+      const updateData:any={namaPT:namaPT.trim(),alamat:alamat.trim(),deskripsi:deskripsi.trim(),telepon:telepon.trim(),npwp:npwp.trim(),picName:picName.trim(),rekeningBank:{bankName,accountNumber:accountNumber.trim(),holderName:holderName.trim()}};
+      if(isAud){
+        updateData.nomorLisensi=nomorLisensi.trim();updateData.gelarProfesi=gelarProfesi.trim();updateData.spesialisasiAudit=spesialisasiAudit.trim();updateData.sektor=spesialisasiAudit.trim();updateData.biayaJasaPerKasus=cleanFee;
+        await updateDoc(doc(db,'users',(user.uid||user.id)),updateData);
+      }else{
+        updateData.sektor=sektor.trim()||'Lainnya';
+        const response=await fetch('/api/company/data',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({operation:'save-company-profile',data:updateData})});
+        const result=await response.json().catch(()=>({}));
+        if(!response.ok||!result?.ok) throw new Error(result?.error||'Profil gagal disimpan ke D1.');
+        setProfileData(prev=>prev?({...prev,...updateData,company_name:updateData.namaPT,namaPT:updateData.namaPT,perusahaanName:updateData.namaPT}):prev);
       }
-
-      await updateDoc(userRef, updateData);
-
-      setProfileSuccessMsg(
-        isAud
-          ? 'Profil praktisi auditor, lisensi profesi, tarif jasa, dan rekening bank berhasil disimpan!'
-          : 'Data profil dan legalitas perusahaan berhasil disimpan!'
-      );
-      setTimeout(() => setProfileSuccessMsg(''), 4000);
-    } catch (err: any) {
-      console.error('Error updating profile:', err);
-      setProfileErrorMsg(err.message || 'Gagal menyimpan perubahan profil.');
-    } finally {
-      setSavingProfile(false);
-    }
+      setProfileSuccessMsg(isAud?'Profil praktisi auditor, lisensi profesi, tarif jasa, dan rekening bank berhasil disimpan!':'Data profil dan legalitas perusahaan berhasil disimpan ke D1!');
+      setTimeout(()=>setProfileSuccessMsg(''),4000);
+    }catch(err:any){console.error('Error updating profile:',err);setProfileErrorMsg(err.message||'Gagal menyimpan perubahan profil.');}
+    finally{setSavingProfile(false);}
   };
 
-  // Quick fee updater for auditor
+    // Quick fee updater for auditor.
   const handleQuickUpdateFee = async (newFee: number) => {
-    if (!user) return;
-    const clean = Math.max(100000, newFee);
-    try {
-      await updateDoc(doc(db, 'users', (user.uid || user.id)), {
-        biayaJasaPerKasus: clean,
-      });
-      setBiayaJasaPerKasus(clean);
-      alert(`Tarif jasa investigasi per kasus berhasil diperbarui menjadi Rp ${clean.toLocaleString('id-ID')}.`);
-    } catch (err: any) {
-      console.error('Error updating auditor fee:', err);
-      alert('Gagal mengubah tarif jasa: ' + err.message);
-    }
+    if(!user)return;const clean=Math.max(100000,newFee);
+    try{await updateDoc(doc(db,'users',(user.uid||user.id)),{biayaJasaPerKasus:clean});setBiayaJasaPerKasus(clean);alert(`Tarif jasa investigasi per kasus berhasil diperbarui menjadi Rp ${clean.toLocaleString('id-ID')}.`);}
+    catch(err:any){console.error('Error updating auditor fee:',err);alert('Gagal mengubah tarif jasa: '+err.message);}
   };
 
-  // Handle Document Upload (Perusahaan / Auditor)
+    // Handle Document Upload (Perusahaan / Auditor)
   const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -419,8 +328,13 @@ export const ProfilePage: React.FC = () => {
             updatePayload.sektor = (sektor || profileData?.sektor || 'Manufaktur & Pabrikasi').trim();
           }
 
-          const userRef = doc(db, 'users', (user.uid || user.id));
-          await updateDoc(userRef, updatePayload);
+          if (profileData?.role === 'auditor') {
+            await updateDoc(doc(db, 'users', (user.uid || user.id)), updatePayload);
+          } else {
+            const response = await fetch('/api/company/data', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operation: 'save-company-profile', data: updatePayload }) });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan data profil ke D1.');
+          }
 
           setDokumenUrl(finalData);
           setDokumenNama(file.name);
@@ -504,8 +418,13 @@ export const ProfilePage: React.FC = () => {
             updatePayload.sektor = (sektor || profileData?.sektor || 'Manufaktur & Pabrikasi').trim();
           }
 
-          const userRef = doc(db, 'users', (user.uid || user.id));
-          await updateDoc(userRef, updatePayload);
+          if (profileData?.role === 'auditor') {
+            await updateDoc(doc(db, 'users', (user.uid || user.id)), updatePayload);
+          } else {
+            const response = await fetch('/api/company/data', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operation: 'save-company-profile', data: updatePayload }) });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan data profil ke D1.');
+          }
           setPhotoURL(compressed);
           alert('Foto profil berhasil diperbarui dan data pengisian tetap tersimpan!');
         } catch (err: any) {
@@ -535,19 +454,10 @@ export const ProfilePage: React.FC = () => {
 
     setProcessingDeposit(true);
     try {
-      await addDoc(collection(db, 'transactions'), {
-        userId: (user.uid || user.id),
-        userName: profileData?.namaPT || user.email,
-        type: 'deposit',
-        amount: depositAmount,
-        status: 'pending',
-        metode: `NOWPayments (${cryptoInfo.cryptoCurrency})`,
-        cryptoCurrency: cryptoInfo.cryptoCurrency,
-        cryptoAmount: cryptoInfo.cryptoAmount,
-        txHash: cryptoInfo.txHash,
-        keterangan: `Deposit Crypto via NOWPayments: ${cryptoInfo.cryptoAmount} ${cryptoInfo.cryptoCurrency} (TXID: ${cryptoInfo.txHash}) - Menunggu verifikasi Administrator`,
-        createdAt: serverTimestamp(),
-      });
+      const method = `NOWPayments (${cryptoInfo.cryptoCurrency})`;
+      const response = await fetch('/api/company/data', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operation: 'create-transaction', data: { userName: profileData?.namaPT || user.email, type: 'deposit', amount: depositAmount, method, cryptoCurrency: cryptoInfo.cryptoCurrency, cryptoAmount: cryptoInfo.cryptoAmount, txHash: cryptoInfo.txHash, keterangan: `Deposit Crypto via NOWPayments: ${cryptoInfo.cryptoAmount} ${cryptoInfo.cryptoCurrency} (TXID: ${cryptoInfo.txHash}) - Menunggu verifikasi Administrator` } }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan transaksi ke D1.');
 
       setShowNowPaymentsModal(false);
       setShowDepositModal(false);
@@ -578,16 +488,9 @@ export const ProfilePage: React.FC = () => {
       setProcessingDeposit(true);
 
       // Catat transaksi dengan status 'pending' (akan diverifikasi oleh Administrator)
-      await addDoc(collection(db, 'transactions'), {
-        userId: (user.uid || user.id),
-        userName: profileData?.namaPT || user.email,
-        type: 'deposit',
-        amount: depositAmount,
-        status: 'pending',
-        keterangan: `Permintaan Deposit saldo via ${depositMethod} (Menunggu verifikasi Administrator)`,
-        metode: depositMethod,
-        createdAt: serverTimestamp(),
-      });
+      const response = await fetch('/api/company/data', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operation: 'create-transaction', data: { userName: profileData?.namaPT || user.email, type: 'deposit', amount: depositAmount, method: depositMethod, metode: depositMethod, keterangan: `Permintaan Deposit saldo via ${depositMethod} (Menunggu verifikasi Administrator)` } }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan transaksi ke D1.');
 
       setShowDepositModal(false);
       setDepositAmount(5000000);
@@ -614,28 +517,9 @@ export const ProfilePage: React.FC = () => {
 
     try {
       setProcessingWithdraw(true);
-      const userRef = doc(db, 'users', (user.uid || user.id));
-
-      // Kurangi saldo aktif sementara untuk reservasi dana penarikan
-      await updateDoc(userRef, {
-        saldo: increment(-withdrawAmount),
-      });
-
-      // Catat transaksi dengan status 'pending' (akan diverifikasi & ditransfer Administrator)
-      await addDoc(collection(db, 'transactions'), {
-        userId: (user.uid || user.id),
-        userName: profileData?.namaPT || user.email,
-        type: 'withdrawal',
-        amount: withdrawAmount,
-        status: 'pending',
-        keterangan: `Penarikan dana ke rekening ${withdrawBank} ${withdrawAccount} a.n. ${withdrawHolder} (Menunggu verifikasi & transfer Administrator)`,
-        bankDetails: {
-          bankName: withdrawBank,
-          accountNumber: withdrawAccount.trim(),
-          holderName: withdrawHolder.trim(),
-        },
-        createdAt: serverTimestamp(),
-      });
+      const response = await fetch('/api/company/data', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operation: 'create-transaction', data: { userName: profileData?.namaPT || user.email, type: 'withdrawal', amount: withdrawAmount, method: 'Bank Transfer', bankDetails: { bankName: withdrawBank, accountNumber: withdrawAccount.trim(), holderName: withdrawHolder.trim() }, keterangan: `Penarikan dana ke rekening ${withdrawBank} ${withdrawAccount} a.n. ${withdrawHolder} (Menunggu verifikasi & transfer Administrator)` } }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan permintaan penarikan ke D1.');
 
       setShowWithdrawModal(false);
       setWithdrawAmount(1000000);
