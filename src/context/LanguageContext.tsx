@@ -73,7 +73,50 @@ const PHRASES: Record<string, string> = {
   'Nomor WhatsApp':'WhatsApp number','Kirim permintaan':'Send request','Pendaftaran':'Registration',
   'Khusus Akun Perusahaan & Auditor (Pelapor tidak perlu login)':'For Company and Auditor accounts only (reporters do not need to sign in)',
   'Isi formulir berikut':'Complete the following form','Perlindungan Pelapor':'Reporter Protection',
-  'Laporan anonim':'Anonymous report','Laporkan Sekarang':'Report Now'
+  'Laporan anonim':'Anonymous report',  'Laporkan Sekarang':'Report Now',
+  'Sederhana untuk Pelapor, Terukur untuk Perusahaan':'Simple for Reporters, Measurable for Companies',
+  'Perusahaan meninjau laporan':'The company reviews the report',
+  'Scan QR perusahaan':'Scan the company QR code','Saldo reward dikunci sebelum kasus dibuka':'Reward balance is locked before the case is opened',
+  'SCAN UNTUK LAPOR SECARA ANONIM':'SCAN TO REPORT ANONYMOUSLY','QR KHUSUS PERUSAHAAN':'COMPANY-SPECIFIC QR CODE',
+  'PELAPORAN ANONIM PERUSAHAAN':'CORPORATE ANONYMOUS REPORTING',
+  'Sistem tidak mencatat alamat IP atau identitas pelapor, sehingga aman dari pembalasan oknum manager.':'The system does not record the reporter’s IP address or identity, helping protect them from retaliation.',
+  'Laporan whistleblowing masuk langsung ke Dewan Owner/Komisaris, bukan ke atasan langsung pelaku.':'Whistleblowing reports go directly to the owner or board of commissioners, not to the alleged offender’s direct supervisor.',
+  'Kami akan mengirim link reset ke email Anda':'We will send a password reset link to your email',
+  'Harap masukkan email dan kata sandi.':'Please enter your email and password.',
+  'Akun login Anda sedang dinonaktifkan / ditangguhkan.':'Your account has been disabled or suspended.',
+  'Gagal masuk. Silakan coba lagi.':'Sign-in failed. Please try again.',
+  'Koneksi ke server gagal. Periksa koneksi internet dan coba lagi.':'Could not connect to the server. Check your internet connection and try again.',
+  'Harap masukkan alamat email Anda.':'Please enter your email address.',
+  'Fitur reset kata sandi sedang dipindahkan ke sistem Cloudflare. Hubungi Owner / Super Admin untuk reset sementara.':'Password reset is being migrated to Cloudflare. Contact the Owner / Super Admin for a temporary reset.',
+  'Login Google sudah dinonaktifkan. Gunakan email dan kata sandi yang diterbitkan Owner / Super Admin.':'Google sign-in is disabled. Use the email and password issued by the Owner / Super Admin.',
+  'Masuk ke Sistem':'Sign In to the System','Atur Ulang Kata Sandi':'Reset Password','Mengirim...':'Sending...','Kirim Link':'Send Link',
+  'Perusahaan Didaftarkan Manual':'Company Registration Is Manual',
+  'Pelapor whistleblower?':'Are you a whistleblower?',
+  'Lapor secara anonim tanpa login di sini':'Submit an anonymous report without signing in here',
+  'Memverifikasi akses Super Admin…':'Verifying Super Admin access…',
+  'Control plane SaaS — data lintas tenant':'SaaS control plane — cross-tenant data',
+  'Semua Tenant':'All Tenants','Semua Laporan':'All Reports','Saldo & Transaksi':'Balances & Transactions',
+  'Total Tenant':'Total Tenants','Saldo Tersedia':'Available Balance','Saldo Terkunci':'Locked Balance',
+  'Laporan Aktif':'Active Reports','Transaksi Pending':'Pending Transactions','Ringkasan sistem':'System Summary',
+  'Panel ini khusus Owner/Super Admin untuk memantau seluruh tenant, laporan, saldo, transaksi, dan jejak audit. Tenant tetap masuk melalui portal tenant terpisah.':'This panel is for the Owner/Super Admin to monitor all tenants, reports, balances, transactions, and audit trails. Tenants continue to use their separate portal.',
+  'Kelola Tenant':'Manage Tenants','Portal Tenant':'Tenant Portal','Tambah Tenant Perusahaan':'Add Company Tenant',
+  'Buat ruang perusahaan yang terpisah beserta akun admin pertamanya. Tenant baru berstatus DEPOSIT_REQUIRED.':'Create an isolated company workspace and its first admin account. New tenants have DEPOSIT_REQUIRED status.',
+  'Tenant tidak berhasil dibuat.':'Failed to create tenant.','Tenant berhasil dibuat. ID:':'Tenant created. ID:',
+  'Admin perusahaan pertama':'First Company Admin','Setiap tenant maksimal memiliki 3 akun admin termasuk akun pertama.':'Each tenant can have a maximum of 3 admin accounts, including the first.',
+  'Nama perusahaan belum terdaftar':'Company name not registered','Tarik saldo honorarium ke rekening bank':'Withdraw fee balance to a bank account',
+  'Kelola profil praktisi dan dokumen lisensi profesi':'Manage practitioner profile and professional license documents',
+  'Total Berkas Masuk':'Total Incoming Cases','Laporan Baru':'New Reports','Kasus Selesai':'Completed Cases',
+  'Spesialisasi Audit':'Audit Specialization','Saldo Honorarium':'Fee Balance',
+  'Data profil dan legalitas perusahaan berhasil disimpan!':'Company profile and legal documents saved successfully!',
+  'Profil praktisi auditor, lisensi profesi, tarif jasa, dan rekening bank berhasil disimpan!':'Auditor profile, professional license, service fees, and bank account saved successfully!',
+  'Dokumen berhasil diunggah dan seluruh data pengisian perusahaan tersimpan aman! Menunggu verifikasi Administrator.':'Documents uploaded and all company details saved securely! Awaiting administrator verification.',
+  'Foto profil berhasil diperbarui dan data pengisian tetap tersimpan!':'Profile photo updated and profile details remain saved!',
+  'Regulasi Wajib: Persentase reward kasus finansial minimal adalah 2% dari nilai kerugian.':'Mandatory regulation: The reward for financial cases must be at least 2% of the loss amount.',
+  'Ketentuan: Reward kasus pelanggaran etik minimal adalah Rp 100.000 (dapat disesuaikan dengan kebijakan perusahaan).':'Requirement: The minimum reward for an ethics violation case is IDR 100,000 (subject to company policy).',
+  'Audit Kepatuhan & Investigasi':'Compliance & Investigation Audit',
+  'Laporan Dugaan Pelanggaran':'Suspected Misconduct Report',
+  'Menunggu verifikasi Administrator':'Awaiting administrator verification',
+  'Periksa koneksi internet dan coba lagi.':'Check your internet connection and try again.'
 };
 
 const WORDS: Record<string,string> = {
@@ -111,11 +154,9 @@ function translateText(input: string, lang: Language): string {
   for (const phrase of Object.keys(PHRASES).sort((a, b) => b.length - a.length)) {
     const translated = PHRASES[phrase];
     if (!phrase || !translated) continue;
-    const pattern = phrase.includes(' ')
-      ? escapeRegExp(phrase)
-      : '(^|[^\\p{L}\\p{N}_])(' + escapeRegExp(phrase) + ')(?=$|[^\\p{L}\\p{N}_])';
+    const pattern = '(^|[^\\p{L}\\p{N}_])(' + escapeRegExp(phrase) + ')(?=$|[^\\p{L}\\p{N}_])';
     const regex = new RegExp(pattern, 'giu');
-    result = result.replace(regex, (...args: any[]) => phrase.includes(' ') ? preserveCase(args[0], translated) : (args[1] || '') + preserveCase(args[2], translated));
+    result = result.replace(regex, (_match: string, prefix: string, phraseMatch: string) => prefix + preserveCase(phraseMatch, translated));
   }
   for (const [id, en] of Object.entries(WORDS)) {
     const regex = new RegExp('(^|[^\\p{L}\\p{N}_])(' + escapeRegExp(id) + ')(?=$|[^\\p{L}\\p{N}_])', 'giu');
