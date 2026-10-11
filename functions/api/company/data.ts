@@ -44,6 +44,45 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     ]);
     return json({user:{id:uid,email,role:requestedRole,company_id:companyId}});
   }
+  if(op==='release-reward'){
+    const id=String(body.id||'');
+    const requested=Number(body.rewardAmount||0);
+    if(!id) return json({error:'ID laporan wajib diisi.'},400);
+    if(!Number.isFinite(requested)||requested<=0) return json({error:'Nominal reward tidak valid.'},400);
+    const report=await env.DB.prepare('SELECT * FROM reports WHERE id=? AND company_id=? LIMIT 1').bind(id,companyId).first<any>();
+    if(!report) return json({error:'Laporan tidak ditemukan pada tenant ini.'},404);
+    let meta:any={}; try{meta=JSON.parse(report.metadata_json||'{}')}catch{}
+    if(String(report.status||'').toLowerCase()!=='valid') return json({error:'Reward hanya dapat dirilis setelah laporan berstatus VALID.'},409);
+    if(meta.rewardReleased===true || meta.rewardReleased===1) return json({error:'Reward untuk laporan ini sudah diproses.'},409);
+    const category=String(meta.tipePelanggaran||report.violation_type||'').toLowerCase();
+    const minimum=category==='finansial' ? Math.round(Number(report.estimated_loss||0)*0.02) : 100000;
+    if(requested<minimum) return json({error:'Nominal reward di bawah ketentuan minimum.',minimum},400);
+    const company=await env.DB.prepare('SELECT deposit_balance FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
+    if(!company) return json({error:'Data perusahaan tidak ditemukan.'},404);
+    if(Number(company.deposit_balance||0)<requested) return json({error:'Saldo perusahaan tidak mencukupi untuk reward ini.',balance:Number(company.deposit_balance||0),required:requested},409);
+    const operationId=randomId('reward');
+    const releasedAt=new Date().toISOString();
+    const claimStatus=meta.rewardClaimBank?'pending':'siap_diklaim';
+    const nextMeta={...meta,rewardReleased:true,rewardReleasedAt:releasedAt,rewardReleaseType:'auto_valid',rewardReleaseOperationId:operationId,rewardAmount:requested,rewardStatusPerusahaan:'disetujui',rewardClaimStatus:claimStatus,companyCaseStatus:'selesai'};
+    await env.DB.batch([
+      env.DB.prepare(`UPDATE reports SET status='selesai',reward_amount=?,reward_claim_status=?,metadata_json=?,updated_at=CURRENT_TIMESTAMP
+        WHERE id=? AND company_id=? AND lower(status)='valid'
+        AND COALESCE(json_extract(metadata_json,'$.rewardReleased'),0) NOT IN (1,'true')
+        AND EXISTS (SELECT 1 FROM companies WHERE company_id=? AND deposit_balance>=?)`)
+        .bind(requested,claimStatus,JSON.stringify(nextMeta),id,companyId,companyId,requested),
+      env.DB.prepare(`UPDATE companies SET deposit_balance=deposit_balance-?,updated_at=CURRENT_TIMESTAMP
+        WHERE company_id=? AND EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND json_extract(metadata_json,'$.rewardReleaseOperationId')=? AND json_extract(metadata_json,'$.rewardReleased')=1)`)
+        .bind(requested,companyId,id,companyId,operationId),
+      env.DB.prepare(`INSERT INTO transactions(id,user_id,company_id,type,amount,status,report_id,metadata_json)
+        SELECT ?,?,?, 'reward_release', ?, 'selesai', ?, ?
+        WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND json_extract(metadata_json,'$.rewardReleaseOperationId')=? AND json_extract(metadata_json,'$.rewardReleased')=1)`)
+        .bind(operationId,actor.id,companyId,requested,id,JSON.stringify({description:'Reward pelapor otomatis dirilis setelah laporan dinyatakan valid',operationId}),id,companyId,operationId)
+    ]);
+    const finalReport=await env.DB.prepare('SELECT metadata_json FROM reports WHERE id=? AND company_id=?').bind(id,companyId).first<any>();
+    let finalMeta:any={}; try{finalMeta=JSON.parse(finalReport?.metadata_json||'{}')}catch{}
+    if(finalMeta.rewardReleaseOperationId!==operationId) return json({error:'Reward tidak diproses. Laporan mungkin sudah dirilis atau saldo tidak mencukupi.'},409);
+    return json({ok:true,id,rewardAmount:requested,remainingBalance:Number((await env.DB.prepare('SELECT deposit_balance FROM companies WHERE company_id=?').bind(companyId).first<any>())?.deposit_balance||0)});
+  }
   if(op==='update-report'){
     const id=String(body.id||''); const d=body.data||{};
     if(!id) return json({error:'ID laporan wajib diisi.'},400);
