@@ -153,7 +153,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         const companyId = await resolveCompanyId(env.DB, companyIdParam);
         if (!(await canReadTenant(request, env.DB, companyId))) return json({ error: 'Akses tenant ditolak' }, 403);
         const rows = await env.DB.prepare('SELECT * FROM transactions WHERE company_id = ? ORDER BY created_at DESC').bind(companyId).all<any>();
-        return json({ items: rows.results.map((r:any) => ({...r, id:r.id})) });
+        return json({ items: rows.results.map((r:any) => { let meta:any={}; try { meta=JSON.parse(r.metadata_json||'{}'); } catch {} return {...meta,...r,id:r.id}; }) });
       }
       return json({ error: 'Tenant scope diperlukan' }, 400);
     }
