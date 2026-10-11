@@ -771,7 +771,7 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <p className="text-[10px] uppercase font-mono font-semibold text-cyan-400 tracking-wider">Akses Portal Kepatuhan</p>
                   <p className="text-sm font-bold text-white mt-0.5">
-                    {profileData?.perusahaanName || 'Perusahaan Kepatuhan'}
+                    {profileData?.perusahaanName || profileData?.namaPT || (profileData as any)?.company_name || 'Nama perusahaan belum terdaftar'}
                   </p>
                 </div>
                 <button
