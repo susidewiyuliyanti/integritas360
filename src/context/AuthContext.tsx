@@ -88,7 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const sessionUser = data.user as SessionUser;
       setUser(sessionUser);
-      setProfile(toProfile(sessionUser));
+
+      // Gabungkan data auth dan company sebelum set profile sekali —
+      // menghindari penimpaan berkali-kali yang menyebabkan re-render inkonsisten.
+      let finalProfile = toProfile(sessionUser);
 
       if (sessionUser.company_id) {
         try {
@@ -106,13 +109,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setCompanyUser(companyData.companyUser as CompanyUser);
             }
             if (companyData?.profile) {
-              setProfile(companyData.profile as UserProfile);
+              finalProfile = { ...finalProfile, ...companyData.profile };
             }
           }
         } catch {
           // Company API is optional during the auth migration.
         }
       }
+
+      setProfile(finalProfile);
     } catch (error) {
       console.warn('Cloudflare session check failed:', error);
       setUser(null);
