@@ -42,8 +42,15 @@ function unmeta(data:any){
 async function listCollection(env:Env,collection:string,filter?:{field:string;value:any}){
   let sql=''; const params:any[]=[];
   if(collection==='users'){
-    sql='SELECT * FROM users ORDER BY created_at DESC';
-    if(filter?.field){sql='SELECT * FROM users WHERE '+filter.field+'=? ORDER BY created_at DESC';params.push(filter.value);}
+    // Tenant company rows are read from canonical D1 companies, not a duplicate user profile.
+    if(filter?.field==='role' && String(filter.value).toLowerCase()==='perusahaan'){
+      sql=`SELECT company_id AS id, company_id, company_name, company_name AS full_name, email, status,
+        deposit_balance, locked_balance, created_at, updated_at, metadata_json, 'perusahaan' AS role
+        FROM companies ORDER BY created_at DESC`;
+    }else{
+      sql='SELECT * FROM users ORDER BY created_at DESC';
+      if(filter?.field){sql='SELECT * FROM users WHERE '+filter.field+'=? ORDER BY created_at DESC';params.push(filter.value);}
+    }
   }else if(collection==='companies') sql='SELECT * FROM companies ORDER BY created_at DESC';
   else if(collection==='company_users') sql='SELECT * FROM company_users ORDER BY created_at DESC';
   else if(collection==='reports') sql='SELECT * FROM reports ORDER BY created_at DESC';
@@ -196,7 +203,24 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
           if(data.danaTersedia!==undefined) data.deposit_balance=data.danaTersedia;
           if(data.danaTerkunci!==undefined) data.locked_balance=data.danaTerkunci;
           fields.push('metadata_json=?');vals.push(unmeta(data),id);
+          const beforeUser=await env.DB.prepare('SELECT id,company_id,role FROM users WHERE id=? LIMIT 1').bind(id).first<any>();
           await env.DB.prepare('UPDATE users SET '+fields.join(',')+',updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(...vals).run();
+          // Keep company edits made through the legacy Owner form synchronized with the canonical D1 row.
+          if(String(beforeUser?.role||data.role||'').toLowerCase()==='perusahaan'){
+            const cid=String(beforeUser?.company_id||data.company_id||data.companyId||id||'');
+            const company=await env.DB.prepare('SELECT company_id,company_name,email,status,deposit_balance,locked_balance,metadata_json FROM companies WHERE company_id=? OR id=? LIMIT 1').bind(cid,cid).first<any>();
+            if(company){
+              const companyName=data.company_name??data.namaPT??data.companyName??company.company_name;
+              const companyEmail=data.company_email??data.email??company.email;
+              const companyStatus=data.status??company.status;
+              const deposit=data.deposit_balance??data.danaTersedia??company.deposit_balance;
+              const locked=data.locked_balance??data.danaTerkunci??company.locked_balance;
+              let meta:any={}; try{meta=JSON.parse(company.metadata_json||'{}')}catch{}
+              const mergedMeta={...meta,...data};
+              await env.DB.prepare('UPDATE companies SET company_name=?,email=?,status=?,deposit_balance=?,locked_balance=?,metadata_json=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=?')
+                .bind(companyName,companyEmail,companyStatus,Number(deposit||0),Number(locked||0),unmeta(mergedMeta),company.company_id).run();
+            }
+          }
         }
       }else if(collection==='company_users'){
         await env.DB.prepare('INSERT OR REPLACE INTO company_users(id,user_id,company_id,role,is_primary_company_account,status,metadata_json) VALUES(?,?,?,?,?,?,?)')
