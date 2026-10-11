@@ -28,7 +28,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   if(op==='save-company-profile'){
     const actorRole=String(actor.role||'').toLowerCase();
     const d=body.data||{};
-    const allowed=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','statusVerifikasiDokumen','catatanVerifikasi','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus'];
+    const allowed=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','statusVerifikasiDokumen','catatanVerifikasi','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus','kebijakanReward'];
     const profile:any={};
     for(const key of allowed) if(d[key]!==undefined) profile[key]=d[key];
     if(actorRole==='auditor'){
