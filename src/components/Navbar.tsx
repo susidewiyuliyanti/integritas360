@@ -2,11 +2,13 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
 import { BrandLogo } from './BrandLogo';
-import { ShieldCheck, LogOut, UserCircle, Building2, Eye, LayoutDashboard, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, LogOut, UserCircle, Building2, Eye, LayoutDashboard, ShieldAlert, CheckCircle2, Languages } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export const Navbar: React.FC = () => {
   const { user, profile, isOwner, role, logout } = useAuth();
   const { path, navigate } = useNavigation();
+  const { language, toggleLanguage } = useLanguage();
 
   const handleLogout = async () => {
     await logout();
@@ -43,6 +45,17 @@ export const Navbar: React.FC = () => {
         </button>
 
         <nav aria-label="Navigasi utama" className="flex flex-wrap items-center gap-1.5 sm:gap-2 md:justify-end w-full md:w-auto">
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            aria-label={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
+            title={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
+            data-no-translate
+            className="px-2.5 sm:px-3 py-2 text-xs font-bold rounded-lg border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition-colors cursor-pointer min-h-10 flex items-center gap-1.5"
+          >
+            <Languages className="w-4 h-4" />
+            <span>{language === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
+          </button>
           <button
             id="nav-btn-studi-kasus"
             onClick={() => navigate('/studi-kasus')}
