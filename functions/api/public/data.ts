@@ -166,7 +166,11 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     return json({ items: [] });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : 'Request gagal' }, 500);
+    const message = e instanceof Error ? e.message : 'Request gagal';
+    if (/UNIQUE constraint failed:\s*transactions\.report_id/i.test(message)) {
+      return json({ error: 'Klaim reward untuk ID laporan ini sudah pernah tercatat.' }, 409);
+    }
+    return json({ error: message }, 500);
   }
 };
 
