@@ -112,16 +112,32 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     if (collection === 'companies') {
       if (idValue) {
+        const actor = await tenantSession(request, env.DB);
         const row = await env.DB.prepare('SELECT * FROM companies WHERE id = ? OR company_id = ? LIMIT 1').bind(idValue, idValue).first<any>();
+        // A company profile is private to its own authenticated tenant.
+        if (row && (!actor?.company_id || actor.company_id !== row.company_id)) {
+          return json({ error: 'Akses tenant ditolak' }, 403);
+        }
+        let meta: any = {};
+        try { meta = row?.metadata_json ? JSON.parse(row.metadata_json) : {}; } catch {}
         return json({
           items: row ? [{
+            ...meta,
             ...row,
             uid: row.company_id || row.id,
             id: row.company_id || row.id,
-            namaPT: row.company_name,
+            namaPT: row.company_name || meta.namaPT || meta.company_name || '',
+            company_name: row.company_name || meta.company_name || meta.namaPT || '',
             companyId: row.company_id || row.id,
-            danaTersedia: row.deposit_balance,
-            saldo: row.deposit_balance
+            company_id: row.company_id || row.id,
+            // D1 canonical balance fields are the source of truth.
+            deposit_balance: Number(row.deposit_balance || 0),
+            locked_balance: Number(row.locked_balance || 0),
+            danaTersedia: Number(row.deposit_balance || 0),
+            danaTerkunci: Number(row.locked_balance || 0),
+            saldo: Number(row.deposit_balance || 0),
+            rewardBalance: Number(meta.rewardBalance ?? meta.saldoReward ?? meta.reward_balance ?? meta.available_balance ?? row.locked_balance ?? 0),
+            saldoReward: Number(meta.saldoReward ?? meta.rewardBalance ?? meta.reward_balance ?? meta.available_balance ?? row.locked_balance ?? 0),
           }] : []
         });
       }
