@@ -14,6 +14,7 @@ import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { ProfilePage } from './pages/ProfilePage';
 import { StudiKasusPage } from './pages/StudiKasusPage';
 import { MessageCircle } from 'lucide-react';
+import { LanguageProvider } from './context/LanguageContext';
 
 const RouterView: React.FC = () => {
   const { path } = useNavigation();
@@ -72,10 +73,12 @@ const RouterView: React.FC = () => {
 
 export default function App() {
   return (
-    <NavigationProvider>
-      <AuthProvider>
-        <RouterView />
-      </AuthProvider>
-    </NavigationProvider>
+    <LanguageProvider>
+      <NavigationProvider>
+        <AuthProvider>
+          <RouterView />
+        </AuthProvider>
+      </NavigationProvider>
+    </LanguageProvider>
   );
 }
