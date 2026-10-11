@@ -495,10 +495,9 @@ export const PerusahaanDashboard: React.FC = () => {
     }
   };
 
-  // 2. Rilis Reward & Potong Saldo Lock (Manual atau Auto 1x24 Jam)
-  const handleReleaseReward = async (report: WhistleblowingReport, isAuto = false) => {
-    if (!user || !report.id) return;
-
+  // Reward otomatis diproses dari saldo aktif perusahaan saat laporan berstatus VALID.
+  const handleReleaseReward = async (report: WhistleblowingReport, isAuto = true) => {
+    if (!user || !report.id || report.rewardReleased) return;
     const kerugian = Number(report.estimasiKerugian || 0);
     const minReward = report.tipePelanggaran === 'finansial'
       ? Math.round(kerugian * 0.02)
@@ -506,103 +505,25 @@ export const PerusahaanDashboard: React.FC = () => {
     const nominalReward = report.rewardAmount !== undefined && report.rewardAmount > 0
       ? report.rewardAmount
       : (report.rewardMinAmount && report.rewardMinAmount >= 100000 ? report.rewardMinAmount : minReward);
-    const auditorFee = Number(report.biayaAuditor || 150000);
-    const totalPotongan = nominalReward + auditorFee;
 
     try {
       setActionLoadingId(report.id);
       setActionFeedback(null);
-
-      // 1. Potong Saldo Lock Perusahaan (danaTerkunci, danaTersedia, saldo)
-      const userDocRef = doc(db, 'users', (user.uid || user.id));
-      await updateDoc(userDocRef, {
-        danaTerkunci: increment(-totalPotongan),
-        danaTersedia: increment(-totalPotongan),
-        saldo: increment(-totalPotongan)
+      const response = await fetch('/api/company/data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operation: 'release-reward', id: report.id, rewardAmount: nominalReward })
       });
-
-      // 2. Masukkan Honorarium Fee ke Saldo Auditor jika ada auditorId
-      if (report.auditorId) {
-        try {
-          await updateDoc(doc(db, 'users', report.auditorId), {
-            saldo: increment(auditorFee)
-          });
-        } catch (auditorErr) {
-          console.warn('Gagal update saldo auditor langsung:', auditorErr);
-        }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || 'Reward tidak dapat diproses.');
       }
-
-      // 3. Catat Mutasi Transaksi
-      // a) Pemotongan saldo lock untuk reward pelapor
-      await addDoc(collection(db, 'transactions'), {
-        type: 'potong_lock_reward',
-        amount: nominalReward,
-        status: 'selesai',
-        userId: (user.uid || user.id),
-        companyName: namaPT,
-        claimReportToken: report.tokenAkses,
-        claimReportId: report.id,
-        keterangan: `Pencairan reward pelapor (${report.tipePelanggaran === 'finansial' ? 'Finansial' : 'Etik'}) tiket #${report.tokenAkses} [${
-          isAuto ? 'AUTO 1x24 JAM SISTEM' : 'MANUAL OLEH PERUSAHAAN'
-        }]`,
-        whatsapp: report.whatsappPelapor || '',
-        createdAt: serverTimestamp()
-      });
-
-      // b) Pemotongan saldo lock untuk biaya jasa auditor
-      await addDoc(collection(db, 'transactions'), {
-        type: 'potong_lock_auditor',
-        amount: auditorFee,
-        status: 'selesai',
-        userId: (user.uid || user.id),
-        companyName: namaPT,
-        claimReportToken: report.tokenAkses,
-        claimReportId: report.id,
-        keterangan: `Biaya jasa investigasi auditor (${report.auditorName || 'Auditor'}) untuk laporan #${report.tokenAkses}`,
-        createdAt: serverTimestamp()
-      });
-
-      // c) Mutasi penerimaan fee auditor
-      if (report.auditorId) {
-        await addDoc(collection(db, 'transactions'), {
-          type: 'fee_auditor_masuk',
-          amount: auditorFee,
-          status: 'selesai',
-          userId: report.auditorId,
-          companyName: namaPT,
-          claimReportToken: report.tokenAkses,
-          claimReportId: report.id,
-          keterangan: `Penerimaan honorarium audit laporan #${report.tokenAkses} dari ${namaPT}`,
-          createdAt: serverTimestamp()
-        });
-      }
-
-      // 4. Update Dokumen Laporan
-      const sanksiKeterangan =
-        (sanksiInputMap[report.id] || '').trim() ||
-        report.sanksiKaryawan ||
-        'Karyawan pelanggar telah dikenakan sanksi disipliner tegas sesuai ketentuan dan regulasi perusahaan.';
-
-      await updateDoc(doc(db, 'reports', report.id), {
-        status: 'selesai',
-        companyCaseStatus: 'selesai',
-        rewardReleased: true,
-        rewardReleasedAt: serverTimestamp(),
-        rewardReleaseType: isAuto ? 'auto_sistem_24jam' : 'manual_perusahaan',
-        sanksiKaryawan: sanksiKeterangan,
-        rewardAmount: nominalReward,
-        rewardStatusPerusahaan: 'disetujui',
-        rewardClaimStatus: report.rewardClaimBank ? 'pending' : 'siap_diklaim'
-      });
-
       setActionFeedback({
         type: 'success',
-        message: isAuto
-          ? `Batas waktu 1x24 jam telah tercapai: Sistem otomatis merilis reward Rp ${nominalReward.toLocaleString('id-ID')} dan biaya jasa auditor Rp ${auditorFee.toLocaleString('id-ID')}. Saldo lock perusahaan telah dipotong Rp ${totalPotongan.toLocaleString('id-ID')}.`
-          : `Reward Rp ${nominalReward.toLocaleString('id-ID')} dan biaya auditor Rp ${auditorFee.toLocaleString('id-ID')} berhasil dirilis! Saldo lock perusahaan telah terpotong Rp ${totalPotongan.toLocaleString('id-ID')}. Sanksi karyawan berhasil dicatat.`
+        message: `Reward Rp ${Number(result.rewardAmount || nominalReward).toLocaleString('id-ID')} berhasil dirilis otomatis setelah laporan VALID. Saldo aktif perusahaan tersisa Rp ${Number(result.remainingBalance || 0).toLocaleString('id-ID')}.`
       });
     } catch (err: any) {
-      console.error('Error releasing reward:', err);
       setActionFeedback({
         type: 'error',
         message: 'Gagal merilis reward: ' + (err.message || 'Terjadi kesalahan sistem')
@@ -612,23 +533,14 @@ export const PerusahaanDashboard: React.FC = () => {
     }
   };
 
-  // 3. Auto-Release Check (Effect triggered when 24h deadline expires)
+  // Automatic release is triggered for every newly VALID report; no 24-hour timer or locked balance is used.
   useEffect(() => {
     reports.forEach((rep) => {
-      if (
-        rep.id &&
-        rep.companyCaseStatus === 'kasus_diambil' &&
-        !rep.rewardReleased &&
-        rep.autoReleaseDeadline
-      ) {
-        const deadlineTime = new Date(rep.autoReleaseDeadline).getTime();
-        if (deadlineTime <= now && actionLoadingId !== rep.id) {
-          console.log('1x24h Auto-Release executed for report:', rep.id);
-          handleReleaseReward(rep, true);
-        }
+      if (rep.id && String(rep.status || '').toLowerCase() === 'valid' && !rep.rewardReleased && actionLoadingId !== rep.id) {
+        handleReleaseReward(rep, true);
       }
     });
-  }, [now, reports]);
+  }, [reports, actionLoadingId]);
 
   // Save Nominal Reward (Optional adjustment by company)
   const handleSaveReward = async (report: WhistleblowingReport) => {
