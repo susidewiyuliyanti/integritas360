@@ -880,7 +880,7 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* TAB 1: KEUANGAN (SALDO, DEPOSIT, WITHDRAWAL, LOCK DANA) */}
+        {/* TAB 1: KEUANGAN (SALDO, DEPOSIT, WITHDRAWAL) */}
         {activeTab === 'keuangan' && (
           <div className="space-y-6">
             {profileData?.role === 'auditor' ? (
@@ -889,11 +889,10 @@ export const ProfilePage: React.FC = () => {
                 <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-emerald-500/30 text-xs text-slate-300 space-y-2 relative overflow-hidden">
                   <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
                     <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-                    <span>Portal Finansial Auditor Independen: Bebas Deposit & Bebas Kunci Dana</span>
+                    <span>Portal Finansial Auditor Independen</span>
                   </div>
                   <p className="text-slate-300 leading-relaxed text-xs">
-                    Sebagai Auditor Independen yang menjalankan fungsi investigasi profesional, <strong>Anda TIDAK PERLU melakukan deposit saldo dan TIDAK PERLU mengunci dana (lock penjaminan)</strong>.
-                    Sistem INTEGRITAS360 menjamin seluruh pembiayaan investigasi ditanggung oleh Perusahaan Terlapor melalui alokasi lock escrow. Setiap laporan aduan yang Anda nyatakan valid akan secara otomatis menghasilkan honorarium jasa audit yang langsung masuk ke Saldo Honorarium Anda dan dapat dicairkan (ditarik) kapan saja ke rekening bank.
+                    Sebagai Auditor Independen, Anda tidak diwajibkan melakukan deposit saldo untuk menerima penugasan audit. Pembiayaan investigasi dan honorarium diproses berdasarkan saldo operasional perusahaan yang tersedia secara realtime serta hasil verifikasi laporan. Honorarium yang telah disetujui akan masuk ke Saldo Honorarium dan dapat diajukan untuk pencairan sesuai ketentuan.
                   </p>
                 </div>
 
@@ -1030,7 +1029,7 @@ export const ProfilePage: React.FC = () => {
                       Rp {currentSaldo.toLocaleString('id-ID')}
                     </div>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Saldo yang dapat ditarik (*withdrawal*) kapan saja atau dipindahkan ke Lock Dana penjaminan integritas.
+                      Saldo perusahaan yang tersedia secara realtime. Saldo ini menjadi acuan untuk pemrosesan reward dan biaya terkait laporan yang telah diverifikasi.
                     </p>
 
                     <div className="flex items-center gap-2 mt-5 pt-4 border-t border-slate-800">
@@ -1090,10 +1089,7 @@ export const ProfilePage: React.FC = () => {
                     Mekanisme Penjaminan Integritas & Kepatuhan
                   </div>
                   <p className="text-slate-400 leading-relaxed">
-                    Setiap perusahaan peserta diwajibkan mengalokasikan <strong>Lock Dana</strong> sebagai wujud
-                    komitmen penjaminan perlindungan saksi, imbalan pelapor berintegritas, serta pembiayaan audit
-                    independen. Dana yang dikunci tidak dapat ditarik secara sepihak selama proses investigasi aduan
-                    whistleblowing sedang berlangsung.
+                    Sistem menggunakan saldo operasional perusahaan yang diperbarui secara realtime sebagai acuan ketersediaan dana untuk reward pelapor dan pembiayaan audit independen. Tidak ada alokasi dana terpisah; pemrosesan reward mengikuti saldo perusahaan yang tersedia dan hasil verifikasi laporan.
                   </p>
                 </div>
               </>
@@ -1787,8 +1783,8 @@ export const ProfilePage: React.FC = () => {
                                 : tx.type === 'withdrawal'
                                 ? 'Penarikan Dana (Withdrawal)'
                                 : tx.type === 'lock'
-                                ? 'Kunci Dana (Lock Penjaminan)'
-                                : 'Buka Kunci Dana (Unlock)'}
+                                ? 'Transaksi Saldo'
+                                : 'Transaksi Saldo'}
                             </span>
                             <span
                               className={`text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border ${
