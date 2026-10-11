@@ -649,7 +649,7 @@ export const PerusahaanDashboard: React.FC = () => {
                 Rp {saldoTerbuka.toLocaleString('id-ID')}
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Saldo kas aktif likuid entitas. Dapat ditarik langsung ke rekening bank atau dialokasikan ke dana lock jaminan poster.
+                Saldo aktif perusahaan yang tersedia untuk operasional reward pelapor.
               </p>
             </div>
 
@@ -1244,7 +1244,7 @@ export const PerusahaanDashboard: React.FC = () => {
                     <p className="text-xs font-semibold text-slate-300 mb-2 text-center">
                       Pindai QRIS Statis Resmi (NMID: ID1026539516033)
                     </p>
-                    <QrisStaticCard nominal={depositAmount} companyName={companyProfile?.namaPT || (companyProfile as any)?.company_name || (authProfile as any)?.company_name || namaPT} rewardBalance={Number((companyProfile as any)?.rewardBalance ?? (companyProfile as any)?.saldoReward ?? (companyProfile as any)?.reward_balance ?? (companyProfile as any)?.danaTersedia ?? 0)} />
+                    <QrisStaticCard nominal={depositAmount} companyName="INTEGRITAS360" showRewardBalance={false} />
                   </>
                 ) : (
                   <div className="w-full p-4 rounded-2xl border border-cyan-500/30 bg-cyan-950/20 text-xs text-cyan-100">
