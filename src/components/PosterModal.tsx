@@ -26,7 +26,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     let active = true;
     const refreshBalance = async () => {
       try {
-        const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store' });
+        const response = await fetch('/api/public/company?companyId=' + encodeURIComponent(companyId), { credentials: 'omit', cache: 'no-store' });
         if (!response.ok) return;
         const data = await response.json();
         const balance = Number(data?.company?.deposit_balance);
