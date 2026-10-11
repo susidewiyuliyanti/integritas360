@@ -151,7 +151,10 @@ export const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (!user) { hasInitializedForm.current = false; return; }
     let active = true;
+    let profileLoadInFlight = false;
     const loadProfile = async () => {
+      if (profileLoadInFlight) return;
+      profileLoadInFlight = true;
       try {
         const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store', headers: { 'cache-control': 'no-cache' } });
         const result = await response.json().catch(() => ({}));
@@ -183,7 +186,11 @@ export const ProfilePage: React.FC = () => {
           setBankName(b.bankName || 'BCA'); setAccountNumber(b.accountNumber || ''); setHolderName(b.holderName || '');
           setWithdrawBank(b.bankName || 'BCA'); setWithdrawAccount(b.accountNumber || ''); setWithdrawHolder(b.holderName || '');
         }
-      } catch (err) { console.error('Gagal memuat profil tenant dari D1:', err); }
+      } catch (err) {
+        console.error('Gagal memuat profil tenant dari D1:', err);
+      } finally {
+        profileLoadInFlight = false;
+      }
     };
     void loadProfile(); const timer=window.setInterval(()=>{void loadProfile();},10000);
     return ()=>{active=false;window.clearInterval(timer);};
@@ -193,7 +200,10 @@ export const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     let active=true;
+    let transactionsLoadInFlight = false;
     const loadTransactions=async()=>{
+      if (transactionsLoadInFlight) return;
+      transactionsLoadInFlight = true;
       try{
         const identityResponse=await fetch('/api/company/me',{credentials:'include',cache:'no-store'});
         const identity=await identityResponse.json().catch(()=>({}));
@@ -209,7 +219,11 @@ export const ProfilePage: React.FC = () => {
           createdAt:d.created_at||d.createdAt
         })).sort((a:any,b:any)=>new Date(b.createdAt||0).getTime()-new Date(a.createdAt||0).getTime());
         if(active) setTransactions(list);
-      }catch(err){console.error('Gagal memuat transaksi tenant dari D1:',err);}
+      }catch(err){
+        console.error('Gagal memuat transaksi tenant dari D1:',err);
+      } finally {
+        transactionsLoadInFlight = false;
+      }
     };
     void loadTransactions(); const timer=window.setInterval(()=>{void loadTransactions();},10000);
     return ()=>{active=false;window.clearInterval(timer);};
