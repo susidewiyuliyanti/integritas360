@@ -73,6 +73,10 @@ export async function addDoc(ref: Ref, data: any) {
     return api('/api/public/data', { method: 'POST', body: JSON.stringify({ operation: 'create-report', data }) });
   }
   if (ref.collection === 'transactions') {
+    const type = String(data?.type || '').toLowerCase();
+    if (type === 'deposit' || type === 'withdrawal') {
+      return api('/api/company/data', { method: 'POST', body: JSON.stringify({ operation: 'create-transaction', data }) });
+    }
     return api('/api/public/data', { method: 'POST', body: JSON.stringify({ operation: 'create-claim', data }) });
   }
   throw new Error(`Collection tidak didukung: ${ref.collection}`);
