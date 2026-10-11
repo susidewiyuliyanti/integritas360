@@ -106,7 +106,10 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     const report=await env.DB.prepare('SELECT * FROM reports WHERE id=? AND company_id=? LIMIT 1').bind(id,companyId).first<any>();
     if(!report) return json({error:'Laporan tidak ditemukan pada tenant ini.'},404);
     let current:any={}; try{current=JSON.parse(report.metadata_json||'{}')}catch{}
-    const next={...current,...d};
+    // Reward release and claim state are database-controlled, never tenant-editable.
+    const safeData={...d};
+    for (const key of ['rewardReleased','rewardReleasedAt','rewardReleaseType','rewardReleaseOperationId','rewardAmount','rewardStatusPerusahaan','rewardClaimStatus','rewardClaimBank','rewardClaimed','reward_claimed','reward_claim_status','reward_amount','rewardMinAmount','reward_min_amount','companyCaseStatus']) delete safeData[key];
+    const next={...current,...safeData};
     const nullable=(value:any)=>value===undefined?null:value;
     await env.DB.prepare(`UPDATE reports SET
       title=COALESCE(?,title), category=COALESCE(?,category), violation_type=COALESCE(?,violation_type),
@@ -115,11 +118,11 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
       reward_min_amount=COALESCE(?,reward_min_amount), reward_claim_status=COALESCE(?,reward_claim_status),
       reward_claimed=COALESCE(?,reward_claimed), evidence_json=COALESCE(?,evidence_json),
       metadata_json=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?`)
-      .bind(nullable(d.judul??d.title),nullable(d.kategori??d.category),nullable(d.tipePelanggaran??d.violation_type),
-        nullable(d.estimasiKerugian??d.estimated_loss),nullable(d.deskripsi??d.description),nullable(d.tanggalKejadian??d.incident_date),
-        nullable(d.lokasi??d.location),nullable(d.status),nullable(d.rewardAmount??d.reward_amount),nullable(d.rewardMinAmount??d.reward_min_amount),
-        nullable(d.rewardClaimStatus??d.reward_claim_status),d.rewardClaimed===undefined&&d.reward_claimed===undefined?null:((d.rewardClaimed??d.reward_claimed)?1:0),
-        d.buktiFiles===undefined&&d.evidence_json===undefined?null:(typeof d.evidence_json==='string'?d.evidence_json:JSON.stringify(d.buktiFiles||[])),
+      .bind(nullable(safeData.judul??safeData.title),nullable(safeData.kategori??safeData.category),nullable(safeData.tipePelanggaran??safeData.violation_type),
+        nullable(safeData.estimasiKerugian??safeData.estimated_loss),nullable(safeData.deskripsi??safeData.description),nullable(safeData.tanggalKejadian??safeData.incident_date),
+        nullable(safeData.lokasi??safeData.location),nullable(safeData.status),null,null,
+        null,null,
+        safeData.buktiFiles===undefined&&safeData.evidence_json===undefined?null:(typeof safeData.evidence_json==='string'?safeData.evidence_json:JSON.stringify(safeData.buktiFiles||[])),
         JSON.stringify(next),id,companyId).run();
     await env.DB.prepare('INSERT INTO audit_logs (id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,?,?,?,?,?,?)')
       .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'REPORT_UPDATED','report',id,JSON.stringify({fields:Object.keys(d)})).run();
