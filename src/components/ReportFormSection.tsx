@@ -523,7 +523,9 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
           status: d1Report.status || 'baru',
           tokenAkses: d1Report.tokenAkses || normalizedToken,
           buktiFiles: Array.isArray(d1Report.buktiFiles) ? d1Report.buktiFiles : [],
-          rewardClaimed: Boolean(d1Report.rewardClaimed ?? d1Report.reward_claimed)
+          rewardClaimed: Boolean(d1Report.rewardClaimed ?? d1Report.reward_claimed),
+          rewardClaimStatus: d1Report.rewardClaimStatus || d1Report.reward_claim_status || 'none',
+          rewardReleased: Boolean(d1Report.rewardReleased ?? d1Report.reward_released)
         } as WhistleblowingReport);
         if (d1Report.whatsappPelapor) setClaimWhatsapp(String(d1Report.whatsappPelapor));
         setClaimSuccess('');
@@ -566,7 +568,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
           isContoh: d.isContoh || false,
           rewardClaimed: d.rewardClaimed || false,
           rewardClaimStatus: d.rewardClaimStatus,
-          rewardClaimBank: d.rewardClaimBank
+          rewardClaimBank: d.rewardClaimBank,
+          rewardReleased: Boolean(d.rewardReleased ?? d.reward_released)
         });
         if (d.whatsappPelapor) {
           setClaimWhatsapp(d.whatsappPelapor);
@@ -584,96 +587,61 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
 
   const handleClaimRewardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trackedReport || !claimAccount.trim() || !claimHolder.trim()) {
-      setClaimError('Harap lengkapi nomor rekening dan nama pemilik rekening bank.');
+    if (!trackedReport || !trackedReport.id || !trackedReport.tokenAkses || !claimAccount.trim() || !claimHolder.trim()) {
+      setClaimError('Harap lengkapi nomor tiket rahasia, nomor rekening, dan nama pemilik rekening.');
+      return;
+    }
+    if (!trackedReport.rewardReleased) {
+      setClaimError('Reward belum dirilis. Tombol klaim hanya tersedia setelah reward benar-benar dirilis.');
+      return;
+    }
+    if (trackedReport.rewardClaimed || (trackedReport.rewardClaimStatus && !['none', 'ditolak'].includes(String(trackedReport.rewardClaimStatus).toLowerCase()))) {
+      setClaimError('Klaim reward untuk laporan ini sudah diajukan atau selesai diproses.');
       return;
     }
 
     try {
       setClaimingReward(true);
       setClaimError('');
-      const rewardNominal = trackedReport.rewardAmount || (trackedReport.tipePelanggaran === 'finansial' ? trackedReport.rewardMinAmount : 0) || 5000000;
-      let companyDeducted = false;
-
-      // Otomatis kurangi saldo perusahaan jika akun perusahaan terdaftar
-      if (trackedReport.companyId && trackedReport.companyId !== 'general') {
-        const compRef = doc(db, 'users', trackedReport.companyId);
-        const compSnap = await getDoc(compRef);
-        if (compSnap.exists()) {
-          const compData = compSnap.data();
-          const currentDana = Number(compData.danaTersedia || 0);
-          const currentSaldo = Number(compData.saldo || 0);
-
-          if (currentDana >= rewardNominal || currentSaldo >= rewardNominal) {
-            await updateDoc(compRef, {
-              danaTersedia: increment(-rewardNominal),
-              saldo: increment(-rewardNominal)
-            });
-            companyDeducted = true;
+      const response = await fetch('/api/public/data', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'omit',
+        body: JSON.stringify({
+          operation: 'create-claim',
+          data: {
+            reportId: trackedReport.id,
+            claimReportToken: trackedReport.tokenAkses,
+            bankDetails: {
+              bankName: claimBank,
+              accountNumber: claimAccount.trim(),
+              holderName: claimHolder.trim()
+            },
+            whatsapp: claimWhatsapp.trim() || trackedReport.whatsappPelapor || ''
           }
-        }
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.id) {
+        throw new Error(result?.error || 'Klaim reward gagal diajukan.');
       }
 
-      const claimFinalStatus = companyDeducted ? 'selesai' : 'pending';
-
-      // 1. Simpan ke koleksi transactions dengan status pencairan
-      await addDoc(collection(db, 'transactions'), {
-        type: 'claim_reward',
-        amount: rewardNominal,
-        status: claimFinalStatus,
-        userId: trackedReport.companyId,
-        claimReportToken: trackedReport.tokenAkses,
-        claimReportId: trackedReport.id || '',
-        companyName: trackedReport.companyName || 'Perusahaan Terlapor',
-        keterangan: `Klaim reward pelapor tiket #${trackedReport.tokenAkses} (${trackedReport.companyName || 'PT Terlapor'})`,
-        whatsapp: claimWhatsapp.trim() || trackedReport.whatsappPelapor || '',
-        bankDetails: {
+      const rewardNominal = Number(result.amount || trackedReport.rewardAmount || trackedReport.rewardMinAmount || 0);
+      setTrackedReport((prev) => prev ? ({
+        ...prev,
+        rewardClaimed: true,
+        rewardClaimStatus: 'pending',
+        rewardAmount: rewardNominal,
+        rewardClaimBank: {
           bankName: claimBank,
           accountNumber: claimAccount.trim(),
           holderName: claimHolder.trim()
         },
-        createdAt: serverTimestamp()
-      });
-
-      // 2. Perbarui status klaim pada dokumen laporan
-      if (trackedReport.id) {
-        const reportRef = doc(db, 'reports', trackedReport.id);
-        await updateDoc(reportRef, {
-          rewardClaimed: true,
-          rewardClaimStatus: 'pending',
-          rewardAmount: rewardNominal,
-          rewardClaimBank: {
-            bankName: claimBank,
-            accountNumber: claimAccount.trim(),
-            holderName: claimHolder.trim()
-          },
-          whatsappPelapor: claimWhatsapp.trim() || trackedReport.whatsappPelapor || '',
-          rewardClaimWhatsapp: claimWhatsapp.trim() || trackedReport.whatsappPelapor || '',
-        });
-      }
-
-      setTrackedReport((prev) =>
-        prev
-          ? {
-              ...prev,
-              rewardClaimed: true,
-              rewardClaimStatus: 'pending',
-              rewardAmount: rewardNominal,
-              rewardClaimBank: {
-                bankName: claimBank,
-                accountNumber: claimAccount.trim(),
-                holderName: claimHolder.trim()
-              },
-              whatsappPelapor: claimWhatsapp.trim() || prev.whatsappPelapor || '',
-              rewardClaimWhatsapp: claimWhatsapp.trim() || prev.whatsappPelapor || '',
-            }
-          : null
-      );
-
+        whatsappPelapor: claimWhatsapp.trim() || prev.whatsappPelapor || '',
+        rewardClaimWhatsapp: claimWhatsapp.trim() || prev.whatsappPelapor || ''
+      }) : null);
       setClaimSuccess(
-        `Klaim reward sebesar Rp ${rewardNominal.toLocaleString('id-ID')} berhasil diajukan! Status: Maksimal 1x24 jam reward akan masuk ke rekening/wallet Anda. ${
-          claimWhatsapp.trim() ? `Notifikasi pengiriman dana akan dikirim ke WhatsApp: ${claimWhatsapp.trim()}` : ''
-        }`
+        `Klaim reward sebesar Rp ${rewardNominal.toLocaleString('id-ID')} berhasil diajukan. Status: menunggu proses pencairan.`
       );
     } catch (err: any) {
       console.error('Error submitting claim reward:', err);
@@ -1645,8 +1613,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                 )}
               </div>
 
-              {/* KLAIM REWARD JIKA STATUS LAPORAN = SELESAI / TERBUKTI ATAU REWARD TELAH DITETAPKAN */}
-              {(trackedReport.status === 'selesai' || Boolean(trackedReport.rewardAmount)) && (
+              {/* KLAIM HANYA DIBUKA SETELAH REWARD BENAR-BENAR DIRILIS */}
+              {Boolean(trackedReport.rewardReleased) && (
                 <div className="rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 p-5 sm:p-6 shadow-2xl space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
