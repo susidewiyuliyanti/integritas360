@@ -49,8 +49,11 @@ export const PerusahaanDashboard: React.FC = () => {
   const { user, profile: authProfile, loading: authLoading, role } = useAuth();
   const { navigate } = useNavigation();
 
-  const [companyProfile, setCompanyProfile] = useState<UserProfile | null>(authProfile);
+  // Inisialisasi dengan null — jangan pakai authProfile yang bisa berubah saat AuthContext
+  // menimpa datanya dari dua sumber berbeda (/api/auth.me lalu /api/company/me).
+  const [companyProfile, setCompanyProfile] = useState<UserProfile | null>(null);
   const [reports, setReports] = useState<WhistleblowingReport[]>([]);
+  const [dataReady, setDataReady] = useState(false);
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
   const [reportFilter, setReportFilter] = useState<'all' | 'menunggu_ambil' | 'kasus_diambil' | 'selesai'>('all');
 
@@ -193,6 +196,8 @@ export const PerusahaanDashboard: React.FC = () => {
         }
       } catch (error) {
         console.error('Gagal menyegarkan data tenant dari D1:', error);
+      } finally {
+        if (active) setDataReady(true);
       }
     };
     void loadCanonicalTenantData();
