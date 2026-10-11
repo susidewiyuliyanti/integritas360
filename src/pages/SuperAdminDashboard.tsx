@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '../context/NavigationContext';
-import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity, KeyRound, Bot, MessageSquare, TrendingUp, Target, Sparkles, Send, User, ChevronDown, ChevronUp, Lightbulb, Mail, MailOpen, CheckSquare, Square, Copy, Check } from 'lucide-react';
+import { Building2, Wallet, FileText, History, RefreshCw, Search, ShieldAlert, LogOut, ExternalLink, Users, Activity, KeyRound, MessageSquare, TrendingUp, Target, Send, User, ChevronDown, ChevronUp, Lightbulb, Mail, MailOpen, CheckSquare, Square, Copy, Check, BarChart3, HelpCircle } from 'lucide-react';
 
 type Company = Record<string, any>;
 type Report = Record<string, any>;
@@ -50,9 +50,9 @@ export const SuperAdminDashboard: React.FC = () => {
   const [adminMessage, setAdminMessage] = useState('');
   const [adminError, setAdminError] = useState('');
 
-  // AI Sales Agent state
+  // Sales Assistant state
   const [aiMessages, setAiMessages] = useState<{role:'user'|'assistant';content:string;timestamp:number}[]>([
-    {role:'assistant',content:'Halo! Saya AI Sales Agent Integritas360. Saya bisa membantu Anda menganalisis data tenant, memberikan rekomendasi follow-up, dan menjawab pertanyaan tentang sales performance. Ada yang bisa saya bantu?',timestamp:Date.now()}
+    {role:'assistant',content:'Halo! Saya Sales Assistant Integritas360. Saya bisa membantu Anda menganalisis data tenant, memberikan rekomendasi follow-up, dan menjawab pertanyaan tentang sales performance. Ada yang bisa saya bantu?',timestamp:Date.now()}
   ]);
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -140,7 +140,7 @@ export const SuperAdminDashboard: React.FC = () => {
     ['transactions','Saldo & Transaksi',Wallet],
     ['audit','History & Audit Log',History],
     ['security','Keamanan Akun',KeyRound],
-    ['ai-sales','AI Sales Agent',Bot],
+    ['ai-sales','Sales Assistant',BarChart3],
     ['sales-email','Sales Email',Mail],
   ] as const;
 
@@ -321,7 +321,7 @@ export const SuperAdminDashboard: React.FC = () => {
   </div>;
 };
 
-/* ── AI Sales Agent Panel ── */
+/* ── Sales Assistant Panel ── */
 interface AISalesAgentPanelProps {
   companies: Company[];
   reports: Report[];
@@ -377,7 +377,7 @@ const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
     setAiMessages(prev => [...prev, {role:'user',content:userMsg,timestamp:Date.now()}]);
     setAiLoading(true);
 
-    // Simulasi AI response berdasarkan data D1 (nanti bisa diganti dengan API call ke AI service)
+    // Simulasi response berdasarkan data D1 (nanti bisa diganti dengan API call ke backend service)
     setTimeout(() => {
       const lower = userMsg.toLowerCase();
       let response = '';
@@ -414,12 +414,12 @@ const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
   };
 
   return <div className="space-y-6">
-    {/* Header AI Sales */}
+    {/* Header Sales Assistant */}
     <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
       <div className="flex items-center gap-3 mb-2">
-        <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-400"><Sparkles className="w-5 h-5"/></div>
+        <div className="rounded-xl bg-emerald-500/15 p-2 text-emerald-400"><BarChart3 className="w-5 h-5"/></div>
         <div>
-          <h2 className="font-bold text-lg">AI Sales Agent</h2>
+          <h2 className="font-bold text-lg">Sales Assistant</h2>
           <p className="text-xs text-slate-400">Analisis data D1 real-time · Rekomendasi sales · Chat interaktif</p>
         </div>
       </div>
@@ -455,8 +455,8 @@ const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
     <section className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden">
       <button onClick={()=>setAiExpanded(!aiExpanded)} className="w-full flex items-center justify-between p-5 hover:bg-slate-800/50 transition-colors">
         <div className="flex items-center gap-3">
-          <Bot className="w-5 h-5 text-emerald-400"/>
-          <h3 className="font-bold">Chat dengan AI Sales Agent</h3>
+          <MessageSquare className="w-5 h-5 text-emerald-400"/>
+          <h3 className="font-bold">Chat dengan Sales Assistant</h3>
           <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">Live</span>
         </div>
         {aiExpanded ? <ChevronUp className="w-5 h-5 text-slate-400"/> : <ChevronDown className="w-5 h-5 text-slate-400"/>}
@@ -469,7 +469,7 @@ const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
             const isUser = msg.role === 'user';
             return <div key={i} className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
               <div className={`rounded-full w-8 h-8 flex items-center justify-center shrink-0 ${isUser ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-500/15 text-emerald-400'}`}>
-                {isUser ? <User className="w-4 h-4"/> : <Bot className="w-4 h-4"/>}
+                {isUser ? <User className="w-4 h-4"/> : <HelpCircle className="w-4 h-4"/>}
               </div>
               <div className={`rounded-2xl px-4 py-3 text-sm max-w-[80%] whitespace-pre-line ${isUser ? 'bg-amber-500/10 text-slate-200 border border-amber-500/20' : 'bg-slate-800 text-slate-300 border border-slate-700'}`}>
                 {msg.content}
@@ -477,7 +477,7 @@ const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
             </div>;
           })}
           {aiLoading && <div className="flex gap-3">
-            <div className="rounded-full w-8 h-8 flex items-center justify-center shrink-0 bg-emerald-500/15 text-emerald-400"><Bot className="w-4 h-4 animate-pulse"/></div>
+            <div className="rounded-full w-8 h-8 flex items-center justify-center shrink-0 bg-emerald-500/15 text-emerald-400"><HelpCircle className="w-4 h-4 animate-pulse"/></div>
             <div className="rounded-2xl px-4 py-3 text-sm bg-slate-800 text-slate-400 border border-slate-700">
               <span className="inline-flex gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce"/><span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]"/><span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]"/></span>
             </div>
@@ -506,7 +506,7 @@ const AISalesAgentPanel: React.FC<AISalesAgentPanelProps> = ({
               <Send className="w-4 h-4"/> Kirim
             </button>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">AI Sales Agent menganalisis data D1 real-time. Tekan Enter untuk kirim.</p>
+          <p className="text-[10px] text-slate-500 mt-2">Sales Assistant menganalisis data D1 real-time. Tekan Enter untuk kirim.</p>
         </div>
       </>}
     </section>
@@ -742,7 +742,7 @@ const SalesEmailPanel: React.FC<SalesEmailPanelProps> = ({
       <div className="space-y-5">
         {/* Template Selector */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <h3 className="font-bold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-amber-400"/>Pilih Template</h3>
+          <h3 className="font-bold mb-3 flex items-center gap-2"><Mail className="w-4 h-4 text-amber-400"/>Pilih Template</h3>
           <div className="grid grid-cols-2 gap-2">
             {[
               {key:'welcome' as const, label:'Welcome', desc:'Email selamat datang'},
@@ -795,7 +795,7 @@ const SalesEmailPanel: React.FC<SalesEmailPanelProps> = ({
             <h3 className="font-bold flex items-center gap-2"><Users className="w-4 h-4 text-blue-400"/>Pilih Tenant ({selectedTenants.size} dipilih)</h3>
             <div className="flex items-center gap-2">
               <button onClick={()=>setShowManualForm(!showManualForm)} className="text-xs rounded-lg border border-blue-700 bg-blue-500/10 px-2 py-1 text-blue-400 hover:bg-blue-500/20 flex items-center gap-1">
-                <Sparkles className="w-3 h-3"/> + Tambah Manual
+                <Users className="w-3 h-3"/> + Tambah Manual
               </button>
               <button onClick={toggleSelectAll} className="text-xs flex items-center gap-1 text-slate-400 hover:text-blue-400">
                 {selectAllTenants ? <><CheckSquare className="w-3 h-3"/> Batal Pilih Semua</> : <><Square className="w-3 h-3"/> Pilih Semua</>}
@@ -811,7 +811,7 @@ const SalesEmailPanel: React.FC<SalesEmailPanelProps> = ({
 
           {/* Form Tambah Manual */}
           {showManualForm && <div className="rounded-xl border border-amber-700/30 bg-amber-500/5 p-4 mb-3 space-y-3">
-            <h4 className="text-sm font-semibold text-amber-400 flex items-center gap-2"><Sparkles className="w-3 h-3"/>Tambah Perusahaan (Sales Prospecting)</h4>
+            <h4 className="text-sm font-semibold text-amber-400 flex items-center gap-2"><Users className="w-3 h-3"/>Tambah Perusahaan (Sales Prospecting)</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input value={manualName} onChange={e=>setManualName(e.target.value)} placeholder="Nama Perusahaan *" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
               <input value={manualEmail} onChange={e=>setManualEmail(e.target.value)} placeholder="Email *" type="email" className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"/>
