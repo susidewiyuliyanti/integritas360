@@ -226,13 +226,13 @@ export const onRequestPost:PagesFunction<Env>=async({request,env})=>{
             .bind(nextStatus,amount,meta,nextStatus,id).run();
           const changed=Number((update as any)?.meta?.changes ?? (update as any)?.changes ?? 0)>0;
           if(changed && isFinal && txType==='deposit' && companyId){
-            await env.DB.prepare('UPDATE companies SET deposit_balance=deposit_balance+?,status=CASE WHEN upper(COALESCE(status,''))='SUSPENDED' THEN 'ACTIVE' ELSE status END,updated_at=CURRENT_TIMESTAMP WHERE company_id=?').bind(amount,companyId).run();
+            await env.DB.prepare(`UPDATE companies SET deposit_balance=deposit_balance+?,status=CASE WHEN upper(COALESCE(status,''))='SUSPENDED' THEN 'ACTIVE' ELSE status END,updated_at=CURRENT_TIMESTAMP WHERE company_id=?`).bind(amount,companyId).run();
           }
         }else{
           await env.DB.prepare('INSERT INTO transactions(id,user_id,company_id,type,amount,status,method,tx_hash,report_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?,?)')
             .bind(id,data.user_id||data.userId||null,companyId,txType,amount,nextStatus,data.method||data.metode||null,data.tx_hash||data.txHash||null,data.report_id||data.reportId||null,meta).run();
           if(isFinal && txType==='deposit' && companyId){
-            await env.DB.prepare('UPDATE companies SET deposit_balance=deposit_balance+?,status=CASE WHEN upper(COALESCE(status,''))='SUSPENDED' THEN 'ACTIVE' ELSE status END,updated_at=CURRENT_TIMESTAMP WHERE company_id=?').bind(amount,companyId).run();
+            await env.DB.prepare(`UPDATE companies SET deposit_balance=deposit_balance+?,status=CASE WHEN upper(COALESCE(status,''))='SUSPENDED' THEN 'ACTIVE' ELSE status END,updated_at=CURRENT_TIMESTAMP WHERE company_id=?`).bind(amount,companyId).run();
           }
         }
       }else if(collection==='audit_logs'){
