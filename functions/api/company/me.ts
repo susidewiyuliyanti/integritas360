@@ -44,9 +44,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     // overwritten by the company profile.
     const profile: Record<string, any> = {
       ...userMetadata,
+      ...userProfile,
       ...(isAuditor ? {} : companyMetadata),
       ...(isAuditor ? {} : companyProfile),
-      ...userProfile,
       uid: String(user.id),
       id: String(user.id),
       email: String(user.email || ''),
