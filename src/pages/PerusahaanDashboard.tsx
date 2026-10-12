@@ -125,10 +125,10 @@ export const PerusahaanDashboard: React.FC = () => {
         }
         const company = result.company;
         const profile = result.profile || {};
+        // The authenticated D1 session is authoritative. AuthContext can briefly
+        // contain a stale legacy tenant ID after refresh; rejecting a valid D1
+        // session here made the dashboard look empty even when the records existed.
         const canonicalId = String(company.company_id);
-        if (canonicalId !== String(effectiveCompanyId)) {
-          throw new Error('ID tenant sesi tidak cocok dengan company_id pada D1.');
-        }
         const balance = Number(company.deposit_balance ?? 0);
         const locked = Number(company.locked_balance ?? 0);
         const rewardPolicy = company.kebijakanReward || profile.kebijakanReward || {
