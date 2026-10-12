@@ -43,18 +43,36 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
         const result = await response.json().catch(() => ({}));
         if (response.ok && result?.company?.company_id) {
           const row = result.company;
+          // Fetch the public, no-cache D1 record as the authoritative source for
+          // the tenant name, canonical company ID, sector and current reward balance.
+          const publicResponse = await fetch('/api/public/company?companyId=' + encodeURIComponent(String(row.company_id)), {
+            credentials: 'omit',
+            cache: 'no-store'
+          });
+          const publicResult = await publicResponse.json().catch(() => ({}));
+          if (!publicResponse.ok || !publicResult?.company?.company_id) {
+            throw new Error(publicResult?.error || 'Data perusahaan tidak dapat diverifikasi dari database D1.');
+          }
+          const d1 = publicResult.company;
+          const d1Balance = Number(d1.deposit_balance);
+          if (!Number.isFinite(d1Balance) || d1Balance < 0) {
+            throw new Error('Saldo reward dari database D1 tidak valid. Poster tidak dibuat agar data tidak keliru.');
+          }
           const canonical: PosterOptions = {
             ...company,
-            uid: String(row.company_id),
-            companyId: String(row.company_id),
-            company_id: String(row.company_id),
-            namaPT: String(row.company_name || row.namaPT || '').trim(),
-            sektor: row.sektor || row.sector || company.sektor || 'Kepatuhan & Integritas',
-            danaTersedia: Number(row.deposit_balance || 0),
-            rewardBalance: Number(row.deposit_balance || 0)
+            uid: String(d1.company_id),
+            companyId: String(d1.company_id),
+            company_id: String(d1.company_id),
+            namaPT: String(d1.company_name || '').trim(),
+            sektor: String(d1.sector || 'Kepatuhan & Integritas'),
+            danaTersedia: d1Balance,
+            rewardBalance: d1Balance
           };
           if (!canonical.namaPT) throw new Error('Nama perusahaan tidak ditemukan di database D1.');
-          if (active) setResolvedCompany(canonical);
+          if (active) {
+            setResolvedCompany(canonical);
+            setLiveRewardBalance(d1Balance);
+          }
         } else {
           throw new Error(result?.error || 'Akun ini tidak terhubung ke perusahaan yang terdaftar di database D1.');
         }
