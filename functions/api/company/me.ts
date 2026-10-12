@@ -44,8 +44,8 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     // overwritten by the company profile.
     const profile: Record<string, any> = {
       ...userMetadata,
-      ...userProfile,
-      ...(isAuditor ? {} : companyMetadata),
+      ...(isAuditor ? companyProfile : userProfile),
+      ...(isAuditor ? userProfile : companyMetadata),
       ...(isAuditor ? {} : companyProfile),
       uid: String(user.id),
       id: String(user.id),
@@ -57,8 +57,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       company_name: canonicalName,
       perusahaanName: canonicalName,
       namaPT: isAuditor ? String(userProfile.namaPT || user.full_name || canonicalName) : canonicalName,
-      picName: userProfile.picName || user.full_name || user.email || '',
-      telepon: userProfile.telepon || user.phone || '',
+      picName: isAuditor
+        ? (userProfile.picName || user.full_name || user.email || '')
+        : (companyProfile.picName || companyMetadata.picName || user.full_name || user.email || ''),
+      telepon: isAuditor
+        ? (userProfile.telepon || user.phone || '')
+        : (companyProfile.telepon || companyMetadata.telepon || user.phone || ''),
     };
 
     const company = companyId ? {
