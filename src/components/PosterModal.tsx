@@ -267,6 +267,11 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
             </div>
 
             <div className="pt-2 space-y-2">
+              {error && (
+                <button type="button" onClick={() => { setError(""); setLoading(true); setIdentityReady(true); setRetryNonce((n) => n + 1); }} className="w-full py-2.5 px-4 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-200 font-semibold text-xs hover:bg-amber-500/20 transition-colors">
+                  Coba Lagi Membuat QR
+                </button>
+              )}
               <button id="btn-download-poster" disabled={loading || !qrDataUrl || downloading} onClick={handleDownload} className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                 {downloading ? <><Loader2 className="w-4 h-4 animate-spin" />Menyimpan Poster...</> : <><Download className="w-4 h-4" />Download Poster PNG (1080 × 1920)</>}
               </button>
