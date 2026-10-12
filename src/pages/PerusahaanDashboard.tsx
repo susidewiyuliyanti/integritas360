@@ -54,6 +54,7 @@ export const PerusahaanDashboard: React.FC = () => {
   const [companyProfile, setCompanyProfile] = useState<UserProfile | null>(null);
   const [reports, setReports] = useState<WhistleblowingReport[]>([]);
   const [dataReady, setDataReady] = useState(false);
+  const [tenantLoadError, setTenantLoadError] = useState<string | null>(null);
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
   const [reportFilter, setReportFilter] = useState<'all' | 'menunggu_ambil' | 'kasus_diambil' | 'selesai'>('all');
 
@@ -174,6 +175,7 @@ export const PerusahaanDashboard: React.FC = () => {
         const reportsResult = await reportsResponse.json().catch(() => ({}));
         if (!reportsResponse.ok) throw new Error(reportsResult?.error || 'Gagal memuat laporan perusahaan dari D1.');
         if (active) {
+          setTenantLoadError(null);
           const items = Array.isArray(reportsResult?.items) ? reportsResult.items : [];
           setReports(items.map((d: any) => ({
             ...d,
@@ -200,6 +202,8 @@ export const PerusahaanDashboard: React.FC = () => {
         }
       } catch (error) {
         console.error('Gagal menyegarkan data tenant dari D1:', error);
+        // Never present a failed database read as a genuine empty tenant.
+        setTenantLoadError(error instanceof Error ? error.message : 'Data gagal dimuat dari database. Sistem akan mencoba lagi otomatis.');
       } finally {
         tenantRefreshInFlight = false;
         if (active) setDataReady(true);
@@ -559,6 +563,13 @@ export const PerusahaanDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        {tenantLoadError && (
+          <div role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100">
+            <div className="font-bold">Data belum berhasil dimuat dari database</div>
+            <p className="mt-1 text-amber-100/80">{tenantLoadError}</p>
+            <p className="mt-1 text-xs text-amber-100/70">Data tidak dihapus. Halaman akan mencoba memuat ulang otomatis; jangan membuat data atau transaksi duplikat.</p>
+          </div>
+        )}
         {/* Top Company Executive Header Card */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
