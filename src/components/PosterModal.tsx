@@ -20,6 +20,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
   const [liveRewardBalance, setLiveRewardBalance] = useState<number | null>(null);
   const [resolvedCompany, setResolvedCompany] = useState<PosterOptions | null>(null);
   const [identityReady, setIdentityReady] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
 
   const liveIdentity: PosterOptions = { ...company, ...(resolvedCompany || {}), lang: language };
   const companyId = resolveCompanyId(liveIdentity);
@@ -122,11 +123,17 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
       try {
         setLoading(true);
         if (!companyId) throw new Error('ID perusahaan tidak tersedia di database D1. QR Code tidak dapat dibuat.');
-        const qrUrl = await generateQrCodeDataUrl(companyId, liveIdentity.customUrl);
+        const timeout = new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error('Pembuatan QR melewati batas waktu 15 detik. Tutup lalu buka kembali poster, atau tekan Coba Lagi.')), 15000);
+        });
+        const qrUrl = await Promise.race([generateQrCodeDataUrl(companyId, liveIdentity.customUrl), timeout]);
         if (!isMounted) return;
         setQrDataUrl(qrUrl);
 
-        const canvas = await renderPosterToCanvas({ ...liveCompany, uid: companyId, lang: language }, qrUrl);
+        const canvas = await Promise.race([
+          renderPosterToCanvas({ ...liveCompany, uid: companyId, lang: language }, qrUrl),
+          timeout
+        ]);
         if (!isMounted) return;
         setPreviewDataUrl(canvas.toDataURL('image/png'));
       } catch (err) {
@@ -146,7 +153,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     return () => {
       isMounted = false;
     };
-  }, [isOpen, identityReady, companyId, liveIdentity.customUrl, liveIdentity.namaPT, liveIdentity.danaTersedia, liveIdentity.rewardBalance, liveIdentity.sektor, liveRewardBalance, error]);
+  }, [isOpen, identityReady, companyId, liveIdentity.customUrl, liveIdentity.namaPT, liveIdentity.danaTersedia, liveIdentity.rewardBalance, liveIdentity.sektor, liveRewardBalance, error, retryNonce]);
 
   if (!isOpen) return null;
 
@@ -235,7 +242,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                   <span>Status Mesin</span>
                   <span className={`flex items-center gap-1 font-semibold ${error ? 'text-red-400' : 'text-emerald-400'}`}>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    {error ? 'QR ERROR' : loading ? 'MEMUAT QR' : 'QR SIAP'}
+                    {error ? 'QR ERROR' : loading ? 'MEMUAT QR' : qrDataUrl && previewDataUrl ? 'QR SIAP' : 'QR BELUM SIAP'}
                   </span>
                 </div>
               </div>
