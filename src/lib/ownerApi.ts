@@ -44,16 +44,22 @@ function makeSnapshot(items:any[]){
 
 export const onSnapshot=(ref:QueryRef,callback:(snapshot:any)=>void)=>{
   let active=true;
+  let inFlight=false;
   const load=async()=>{
+    // Serialize D1 polling so an older, slower response can never overwrite
+    // a newer snapshot on owner/admin pages.
+    if(!active || inFlight) return;
+    inFlight=true;
     try{
       const p=new URLSearchParams({collection:ref.collection});
       if(ref.where){p.set('whereField',ref.where.field);p.set('whereValue',String(ref.where.value));}
       const data=await api('/api/owner/data?'+p.toString());
-      if(active) callback(makeSnapshot(data.items||[]));
+      if(active && Array.isArray(data.items)) callback(makeSnapshot(data.items));
     }catch(error){console.error('Owner D1 subscription error',error);}
+    finally{inFlight=false;}
   };
-  load();
-  const timer=window.setInterval(load,15000);
+  void load();
+  const timer=window.setInterval(()=>{void load()},15000);
   return ()=>{active=false;window.clearInterval(timer)};
 };
 
