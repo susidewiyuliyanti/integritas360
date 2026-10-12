@@ -43,29 +43,21 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
         const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store' });
         const result = await response.json().catch(() => ({}));
         if (response.ok && result?.company?.company_id) {
+          // Use the authenticated tenant API as the sole source of truth.
+          // It reads the tenant row directly from D1 and avoids showing fallback
+          // values from stale AuthContext or public/legacy profile metadata.
           const row = result.company;
-          // Fetch the public, no-cache D1 record as the authoritative source for
-          // the tenant name, canonical company ID, sector and current reward balance.
-          const publicResponse = await fetch('/api/public/company?companyId=' + encodeURIComponent(String(row.company_id)), {
-            credentials: 'omit',
-            cache: 'no-store'
-          });
-          const publicResult = await publicResponse.json().catch(() => ({}));
-          if (!publicResponse.ok || !publicResult?.company?.company_id) {
-            throw new Error(publicResult?.error || 'Data perusahaan tidak dapat diverifikasi dari database D1.');
-          }
-          const d1 = publicResult.company;
-          const d1Balance = Number(d1.deposit_balance);
+          const d1Balance = Number(row.deposit_balance);
           if (!Number.isFinite(d1Balance) || d1Balance < 0) {
-            throw new Error('Saldo reward dari database D1 tidak valid. Poster tidak dibuat agar data tidak keliru.');
+            throw new Error('Saldo tersedia dari database D1 tidak valid. Poster tidak dibuat agar nominal tidak keliru.');
           }
           const canonical: PosterOptions = {
             ...company,
-            uid: String(d1.company_id),
-            companyId: String(d1.company_id),
-            company_id: String(d1.company_id),
-            namaPT: String(d1.company_name || '').trim(),
-            sektor: String(d1.sector || 'Kepatuhan & Integritas'),
+            uid: String(row.company_id),
+            companyId: String(row.company_id),
+            company_id: String(row.company_id),
+            namaPT: String(row.company_name || row.namaPT || '').trim(),
+            sektor: String(row.sektor || row.sector || 'Kepatuhan & Integritas'),
             danaTersedia: d1Balance,
             rewardBalance: d1Balance
           };
@@ -92,13 +84,28 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
     let active = true;
     const refreshBalance = async () => {
       try {
-        const response = await fetch('/api/public/company?companyId=' + encodeURIComponent(companyId), { credentials: 'omit', cache: 'no-store' });
+        const response = await fetch('/api/company/me', {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'cache-control': 'no-cache' }
+        });
         if (!response.ok) return;
         const data = await response.json();
-        const balance = Number(data?.company?.deposit_balance);
-        if (active && Number.isFinite(balance) && balance >= 0) setLiveRewardBalance(balance);
-        if (active && data?.company?.company_name) {
-          setResolvedCompany((prev) => ({ ...(prev || liveIdentity), namaPT: String(data.company.company_name), uid: String(data.company.company_id), company_id: String(data.company.company_id), companyId: String(data.company.company_id), danaTersedia: balance, rewardBalance: balance }));
+        const row = data?.company;
+        const balance = Number(row?.deposit_balance);
+        if (!row?.company_id || !Number.isFinite(balance) || balance < 0) return;
+        if (active) {
+          setLiveRewardBalance(balance);
+          setResolvedCompany((prev) => ({
+            ...(prev || liveIdentity),
+            namaPT: String(row.company_name || row.namaPT || ''),
+            uid: String(row.company_id),
+            company_id: String(row.company_id),
+            companyId: String(row.company_id),
+            sektor: String(row.sektor || row.sector || prev?.sektor || 'Kepatuhan & Integritas'),
+            danaTersedia: balance,
+            rewardBalance: balance
+          }));
         }
       } catch (err) { console.warn('Gagal menyegarkan saldo reward perusahaan:', err); }
     };
@@ -232,7 +239,7 @@ export const PosterModal: React.FC<PosterModalProps> = ({ isOpen, onClose, compa
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Total Reward Tersedia</span>
-                  <span className="font-mono font-bold text-emerald-400">Rp {Number(liveCompany.danaTersedia ?? liveCompany.rewardBalance ?? 0).toLocaleString('id-ID')}</span>
+                  <span className="font-mono font-bold text-emerald-400">{!identityReady ? 'Memverifikasi D1…' : error ? 'Saldo tidak tersedia' : 'Rp ' + Number(liveCompany.danaTersedia ?? liveCompany.rewardBalance ?? 0).toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>QR Resolusi</span>
