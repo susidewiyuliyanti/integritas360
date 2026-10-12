@@ -159,15 +159,15 @@ export const ProfilePage: React.FC = () => {
         const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store', headers: { 'cache-control': 'no-cache' } });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result?.company?.company_id) throw new Error(result?.error || 'Profil tenant D1 tidak tersedia.');
-        const d = { ...(result.profile || {}), ...(result.company || {}) };
-        const balance = Number(d.deposit_balance ?? 0);
+        const d = { ...(result.company || {}), ...(result.profile || {}) };
+        const balance = Number(result.company?.deposit_balance ?? d.deposit_balance ?? 0);
         const p: UserProfile = {
           ...d, uid: user.uid || user.id, email: d.email || user.email || '', role: result.profile?.role || user.role || 'perusahaan',
-          perusahaanName: d.company_name || d.namaPT || '', company_name: d.company_name || d.namaPT || '', namaPT: d.company_name || d.namaPT || '',
+          perusahaanName: result.company?.company_name || d.company_name || d.namaPT || '', company_name: result.company?.company_name || d.company_name || d.namaPT || '', namaPT: result.company?.company_name || d.company_name || d.namaPT || '',
           sektor: d.sektor || d.sector || 'Manufaktur & Bisnis', alamat: d.alamat || '', deskripsi: d.deskripsi || '', telepon: d.telepon || '', npwp: d.npwp || '', picName: d.picName || d.email || user.email || '',
           nomorLisensi: d.nomorLisensi || '', gelarProfesi: d.gelarProfesi || '', spesialisasiAudit: d.spesialisasiAudit || d.sektor || 'Audit Forensik & Investigasi Fraud',
           biayaJasaPerKasus: Math.max(100000, Number(d.biayaJasaPerKasus) || 150000),
-          danaTersedia: balance, saldo: balance, deposit_balance: balance, danaTerkunci: Number(d.locked_balance || 0),
+          danaTersedia: balance, saldo: balance, deposit_balance: balance, danaTerkunci: Number(result.company?.locked_balance ?? d.locked_balance ?? 0),
           statusVerifikasiDokumen: d.statusVerifikasiDokumen || 'belum_upload', dokumenUrl: d.dokumenUrl || '', dokumenNama: d.dokumenNama || '',
           catatanVerifikasi: d.catatanVerifikasi || '', photoURL: d.photoURL || '',
           rekeningBank: d.rekeningBank || { bankName: 'BCA', accountNumber: '', holderName: '' }
