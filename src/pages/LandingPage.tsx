@@ -55,7 +55,7 @@ export const LandingPage: React.FC = () => {
 
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
               Sistem pelaporan pelanggaran dan penyalahgunaan aset perusahaan yang membantu perusahaan
-              menerima laporan secara <span className="text-emerald-400 font-bold">anonim</span>,
+              <span className="text-emerald-400 font-bold">menerima laporan secara anonim</span>,
               memverifikasi laporan, dan memberikan reward sesuai kebijakan perusahaan.
             </p>
 
