@@ -1796,6 +1796,7 @@ export const EN_TO_ID: Record<string, string> = {
   "Withdraw": "Penarikan",
   "Rewards": "Reward",
   "Live": "Langsung",
+  "Failed to get 2D canvas context": "Gagal mendapatkan konteks canvas 2D",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
