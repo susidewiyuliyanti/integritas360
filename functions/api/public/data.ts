@@ -235,7 +235,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const claimToken = String(data.claimReportToken || '');
       const report = await env.DB.prepare('SELECT * FROM reports WHERE id = ? OR reporter_code = ? LIMIT 1')
         .bind(reportId, claimToken).first<any>();
-      if (!report) return json({ error: 'Laporan tidak ditemukan' }, 404);
+      if (!report || !claimToken || String(report.reporter_code || '').toUpperCase() !== claimToken.trim().toUpperCase()) {
+        return json({ error: 'Nomor tiket rahasia tidak valid.' }, 403);
+      }
 
       let reportMeta:any = {};
       try { reportMeta = JSON.parse(report.metadata_json || '{}'); } catch {}
