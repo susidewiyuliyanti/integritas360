@@ -11,11 +11,12 @@ const SKIP_TEXT_TAGS = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'];
 const TRANSLATABLE_ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
 const TRANSLATABLE_INPUT_TYPES = ['submit', 'button', 'reset'];
 
-const originals = new WeakMap<Node, string>();
+type TextTranslationState = { original: string; translated: string };
+const originals = new WeakMap<Node, TextTranslationState>();
 const originalHeadValues = new WeakMap<Element, string>();
 const originalDocumentTitle = typeof document === 'undefined' ? '' : document.title;
 
-type AttrStore = Record<string, string>;
+type AttrStore = Record<string, TextTranslationState>;
 
 function getAttrStore(node: Element): AttrStore {
   const existing = (node as unknown as { __i360OriginalAttrs?: AttrStore }).__i360OriginalAttrs;
@@ -71,13 +72,23 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
 
     const translateNode = (node: Node) => {
       if (node.nodeType === Node.TEXT_NODE) {
-        if (!originals.has(node)) originals.set(node, node.textContent || '');
-        const original = originals.get(node) || '';
+        const currentText = node.textContent || '';
+        let state = originals.get(node);
+        // React can reuse a text node for new API/D1 data. If its current value is
+        // not the value we last translated, treat it as new source text.
+        if (!state) {
+          state = { original: currentText, translated: currentText };
+          originals.set(node, state);
+        } else if (currentText !== state.translated) {
+          state.original = currentText;
+        }
+        const original = state.original;
         const parent = node.parentElement;
         // Catatan: OPTION sengaja TIDAK dikecualikan supaya label dropdown ikut terjemahan.
         if (parent && !SKIP_TEXT_TAGS.includes(parent.tagName) && !parent.closest('[data-no-translate]')) {
           const translated = translateText(original, language);
           if (node.textContent !== translated) node.textContent = translated;
+          state.translated = translated;
         }
         return;
       }
@@ -91,9 +102,11 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
         const value = node.getAttribute(attr);
         if (!value) continue;
         const store = getAttrStore(node);
-        if (!(attr in store)) store[attr] = value;
-        const translated = translateText(store[attr], language);
-        if (node.getAttribute(attr) !== translated) node.setAttribute(attr, translated);
+        if (!(attr in store)) store[attr] = { original: value, translated: value };
+        else if (value !== store[attr].translated) store[attr].original = value;
+        const translated = translateText(store[attr].original, language);
+        if (value !== translated) node.setAttribute(attr, translated);
+        store[attr].translated = translated;
       }
 
       // Tombol <input type="submit" value="Kirim"> berisi label, jadi perlu diterjemahkan.
@@ -102,9 +115,11 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
         const value = node.getAttribute('value');
         if (value) {
           const store = getAttrStore(node);
-          if (!('value' in store)) store.value = value;
-          const translated = translateText(store.value, language);
-          if (node.getAttribute('value') !== translated) node.setAttribute('value', translated);
+          if (!('value' in store)) store.value = { original: value, translated: value };
+          else if (value !== store.value.translated) store.value.original = value;
+          const translated = translateText(store.value.original, language);
+          if (value !== translated) node.setAttribute('value', translated);
+          store.value.translated = translated;
         }
       }
 
@@ -118,12 +133,12 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
 
     const observer = new MutationObserver((records) => {
       for (const record of records) {
-        if (record.type === 'characterData') translateNode(record.target);
+        if (record.type === 'characterData' || record.type === 'attributes') translateNode(record.target);
         record.addedNodes.forEach(translateNode);
       }
     });
     if (document.body) {
-      observer.observe(document.body, { subtree: true, childList: true, characterData: true });
+      observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: [...TRANSLATABLE_ATTRS, 'value'] });
     }
 
     // Dialog bawaan browser juga perlu mengikuti bahasa yang dipilih.
