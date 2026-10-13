@@ -1581,6 +1581,16 @@ export const PHRASES: Record<string, string> = {
   "Identitas pelapor dirahasiakan": "Reporter identity is confidential",
   "03 • REWARD": "03 • REWARD",
   "Jika laporan memenuhi ketentuan reward, pelapor menggunakan kode ID rahasianya untuk melakukan klaim.": "If the report meets the reward requirements, the reporter uses their secret ID code to submit a claim.",
+  "Portal Masuk INTEGRITAS360": "INTEGRITAS360 Login Portal",
+  "Masuk Sekarang": "Sign In Now",
+  "Standar Kepatuhan ISO 37002 & Tata Kelola Integritas360": "ISO 37002 Compliance Standard & Integritas360 Governance",
+  "poster beresolusi HD 1080x1920 siap cetak untuk ditempel di koridor, area presensi, pabrik, dan gudang kantor Anda.": "print-ready HD 1080x1920 poster for corridors, attendance areas, factories, and office warehouses.",
+  "Kembali ke Beranda": "Back to Home",
+  "QR Code Terenkripsi Aktif": "Encrypted QR Code Active",
+  "Belum ada catatan aktivitas yang sesuai filter.": "No activity records match the selected filters.",
+  "Total Saldo Seluruh Sistem": "Total System Balance",
+  "Saldo PT (Terbuka / Likuid)": "Company Balance (Available / Liquid)",
+  "Total Saldo Auditor": "Total Auditor Balance",
 };
 
 
@@ -1958,6 +1968,16 @@ export const EN_TO_ID: Record<string, string> = {
   "Report Misconduct Anonymously": "Laporkan Pelanggaran Secara Anonim",
   "Reporter identity is confidential": "Identitas pelapor dirahasiakan",
   "If the report meets the reward requirements, the reporter uses their secret ID code to submit a claim.": "Jika laporan memenuhi ketentuan reward, pelapor menggunakan kode ID rahasianya untuk melakukan klaim.",
+  "INTEGRITAS360 Login Portal": "Portal Masuk INTEGRITAS360",
+  "Sign In Now": "Masuk Sekarang",
+  "ISO 37002 Compliance Standard & Integritas360 Governance": "Standar Kepatuhan ISO 37002 & Tata Kelola Integritas360",
+  "print-ready HD 1080x1920 poster for corridors, attendance areas, factories, and office warehouses.": "poster beresolusi HD 1080x1920 siap cetak untuk ditempel di koridor, area presensi, pabrik, dan gudang kantor Anda.",
+  "Back to Home": "Kembali ke Beranda",
+  "Encrypted QR Code Active": "QR Code Terenkripsi Aktif",
+  "No activity records match the selected filters.": "Belum ada catatan aktivitas yang sesuai filter.",
+  "Total System Balance": "Total Saldo Seluruh Sistem",
+  "Company Balance (Available / Liquid)": "Saldo PT (Terbuka / Likuid)",
+  "Total Auditor Balance": "Total Saldo Auditor",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
