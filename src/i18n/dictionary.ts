@@ -1650,6 +1650,8 @@ export const PHRASES: Record<string, string> = {
   "100% Anonim, Terenkripsi & Rahasia": "100% Anonymous, Encrypted & Confidential",
   "Tanpa Registrasi / Tanpa Akun": "No Registration / No Account Required",
   "Sebagai pelapor, Anda": "As the reporter, you",
+  "QR Pelaporan Resmi": "Official Reporting QR Code",
+  "PORTAL PELAPORAN RESMI": "OFFICIAL REPORTING PORTAL",
 };
 
 
@@ -2095,6 +2097,8 @@ export const EN_TO_ID: Record<string, string> = {
   "100% Anonymous, Encrypted & Confidential": "100% Anonim, Terenkripsi & Rahasia",
   "No Registration / No Account Required": "Tanpa Registrasi / Tanpa Akun",
   "As the reporter, you": "Sebagai pelapor, Anda",
+  "Official Reporting QR Code": "QR Pelaporan Resmi",
+  "OFFICIAL REPORTING PORTAL": "PORTAL PELAPORAN RESMI",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
