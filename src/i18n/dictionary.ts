@@ -1629,6 +1629,21 @@ export const PHRASES: Record<string, string> = {
   "URL Pelaporan": "Reporting URL",
   "Status akan menunjukkan ": "The status will show ",
   "Terima notifikasi saat dana dicairkan": "Receive notifications when funds are paid out",
+  "Syarat & Ketentuan": "Terms & Conditions",
+  "sistem menerbitkan poster QR whistleblowing resmi yang bergaransi.": "the system issues an official, guaranteed whistleblowing QR poster.",
+  "bagi saksi pelapor.": "for reporting witnesses.",
+  "3. Masa Berlaku Reward: Tidak Ada Batasan Waktu": "3. Reward Validity: No Time Limit",
+  "4. Kewajiban Bukti & Mekanisme Whistleblowing": "4. Evidence Requirements & Whistleblowing Process",
+  "Komitmen Kerahasiaan 100% Saksi Pelapor": "100% Confidentiality Commitment for Reporting Witnesses",
+  "2. Enkripsi Berkas Bukti & Hak Akses Terisolasi": "2. Evidence File Encryption & Isolated Access Permissions",
+  "3. Nomor Tiket Akses Mandiri": "3. Self-Service Access Ticket Number",
+  "4. Kepatuhan Undang-Undang Perlindungan Saksi": "4. Compliance with Witness Protection Laws",
+  "serta ISO 37002 (Whistleblowing Management Systems) untuk menjamin pelapor bebas dari intimidasi atau pembalasan.": "and ISO 37002 (Whistleblowing Management Systems) to protect reporters from intimidation or retaliation.",
+  "INTEGRITAS360 • Standar Perlindungan Whistleblowing Indonesia": "INTEGRITAS360 • Indonesian Whistleblowing Protection Standard",
+  "Pilih Aset Kripto yang Digunakan:": "Select the Cryptocurrency to Use:",
+  "⚠️ Harap hanya mengirimkan aset melalui jaringan": "⚠️ Please send assets only through the network",
+  ". Pengiriman di luar jaringan dapat menyebabkan dana hilang.": ". Sending funds over a different network may result in loss of funds.",
+  "Pembayaran Nasional": "National Payments",
 };
 
 
@@ -2053,6 +2068,21 @@ export const EN_TO_ID: Record<string, string> = {
   "Reporting URL": "URL Pelaporan",
   "No file available": "Belum ada file",
   "Track Report Status": "Pantau Status Tiket",
+  "Terms & Conditions": "Syarat & Ketentuan",
+  "the system issues an official, guaranteed whistleblowing QR poster.": "sistem menerbitkan poster QR whistleblowing resmi yang bergaransi.",
+  "for reporting witnesses.": "bagi saksi pelapor.",
+  "3. Reward Validity: No Time Limit": "3. Masa Berlaku Reward: Tidak Ada Batasan Waktu",
+  "4. Evidence Requirements & Whistleblowing Process": "4. Kewajiban Bukti & Mekanisme Whistleblowing",
+  "100% Confidentiality Commitment for Reporting Witnesses": "Komitmen Kerahasiaan 100% Saksi Pelapor",
+  "2. Evidence File Encryption & Isolated Access Permissions": "2. Enkripsi Berkas Bukti & Hak Akses Terisolasi",
+  "3. Self-Service Access Ticket Number": "3. Nomor Tiket Akses Mandiri",
+  "4. Compliance with Witness Protection Laws": "4. Kepatuhan Undang-Undang Perlindungan Saksi",
+  "and ISO 37002 (Whistleblowing Management Systems) to protect reporters from intimidation or retaliation.": "serta ISO 37002 (Whistleblowing Management Systems) untuk menjamin pelapor bebas dari intimidasi atau pembalasan.",
+  "INTEGRITAS360 • Indonesian Whistleblowing Protection Standard": "INTEGRITAS360 • Standar Perlindungan Whistleblowing Indonesia",
+  "Select the Cryptocurrency to Use:": "Pilih Aset Kripto yang Digunakan:",
+  "⚠️ Please send assets only through the network": "⚠️ Harap hanya mengirimkan aset melalui jaringan",
+  ". Sending funds over a different network may result in loss of funds.": ". Pengiriman di luar jaringan dapat menyebabkan dana hilang.",
+  "National Payments": "Pembayaran Nasional",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
