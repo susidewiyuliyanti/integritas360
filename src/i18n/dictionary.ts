@@ -1656,6 +1656,8 @@ export const PHRASES: Record<string, string> = {
   "QRIS Statis Nasional (Semua Bank & E-Wallet)": "National Static QRIS (All Banks & E-Wallet)",
   "Spesialisasi Bidang Audit *": "Audit Field Specialization *",
   "Audit & Tindak Lanjut": "Audit & Follow-up",
+  "Coba Lagi Membuat QR": "Try Generating the QR Code Again",
+  "QR Code Standar": "Standard QR Code",
 };
 
 
@@ -2110,6 +2112,8 @@ export const EN_TO_ID: Record<string, string> = {
   "NOWPayments Crypto Gateway (USDT, BTC, ETH, SOL, TRX)": "Gerbang Pembayaran Kripto NOWPayments (USDT, BTC, ETH, SOL, TRX)",
   "Audit & Tindak": "Audit & Tindak Lanjut",
   "Review": "Tinjau",
+  "Try Generating the QR Code Again": "Coba Lagi Membuat QR",
+  "Standard QR Code": "Kode QR Standar",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
