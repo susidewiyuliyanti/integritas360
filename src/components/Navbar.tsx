@@ -55,13 +55,13 @@ export const Navbar: React.FC = () => {
           <button
             type="button"
             onClick={toggleLanguage}
-            aria-label={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
-            title={language === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
+            aria-label={language === 'id' ? 'Switch to English' : 'Switch to Indonesian'}
+            title={language === 'id' ? 'Switch to English' : 'Switch to Indonesian'}
             data-no-translate
             className="w-full px-2.5 py-1.5 text-xs font-semibold rounded-md border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/15 text-amber-300 transition-colors cursor-pointer min-h-8 flex items-center gap-1.5"
           >
             <Languages className="w-4 h-4" />
-            <span>{language === 'id' ? 'English' : 'Bahasa Indonesia'}</span>
+            <span>{language === 'id' ? 'English' : 'Indonesian'}</span>
           </button>
           <button
             id="nav-btn-studi-kasus"
