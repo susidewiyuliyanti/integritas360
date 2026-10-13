@@ -1496,6 +1496,9 @@ export const PHRASES: Record<string, string> = {
   "Platform pelaporan pelanggaran perusahaan dengan sistem anonim dan reward.": "Corporate whistleblowing platform with an anonymous reporting and reward system.",
 
   "Contoh:": "Example:",
+  "Tolak": "Reject",
+  "Tersalin": "Copied",
+  "Legalitas": "Legal Documents",
 };
 
 
@@ -1786,6 +1789,13 @@ export const EN_TO_ID: Record<string, string> = {
   "Compliance & Anti-Bribery Audit (ISO 37001)": "Audit Kepatuhan & Anti-Penyuapan (ISO 37001)",
   "General / Independent Multidisciplinary": "Umum / Multidisiplin Independen",
   "Manufacturing & Business": "Manufaktur & Bisnis",
+  "Report": "Laporan",
+  "Finance": "Keuangan",
+  "System": "Sistem",
+  "Subject": "Subjek",
+  "Withdraw": "Penarikan",
+  "Rewards": "Reward",
+  "Live": "Langsung",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
