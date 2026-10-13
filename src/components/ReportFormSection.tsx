@@ -1843,7 +1843,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                           ) : (
                             <>
                               <Banknote className="w-4 h-4" />
-                              Ajukan Klaim Reward Tunai
+                              Ajukan Klaim Reward
                             </>
                           )}
                         </button>
