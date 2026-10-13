@@ -12,6 +12,8 @@ const TRANSLATABLE_ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
 const TRANSLATABLE_INPUT_TYPES = ['submit', 'button', 'reset'];
 
 const originals = new WeakMap<Node, string>();
+const originalHeadValues = new WeakMap<Element, string>();
+const originalDocumentTitle = typeof document === 'undefined' ? '' : document.title;
 
 type AttrStore = Record<string, string>;
 
@@ -58,6 +60,14 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
 
   useEffect(() => {
     document.documentElement.lang = language;
+
+    // Head metadata lives outside document.body, so the DOM text walker cannot translate it.
+    if (originalDocumentTitle) document.title = translateText(originalDocumentTitle, language);
+    document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]').forEach((element) => {
+      const meta = element as HTMLMetaElement;
+      if (!originalHeadValues.has(meta)) originalHeadValues.set(meta, meta.content || '');
+      meta.content = translateText(originalHeadValues.get(meta) || '', language);
+    });
 
     const translateNode = (node: Node) => {
       if (node.nodeType === Node.TEXT_NODE) {
