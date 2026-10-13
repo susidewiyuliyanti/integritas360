@@ -1436,6 +1436,16 @@ export const PHRASES: Record<string, string> = {
   "ID perusahaan wajib diisi.": "Company ID is required.",
   "Gagal memuat data perusahaan dari database.": "Failed to load company data from the database.",
   "D1 belum terhubung": "D1 is not connected",
+  "Bantuan WhatsApp": "WhatsApp Help",
+  "INTEGRITAS360 Brand Emblem": "INTEGRITAS360 Brand Emblem",
+  "Integritas360 Logo": "Integritas360 Logo",
+  "Download Poster QR Whistleblowing": "Download Whistleblowing QR Poster",
+  "Min. 6 karakter": "Min. 6 characters",
+  "Email *": "Email *",
+  "Data tidak dihapus. Halaman akan mencoba memuat ulang otomatis; jangan membuat data atau transaksi duplikat.": "Data has not been deleted. The page will try to reload automatically; do not create duplicate data or transactions.",
+  "Pastikan jaringan dan alamat wallet benar. Kesalahan alamat dapat menyebabkan dana tidak dapat dipulihkan.": "Make sure the network and wallet address are correct. An incorrect address may result in unrecoverable funds.",
+  "Dashboard ini menunggu endpoint admin yang terautentikasi; tidak menggunakan endpoint publik lintas tenant.": "This dashboard requires an authenticated admin endpoint; it does not use public cross-tenant endpoints.",
+  "Periksa bukti atau referensi transaksi sebelum menyetujui. Saldo hanya berubah setelah approval berhasil.": "Review the proof or transaction reference before approving. The balance changes only after approval succeeds.",
 };
 
 
@@ -1685,6 +1695,14 @@ export const EN_TO_ID: Record<string, string> = {
   "Forbidden": "Akses ditolak",
   "Company tenant required": "Tenant perusahaan wajib ditentukan",
   "Company name not registered": "Nama perusahaan tidak terdaftar",
+  "Show": "Tampilkan",
+  "Hide": "Sembunyikan",
+  "Email *": "Email *",
+  "INTEGRITAS360 Brand Emblem": "Lambang Merek INTEGRITAS360",
+  "Integritas360 Logo": "Logo Integritas360",
+  "WhatsApp Help": "Bantuan WhatsApp",
+  "Download Whistleblowing QR Poster": "Unduh Poster QR Whistleblowing",
+  "Min. 6 characters": "Min. 6 karakter",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
