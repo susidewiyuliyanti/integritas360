@@ -1499,6 +1499,7 @@ export const PHRASES: Record<string, string> = {
   "Tolak": "Reject",
   "Tersalin": "Copied",
   "Legalitas": "Legal Documents",
+
 };
 
 
