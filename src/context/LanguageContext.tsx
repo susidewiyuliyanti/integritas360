@@ -73,7 +73,9 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
       }
 
       if (!(node instanceof Element)) return;
-      if (node.matches('script,style,noscript,textarea,[data-no-translate]')) return;
+      // Jangan menerjemahkan isi textarea karena dapat berisi input pengguna,
+      // tetapi placeholder/title/aria-label-nya tetap bagian dari UI dan perlu diterjemahkan.
+      if (node.matches('script,style,noscript,[data-no-translate]')) return;
 
       for (const attr of TRANSLATABLE_ATTRS) {
         const value = node.getAttribute(attr);
@@ -96,7 +98,7 @@ export const LanguageProvider: React.FC<React.PropsWithChildren> = ({ children }
         }
       }
 
-      node.childNodes.forEach(translateNode);
+      if (node.tagName !== 'TEXTAREA') node.childNodes.forEach(translateNode);
     };
 
     const run = () => {
