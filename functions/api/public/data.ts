@@ -250,16 +250,30 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const rewardAmount = Number(report.reward_amount || reportMeta.rewardAmount || 0);
       if (!Number.isFinite(rewardAmount) || rewardAmount <= 0) return json({ error: 'Nominal reward belum tersedia.' }, 409);
       const payoutMethod = String(data.payoutMethod || 'bank').toLowerCase();
-      if (!['wallet', 'bank'].includes(payoutMethod)) return json({ error: 'Metode pencairan tidak didukung.' }, 400);
+      if (!['wallet', 'bank', 'ewallet'].includes(payoutMethod)) return json({ error: 'Metode pencairan tidak didukung.' }, 400);
       const walletAddress = String(data.walletAddress || '').trim();
       if (payoutMethod === 'wallet' && !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
         return json({ error: 'Alamat wallet EVM tidak valid.' }, 400);
       }
       const bankDetails = data.bankDetails || {};
-      if (payoutMethod === 'bank' && (!String(bankDetails.accountNumber || '').trim() || !String(bankDetails.holderName || '').trim() || !String(bankDetails.bankName || '').trim())) {
-        return json({ error: 'Data rekening bank belum lengkap.' }, 400);
+      const payoutProvider = String(bankDetails.bankName || '').trim();
+      const accountNumber = String(bankDetails.accountNumber || '').trim();
+      const holderName = String(bankDetails.holderName || '').trim();
+      if ((payoutMethod === 'bank' || payoutMethod === 'ewallet') && (!accountNumber || !holderName || !payoutProvider)) {
+        return json({ error: 'Data rekening atau akun pembayaran belum lengkap.' }, 400);
       }
-      const payoutDestination = payoutMethod === 'wallet' ? walletAddress : String(bankDetails.accountNumber).trim();
+      const supportedBanks = ['BCA', 'Mandiri', 'BRI', 'BNI', 'CIMB Niaga', 'BSI', 'Permata', 'Danamon'];
+      const supportedEwallets = ['OVO', 'DANA', 'GoPay', 'ShopeePay', 'LinkAja'];
+      if (payoutMethod === 'bank' && !supportedBanks.includes(payoutProvider)) {
+        return json({ error: 'Bank tujuan belum didukung.' }, 400);
+      }
+      if (payoutMethod === 'ewallet' && !supportedEwallets.includes(payoutProvider)) {
+        return json({ error: 'E-wallet tujuan belum didukung.' }, 400);
+      }
+      if (payoutMethod === 'ewallet' && !/^(?:\\+?62|0)8[0-9]{7,12}$/.test(accountNumber.replace(/[\\s-]/g, ''))) {
+        return json({ error: 'Nomor HP e-wallet tidak valid.' }, 400);
+      }
+      const payoutDestination = payoutMethod === 'wallet' ? walletAddress : accountNumber;
       const txId = id('tx');
       const companyId = report.company_id;
       const claimMeta = JSON.stringify({ ...data, payoutMethod, walletAddress: payoutMethod === 'wallet' ? walletAddress : '', amount: rewardAmount, reportId: report.id, rewardReleased: true });
