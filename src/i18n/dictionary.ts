@@ -1500,6 +1500,9 @@ export const PHRASES: Record<string, string> = {
   "Tersalin": "Copied",
   "Legalitas": "Legal Documents",
 
+  "saldo tidak cukup": "insufficient balance",
+  "saldo tidak mencukupi": "insufficient balance",
+  "saldo perusahaan tidak cukup": "company balance is insufficient",
 };
 
 
@@ -1798,6 +1801,8 @@ export const EN_TO_ID: Record<string, string> = {
   "Rewards": "Reward",
   "Live": "Langsung",
   "Failed to get 2D canvas context": "Gagal mendapatkan konteks canvas 2D",
+  "insufficient balance": "saldo tidak mencukupi",
+  "company balance is insufficient": "saldo perusahaan tidak mencukupi",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
