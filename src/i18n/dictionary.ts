@@ -1644,6 +1644,12 @@ export const PHRASES: Record<string, string> = {
   "⚠️ Harap hanya mengirimkan aset melalui jaringan": "⚠️ Please send assets only through the network",
   ". Pengiriman di luar jaringan dapat menyebabkan dana hilang.": ". Sending funds over a different network may result in loss of funds.",
   "Pembayaran Nasional": "National Payments",
+  "Fakta & Realita Pelanggaran di Dunia Bisnis": "Facts & Realities of Misconduct in Business",
+  "Sering terjadi di PT Swasta": "Commonly Occurs in Private Companies",
+  "Mekanisme Proteksi Sistem:": "System Protection Mechanisms:",
+  "100% Anonim, Terenkripsi & Rahasia": "100% Anonymous, Encrypted & Confidential",
+  "Tanpa Registrasi / Tanpa Akun": "No Registration / No Account Required",
+  "Sebagai pelapor, Anda": "As the reporter, you",
 };
 
 
@@ -2083,6 +2089,12 @@ export const EN_TO_ID: Record<string, string> = {
   "⚠️ Please send assets only through the network": "⚠️ Harap hanya mengirimkan aset melalui jaringan",
   ". Sending funds over a different network may result in loss of funds.": ". Pengiriman di luar jaringan dapat menyebabkan dana hilang.",
   "National Payments": "Pembayaran Nasional",
+  "Facts & Realities of Misconduct in Business": "Fakta & Realita Pelanggaran di Dunia Bisnis",
+  "Commonly Occurs in Private Companies": "Sering terjadi di PT Swasta",
+  "System Protection Mechanisms:": "Mekanisme Proteksi Sistem:",
+  "100% Anonymous, Encrypted & Confidential": "100% Anonim, Terenkripsi & Rahasia",
+  "No Registration / No Account Required": "Tanpa Registrasi / Tanpa Akun",
+  "As the reporter, you": "Sebagai pelapor, Anda",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
