@@ -1591,6 +1591,7 @@ export const PHRASES: Record<string, string> = {
   "Total Saldo Seluruh Sistem": "Total System Balance",
   "Saldo PT (Terbuka / Likuid)": "Company Balance (Available / Liquid)",
   "Total Saldo Auditor": "Total Auditor Balance",
+  "Semua Saldo": "All Balances",
 };
 
 
@@ -1978,6 +1979,7 @@ export const EN_TO_ID: Record<string, string> = {
   "Total System Balance": "Total Saldo Seluruh Sistem",
   "Company Balance (Available / Liquid)": "Saldo PT (Terbuka / Likuid)",
   "Total Auditor Balance": "Total Saldo Auditor",
+  "All Balances": "Semua Saldo",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
