@@ -1654,6 +1654,8 @@ export const PHRASES: Record<string, string> = {
   "PIC Email (Email Pribadi / Dinas PIC)": "PIC Email (Personal / Official PIC Email)",
   "Pusat kendali SaaS — data lintas tenant": "SaaS control plane — cross-tenant data",
   "QRIS Statis Nasional (Semua Bank & E-Wallet)": "National Static QRIS (All Banks & E-Wallet)",
+  "Spesialisasi Bidang Audit *": "Audit Field Specialization *",
+  "Audit & Tindak Lanjut": "Audit & Follow-up",
 };
 
 
@@ -2105,9 +2107,7 @@ export const EN_TO_ID: Record<string, string> = {
   "QR Information": "Informasi QR",
   "Crypto:": "Kripto:",
   "NOWPayments (Crypto)": "NOWPayments (Kripto)",
-  "QRIS Statis Nasional (Semua Bank & E-Wallet)": "QRIS Statis Nasional (Semua Bank & E-Wallet)",
   "NOWPayments Crypto Gateway (USDT, BTC, ETH, SOL, TRX)": "Gerbang Pembayaran Kripto NOWPayments (USDT, BTC, ETH, SOL, TRX)",
-  "Spesialisasi Bidang Audit *": "Spesialisasi Bidang Audit *",
   "Audit & Tindak": "Audit & Tindak Lanjut",
 };
 
