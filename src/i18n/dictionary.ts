@@ -1319,6 +1319,9 @@ export const PHRASES: Record<string, string> = {
   "Peran (Role)": "Role",
   "Finance (Keuangan)": "Finance",
   "HR (Personalia)": "HR",
+  "Estimasi Transfer Kripto": "Estimated Crypto Transfer",
+  "Aturan Integritas360:": "Integritas360 Rules:",
+  "Alur resmi:": "Official Process:",
 };
 
 
