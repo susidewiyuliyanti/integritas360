@@ -1999,7 +1999,7 @@ export const DetailPerusahaanModal: React.FC<DetailPerusahaanModalProps> = ({
                   Daftar Akun Pengguna ({companyName})
                 </h4>
                 <p className="text-[11px] text-slate-400">
-                  Data berasal dari entity terisolasi <code>COMPANY_USERS</code> yang terikat dengan <code>company_id: {companyId}</code>
+                  Data berasal dari entitas yang terisolasi <code>COMPANY_USERS</code> yang terikat dengan <code>company_id: {companyId}</code>
                 </p>
               </div>
 
