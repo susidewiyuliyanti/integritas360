@@ -48,6 +48,53 @@ import {
   Users
 } from 'lucide-react';
 import { UserProfile, WhistleblowingReport } from '../types';
+
+const normalizeEvidenceUrl = (item: unknown): string => {
+  if (typeof item === 'string') return item.trim();
+  if (!item || typeof item !== 'object') return '';
+  const file = item as Record<string, unknown>;
+  for (const key of ['dataUrl', 'fileDataUrl', 'url', 'fileUrl', 'downloadUrl', 'src']) {
+    if (typeof file[key] === 'string' && String(file[key]).trim()) return String(file[key]).trim();
+  }
+  return '';
+};
+
+const downloadReportEvidence = async (fileUrl: string, fileName: string) => {
+  if (!fileUrl) {
+    window.alert('URL bukti tidak tersedia. Muat ulang data atau hubungi administrator.');
+    return;
+  }
+  try {
+    // Data URLs and same-origin files can be downloaded directly through a blob.
+    if (fileUrl.startsWith('data:')) {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      return;
+    }
+    const response = await fetch(fileUrl, { credentials: 'include', cache: 'no-store' });
+    if (!response.ok) throw new Error('Berkas tidak dapat diunduh langsung');
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch {
+    // External file hosts may block fetch via CORS; let the authorized user open the file.
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+  }
+};
 import { PosterModal } from '../components/PosterModal';
 import { PosterOptions } from '../utils/posterGenerator';
 import { CompanyUsersView } from '../components/company/CompanyUsersView';
@@ -161,7 +208,7 @@ export const AdminPerusahaanDashboard: React.FC = () => {
             status: d.status || 'baru',
             tokenAkses: '', // Never expose the reporter's claim ticket in company admin UI.
             pelaporAnonim: d.pelaporAnonim !== false,
-            buktiFiles: d.buktiFiles || [],
+            buktiFiles: (Array.isArray(d.buktiFiles) ? d.buktiFiles : Array.isArray(d.evidenceFiles) ? d.evidenceFiles : Array.isArray(d.evidence) ? d.evidence : []).map((file: unknown) => normalizeEvidenceUrl(file)).filter(Boolean),
             isContoh: Boolean(d.isContoh),
             catatanAuditor: d.catatanAuditor,
             investigasiStatus: d.investigasiStatus || 'belum_dimulai',
@@ -1179,24 +1226,25 @@ export const AdminPerusahaanDashboard: React.FC = () => {
                             Bukti Lampiran #{idx + 1}
                           </span>
                         </div>
-                        {fileData.startsWith('data:image') ? (
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <a
                             href={fileData}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-2.5 py-1 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold shrink-0 transition-colors"
+                            className="px-2.5 py-1 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold transition-colors"
                           >
-                            Lihat Foto
+                            Lihat
                           </a>
-                        ) : (
-                          <a
-                            href={fileData}
-                            download={`Bukti_${selectedReport.tokenAkses}_${idx + 1}`}
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-bold shrink-0 transition-colors"
+                          <button
+                            type="button"
+                            onClick={() => void downloadReportEvidence(fileData, `Bukti_Laporan_${selectedReport.id || 'INTEGRITAS360'}_${idx + 1}`)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold transition-colors"
+                            aria-label={`Unduh bukti laporan ${idx + 1}`}
+                            title={`Unduh bukti laporan ${idx + 1}`}
                           >
-                            Unduh File
-                          </a>
-                        )}
+                            <span className="inline-flex items-center gap-1"><Download className="w-3.5 h-3.5" /> Unduh</span>
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
