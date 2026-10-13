@@ -876,10 +876,10 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold text-emerald-300">
-                    Prinsip Dasar Anonim: Pelapor 100% Bebas & Terenkripsi
+                    Prinsip Dasar Anonim: Pelapor 100% Anonim & Terenkripsi
                   </span>
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold px-2 py-0.5 rounded border border-emerald-500/30">
-                    Bebas Akun
+                    Tanpa Perlu Akun
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
@@ -1824,7 +1824,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                             Nomor WhatsApp Notifikasi (Opsional)
                           </label>
                           <span className="text-[10px] text-amber-400 font-medium">
-                            Dapatkan notifikasi jika ingin dapat notif saat dana cair
+                            Terima notifikasi saat dana dicairkan
                           </span>
                         </div>
                         <input
