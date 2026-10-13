@@ -159,7 +159,7 @@ export const ProfilePage: React.FC = () => {
         const response = await fetch('/api/company/me', { credentials: 'include', cache: 'no-store', headers: { 'cache-control': 'no-cache' } });
         const result = await response.json().catch(() => ({}));
         if (!response.ok || !result?.company?.company_id) throw new Error(result?.error || 'Profil tenant D1 tidak tersedia.');
-        const d = { ...(result.company || {}), ...(result.profile || {}) };
+        const d = { ...(result.profile || {}), ...(result.company || {}) }; // D1 companies row overrides stale user/profile metadata for tenant-wide fields.
         const balance = Number(result.company?.deposit_balance ?? d.deposit_balance ?? 0);
         const p: UserProfile = {
           ...d, uid: user.uid || user.id, email: d.email || user.email || '', role: result.profile?.role || user.role || 'perusahaan',
