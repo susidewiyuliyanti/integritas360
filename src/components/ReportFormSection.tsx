@@ -1741,7 +1741,11 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                       <div className="space-y-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1.5">Metode Pencairan Reward</label>
-                          <select value={claimMethod} onChange={(e) => setClaimMethod(e.target.value as 'wallet' | 'bank' | 'ewallet')} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                          <select value={claimMethod} onChange={(e) => {
+                              const method = e.target.value as 'wallet' | 'bank' | 'ewallet';
+                              setClaimMethod(method);
+                              setClaimBank(method === 'ewallet' ? 'OVO' : 'BCA');
+                            }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                             <option value="wallet">Wallet Crypto (EVM)</option>
                             <option value="ewallet">E-Wallet Indonesia (OVO, DANA, GoPay, dll.)</option>
                             <option value="bank">Transfer Bank</option>
@@ -1764,20 +1768,21 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                             onChange={(e) => setClaimBank(e.target.value)}
                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                           >
-                            <option value="BCA">BCA (Bank Central Asia)</option>
-                            <option value="Mandiri">Bank Mandiri</option>
-                            <option value="BRI">BRI (Bank Rakyat Indonesia)</option>
-                            <option value="BNI">BNI (Bank Negara Indonesia)</option>
-                            <option value="CIMB Niaga">CIMB Niaga</option>
-                            <option value="BSI">BSI (Bank Syariah Indonesia)</option>
-                            <option value="Permata">Bank Permata</option>
-                            <option value="Danamon">Bank Danamon</option>
-                            {claimMethod === 'ewallet' && <>
+                            {claimMethod === 'ewallet' ? <>
                               <option value="OVO">OVO</option>
                               <option value="DANA">DANA</option>
                               <option value="GoPay">GoPay</option>
                               <option value="ShopeePay">ShopeePay</option>
                               <option value="LinkAja">LinkAja</option>
+                            </> : <>
+                              <option value="BCA">BCA (Bank Central Asia)</option>
+                              <option value="Mandiri">Bank Mandiri</option>
+                              <option value="BRI">BRI (Bank Rakyat Indonesia)</option>
+                              <option value="BNI">BNI (Bank Negara Indonesia)</option>
+                              <option value="CIMB Niaga">CIMB Niaga</option>
+                              <option value="BSI">BSI (Bank Syariah Indonesia)</option>
+                              <option value="Permata">Bank Permata</option>
+                              <option value="Danamon">Bank Danamon</option>
                             </>}
                           </select>
                         </div>
