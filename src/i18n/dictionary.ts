@@ -1651,6 +1651,9 @@ export const PHRASES: Record<string, string> = {
   "Sebagai pelapor, Anda": "As the reporter, you",
   "QR Pelaporan Resmi": "Official Reporting QR Code",
   "PORTAL PELAPORAN RESMI": "OFFICIAL REPORTING PORTAL",
+  "PIC Email (Email Pribadi / Dinas PIC)": "PIC Email (Personal / Official PIC Email)",
+  "Pusat kendali SaaS — data lintas tenant": "SaaS control plane — cross-tenant data",
+  "QRIS Statis Nasional (Semua Bank & E-Wallet)": "National Static QRIS (All Banks & E-Wallet)",
 };
 
 
@@ -2097,6 +2100,15 @@ export const EN_TO_ID: Record<string, string> = {
   "As the reporter, you": "Sebagai pelapor, Anda",
   "Official Reporting QR Code": "QR Pelaporan Resmi",
   "OFFICIAL REPORTING PORTAL": "PORTAL PELAPORAN RESMI",
+  "PIC Email (Personal / Official PIC Email)": "Email PIC (Email Pribadi / Email Dinas PIC)",
+  "Financial Information": "Informasi Keuangan",
+  "QR Information": "Informasi QR",
+  "Crypto:": "Kripto:",
+  "NOWPayments (Crypto)": "NOWPayments (Kripto)",
+  "QRIS Statis Nasional (Semua Bank & E-Wallet)": "QRIS Statis Nasional (Semua Bank & E-Wallet)",
+  "NOWPayments Crypto Gateway (USDT, BTC, ETH, SOL, TRX)": "Gerbang Pembayaran Kripto NOWPayments (USDT, BTC, ETH, SOL, TRX)",
+  "Spesialisasi Bidang Audit *": "Spesialisasi Bidang Audit *",
+  "Audit & Tindak": "Audit & Tindak Lanjut",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
