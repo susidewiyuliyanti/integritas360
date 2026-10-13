@@ -2109,6 +2109,7 @@ export const EN_TO_ID: Record<string, string> = {
   "NOWPayments (Crypto)": "NOWPayments (Kripto)",
   "NOWPayments Crypto Gateway (USDT, BTC, ETH, SOL, TRX)": "Gerbang Pembayaran Kripto NOWPayments (USDT, BTC, ETH, SOL, TRX)",
   "Audit & Tindak": "Audit & Tindak Lanjut",
+  "Review": "Tinjau",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
