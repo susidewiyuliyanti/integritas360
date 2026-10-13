@@ -907,7 +907,9 @@ export const EditReportModal: React.FC<EditReportModalProps> = ({
               <option value="valid">✅ Valid Terverifikasi</option>
               <option value="terbukti">🎉 Terbukti Sah & Reward Dirilis</option>
               <option value="selesai">Selesai (Kasus Ditutup)</option>
-              <option value="palsu_hoax">❌ Laporan Palsu / Hoax (Tidak Terbukti)</option>
+              {!report.rewardReleased && !['valid', 'terbukti', 'selesai'].includes(String(report.status || '').toLowerCase()) && (
+                <option value="palsu_hoax">❌ Laporan Palsu / Hoax (Tidak Terbukti)</option>
+              )}
               <option value="ditolak">Ditolak</option>
             </select>
           </div>
