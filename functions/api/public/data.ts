@@ -32,6 +32,17 @@ function metadata(row: any) {
 function mergeReport(row: any) {
   let m: any = {};
   try { m = row.metadata_json ? JSON.parse(row.metadata_json) : {}; } catch {}
+  // Older reports may have evidence stored in metadata_json rather than evidence_json.
+  // Do not let an empty/missing evidence_json column erase files that were already saved.
+  let columnEvidence: any[] = [];
+  try {
+    const parsed = JSON.parse(row.evidence_json || '[]');
+    if (Array.isArray(parsed)) columnEvidence = parsed;
+  } catch {}
+  const metadataEvidence = Array.isArray(m.buktiFiles) ? m.buktiFiles
+    : Array.isArray(m.evidenceFiles) ? m.evidenceFiles
+    : Array.isArray(m.evidence) ? m.evidence : [];
+  const evidence = columnEvidence.length ? columnEvidence : metadataEvidence;
   return {
     ...m,
     id: row.id,
@@ -50,7 +61,7 @@ function mergeReport(row: any) {
     rewardClaimed: Boolean(row.reward_claimed),
     tokenAkses: row.reporter_code,
     reportCode: row.report_code,
-    buktiFiles: (() => { try { return JSON.parse(row.evidence_json || '[]'); } catch { return []; } })(),
+    buktiFiles: evidence,
     createdAt: row.created_at,
   };
 }
