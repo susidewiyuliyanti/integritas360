@@ -247,9 +247,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       }
       const rewardAmount = Number(report.reward_amount || reportMeta.rewardAmount || 0);
       if (!Number.isFinite(rewardAmount) || rewardAmount <= 0) return json({ error: 'Nominal reward belum tersedia.' }, 409);
+      const payoutMethod = String(data.payoutMethod || 'bank').toLowerCase();
+      if (!['wallet', 'bank'].includes(payoutMethod)) return json({ error: 'Metode pencairan tidak didukung.' }, 400);
+      const walletAddress = String(data.walletAddress || '').trim();
+      if (payoutMethod === 'wallet' && !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+        return json({ error: 'Alamat wallet EVM tidak valid.' }, 400);
+      }
+      const bankDetails = data.bankDetails || {};
+      if (payoutMethod === 'bank' && (!String(bankDetails.accountNumber || '').trim() || !String(bankDetails.holderName || '').trim() || !String(bankDetails.bankName || '').trim())) {
+        return json({ error: 'Data rekening bank belum lengkap.' }, 400);
+      }
+      const payoutDestination = payoutMethod === 'wallet' ? walletAddress : String(bankDetails.accountNumber).trim();
       const txId = id('tx');
       const companyId = report.company_id;
-      const claimMeta = JSON.stringify({ ...data, amount: rewardAmount, reportId: report.id, rewardReleased: true });
+      const claimMeta = JSON.stringify({ ...data, payoutMethod, walletAddress: payoutMethod === 'wallet' ? walletAddress : '', amount: rewardAmount, reportId: report.id, rewardReleased: true });
       const results = await env.DB.batch([
         env.DB.prepare(`INSERT INTO transactions (id, user_id, company_id, type, amount, status, report_id, metadata_json)
           SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
@@ -263,11 +274,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
           AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
           AND EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
-          .bind(data.bankDetails?.accountNumber || '', report.id, companyId)
+          .bind(payoutDestination, report.id, companyId)
       ]);
       const inserted = Number((results?.[0] as any)?.meta?.changes ?? (results?.[0] as any)?.changes ?? 0);
       if (!inserted) return json({ error: 'Klaim sudah diajukan atau reward belum tersedia.' }, 409);
-      return json({ id: txId, amount: rewardAmount, status: 'pending' });
+      return json({ id: txId, amount: rewardAmount, status: 'pending', payoutMethod });
     }
 
     return json({ error: 'Operasi tidak didukung' }, 400);
