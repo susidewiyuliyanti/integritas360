@@ -480,7 +480,7 @@ export const AuditorDashboard: React.FC = () => {
                       onClick={() => handleOpenReview(report)}
                       className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-colors cursor-pointer"
                     >
-                      Audit & Tindak
+                      Audit & Tindak Lanjut
                     </button>
                   </div>
                 </div>
