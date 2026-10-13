@@ -1347,6 +1347,7 @@ export const PHRASES: Record<string, string> = {
   "Contoh: 0x5a8b9c... atau tron_tx_id...": "Example: 0x5a8b9c... or tron_tx_id...",
   "01 • LAPOR": "01 • REPORT",
   "100% Anonim": "100% Anonymous",
+  "1x24 jam": "within 24 hours",
 };
 
 
