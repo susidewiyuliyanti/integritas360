@@ -1628,6 +1628,7 @@ export const PHRASES: Record<string, string> = {
   "Formulir Pratinjau Interaktif": "Interactive Preview Form",
   "URL Pelaporan": "Reporting URL",
   "Status akan menunjukkan ": "The status will show ",
+  "Terima notifikasi saat dana dicairkan": "Receive notifications when funds are paid out",
 };
 
 
@@ -2051,6 +2052,7 @@ export const EN_TO_ID: Record<string, string> = {
   "Interactive Preview Form": "Formulir Pratinjau Interaktif",
   "Reporting URL": "URL Pelaporan",
   "No file available": "Belum ada file",
+  "Track Report Status": "Pantau Status Tiket",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
