@@ -1423,6 +1423,19 @@ export const PHRASES: Record<string, string> = {
   "Nomor HP e-wallet tidak valid.": "Invalid e-wallet phone number.",
   "Klaim sudah diajukan atau reward belum tersedia.": "The claim has already been submitted or the reward is not available yet.",
   "Operasi tidak didukung": "This operation is not supported.",
+  "Email dan password minimal 8 karakter wajib diisi.": "Email and password must each be at least 8 characters long.",
+  "Akun sudah ada.": "The account already exists.",
+  "Sesi login tidak ditemukan. Silakan masuk kembali.": "Login session not found. Please sign in again.",
+  "Hanya Owner yang berwenang mengubah kata sandi.": "Only the Owner is authorized to change the password.",
+  "Semua kolom kata sandi wajib diisi.": "All password fields are required.",
+  "Kata sandi baru minimal 10 karakter.": "The new password must be at least 10 characters long.",
+  "Kata sandi baru harus berbeda dari kata sandi saat ini.": "The new password must be different from the current password.",
+  "Kata sandi saat ini tidak benar.": "The current password is incorrect.",
+  "Kata sandi Owner berhasil diperbarui.": "The Owner password was updated successfully.",
+  "Terjadi kesalahan server saat mengubah kata sandi.": "A server error occurred while changing the password.",
+  "ID perusahaan wajib diisi.": "Company ID is required.",
+  "Gagal memuat data perusahaan dari database.": "Failed to load company data from the database.",
+  "D1 belum terhubung": "D1 is not connected",
 };
 
 
@@ -1671,6 +1684,7 @@ export const EN_TO_ID: Record<string, string> = {
   "Unauthorized": "Tidak terautentikasi",
   "Forbidden": "Akses ditolak",
   "Company tenant required": "Tenant perusahaan wajib ditentukan",
+  "Company name not registered": "Nama perusahaan tidak terdaftar",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
