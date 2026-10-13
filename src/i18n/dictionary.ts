@@ -1482,6 +1482,16 @@ export const PHRASES: Record<string, string> = {
   "PT Terkait": "Related Company",
   "Resmi Terverifikasi": "Officially Verified",
   "Mendaftarkan User...": "Registering User...",
+  "Investigator Independen": "Independent Investigator",
+  "PIC / Legal": "Person in Charge / Legal",
+  "terdaftar manual oleh Owner / Super Admin.": "manually registered by the Owner / Super Admin.",
+  "Setujui Transfer": "Approve Transfer",
+  "Konfirmasi Tolak": "Confirm Rejection",
+  "Audit Kepatuhan & Anti-Penyuapan (ISO 37001)": "Compliance & Anti-Bribery Audit (ISO 37001)",
+  "Umum / Multidisiplin Independen": "General / Independent Multidisciplinary",
+  "Manufaktur & Bisnis": "Manufacturing & Business",
+  "Download file bukti laporan": "Download report evidence file",
+  "Saldo tersedia": "Available balance",
 };
 
 
@@ -1759,6 +1769,19 @@ export const EN_TO_ID: Record<string, string> = {
   "Select Destination E-Wallet": "Pilih E-Wallet Tujuan",
   "Phone number registered with the e-wallet": "Nomor HP yang terdaftar di e-wallet",
   "Compliance & Integrity": "Kepatuhan & Integritas",
+  "Independent Investigator": "Investigator Independen",
+  "Person in Charge / Legal": "PIC / Legal",
+  "Compliance Admin Officer": "Petugas Admin Kepatuhan",
+  "Company entity": "Entitas perusahaan",
+  "Approve Transfer": "Setujui Transfer",
+  "Confirm Rejection": "Konfirmasi Tolak",
+  "Open report evidence": "Buka bukti laporan",
+  "Preview evidence": "Pratinjau bukti",
+  "Pending Pickup": "Perlu Diambil",
+  "Investigation": "Investigasi",
+  "Compliance & Anti-Bribery Audit (ISO 37001)": "Audit Kepatuhan & Anti-Penyuapan (ISO 37001)",
+  "General / Independent Multidisciplinary": "Umum / Multidisiplin Independen",
+  "Manufacturing & Business": "Manufaktur & Bisnis",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
