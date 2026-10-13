@@ -270,7 +270,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       if (payoutMethod === 'ewallet' && !supportedEwallets.includes(payoutProvider)) {
         return json({ error: 'E-wallet tujuan belum didukung.' }, 400);
       }
-      if (payoutMethod === 'ewallet' && !/^(?:\\+?62|0)8[0-9]{7,12}$/.test(accountNumber.replace(/[\\s-]/g, ''))) {
+      if (payoutMethod === 'ewallet' && !/^(?:\+?62|0)8[0-9]{7,12}$/.test(accountNumber.replace(/[\s-]/g, ''))) {
         return json({ error: 'Nomor HP e-wallet tidak valid.' }, 400);
       }
       const payoutDestination = payoutMethod === 'wallet' ? walletAddress : accountNumber;
