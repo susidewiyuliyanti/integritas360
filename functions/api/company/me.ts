@@ -1,5 +1,13 @@
 import { Env, json, getCookie } from '../_utils';
 
+const noStoreJson = (body: unknown, status = 200) => {
+  const response = json(body, status);
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  headers.set('Pragma', 'no-cache');
+  return new Response(response.body, { status: response.status, headers });
+};
+
 const parseObject = (value: unknown): Record<string, any> => {
   if (!value) return {};
   if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, any>;
@@ -14,7 +22,7 @@ const parseObject = (value: unknown): Record<string, any> => {
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const sid = getCookie(request, 'i360_session');
-    if (!sid) return json({ ok: false, error: 'Unauthorized' }, 401);
+    if (!sid) return noStoreJson({ ok: false, error: 'Unauthorized' }, 401);
 
     const user = await env.DB.prepare(`
       SELECT u.id, u.email, u.role, u.company_id, u.status, u.full_name, u.phone,
@@ -29,7 +37,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       LIMIT 1
     `).bind(sid).first<any>();
 
-    if (!user) return json({ ok: false, error: 'Unauthorized' }, 401);
+    if (!user) return noStoreJson({ ok: false, error: 'Unauthorized' }, 401);
 
     const userMetadata = parseObject(user.user_metadata_json);
     const userProfile = parseObject(user.user_profile_json);
@@ -84,9 +92,9 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
           .bind(user.id, companyId).first<any>()
       : null;
 
-    return json({ ok: true, profile, company, companyUser });
+    return noStoreJson({ ok: true, profile, company, companyUser });
   } catch (e) {
     console.error('COMPANY_ME', e);
-    return json({ ok: false, error: 'Gagal mengambil profil perusahaan dari D1.' }, 500);
+    return noStoreJson({ ok: false, error: 'Gagal mengambil profil perusahaan dari D1.' }, 500);
   }
 };
