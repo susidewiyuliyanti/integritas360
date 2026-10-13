@@ -45,6 +45,26 @@ import { PosterModal } from '../components/PosterModal';
 import { QrisStaticCard } from '../components/QrisStaticCard';
 import { NowPaymentsModal } from '../components/NowPaymentsModal';
 
+ 
+const downloadReportEvidence = async (fileUrl: string, fileName: string) => {
+  try {
+    const response = await fetch(fileUrl);
+    if (!response.ok) throw new Error('File tidak dapat diunduh langsung');
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch (error) {
+    // Some external file hosts disallow fetch via CORS; open the original file as a fallback.
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+  }
+};
+
 export const PerusahaanDashboard: React.FC = () => {
   const { user, profile: authProfile, loading: authLoading, role } = useAuth();
   const { navigate } = useNavigation();
@@ -1016,16 +1036,15 @@ export const PerusahaanDashboard: React.FC = () => {
                                       Buka Bukti #{idx + 1}
                                     </div>
                                   </a>
-                                  <a
-                                    href={bUrl}
-                                    download={`Bukti_Laporan_${idx + 1}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center justify-center gap-1.5 p-2 text-[11px] font-semibold text-emerald-300 hover:text-white hover:bg-emerald-500/15 border-t border-slate-800"
+                                  <button
+                                    type="button"
+                                    onClick={() => void downloadReportEvidence(bUrl, `Bukti_Laporan_${idx + 1}`)}
+                                    className="w-full flex items-center justify-center gap-1.5 p-2 text-[11px] font-semibold text-emerald-300 hover:text-white hover:bg-emerald-500/15 border-t border-slate-800"
+                                    aria-label={`Download file bukti laporan ${idx + 1}`}
                                   >
                                     <Download className="w-3.5 h-3.5" />
-                                    Download Bukti
-                                  </a>
+                                    Download File
+                                  </button>
                                 </div>
                               ))}
                             </div>
