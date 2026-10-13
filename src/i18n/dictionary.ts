@@ -1322,6 +1322,29 @@ export const PHRASES: Record<string, string> = {
   "Estimasi Transfer Kripto": "Estimated Crypto Transfer",
   "Aturan Integritas360:": "Integritas360 Rules:",
   "Alur resmi:": "Official Process:",
+  "Cetak Poster HD": "Print HD Poster",
+  "Contoh: Budi Santoso, Ak.": "Example: Budi Santoso, Ak.",
+  "Contoh: CPA, CFE, CFrA, CA, SH, M.H.": "Example: CPA, CFE, CFrA, CA, SH, M.H.",
+  "Contoh: SK Kemenkeu No. 123/KM.1/2023 / ACFE-ID-9912": "Example: Ministry of Finance Decree No. 123/KM.1/2023 / ACFE-ID-9912",
+  "Contoh: KAP Budi & Rekan (atau kosongkan)": "Example: Budi & Partners Public Accounting Firm (or leave blank)",
+  "Contoh: 0812-3456-7890": "Example: 0812-3456-7890",
+  "Contoh: PT Sumber Integritas Nusantara": "Example: PT Sumber Integritas Nusantara",
+  "Tanya tentang tenant, revenue, conversion, rekomendasi follow-up...": "Ask about tenants, revenue, conversion, or follow-up recommendations...",
+  "Tulis isi email...": "Write the email body...",
+  "Nama Perusahaan *": "Company Name *",
+  "Sektor / Industri": "Sector / Industry",
+  "Contoh: Dokumen buram, nomor rekening tidak sesuai, atau bukti belum memenuhi syarat...": "Example: Blurry document, mismatched bank account number, or insufficient proof...",
+  "Contoh: 150000": "Example: 150000",
+  "Navigasi utama": "Main navigation",
+  "Salin Tautan": "Copy Link",
+  "Contoh: 150000000 (tanpa titik/koma)": "Example: 150000000 (without dots/commas)",
+  "Contoh: Dugaan manipulasi faktur pengadaan material di gudang logistik": "Example: Suspected manipulation of material procurement invoices in a logistics warehouse",
+  "Contoh: Gudang B, Divisi Keuangan, atau Kantor Cabang": "Example: Warehouse B, Finance Division, or Branch Office",
+  "Contoh: 08123456789 atau 628123456789": "Example: 08123456789 or 628123456789",
+  "Contoh: WB-8A7F2D-812": "Example: WB-8A7F2D-812",
+  "0x... (alamat wallet EVM)": "0x... (EVM wallet address)",
+  "Contoh: 08123456789 (masukkan jika ingin dapat notif via WhatsApp)": "Example: 08123456789 (enter if you want WhatsApp notifications)",
+  "Contoh: 0x5a8b9c... atau tron_tx_id...": "Example: 0x5a8b9c... or tron_tx_id...",
 };
 
 
@@ -1565,6 +1588,8 @@ export const EN_TO_ID: Record<string, string> = {
   "Management Actions": "Aksi Pengelolaan",
   "Ticket & Title": "Tiket & Judul",
   "Metadata Details": "Detail Metadata",
+  "Subject email...": "Subjek email...",
+  "Wallet QR": "QR Wallet",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
