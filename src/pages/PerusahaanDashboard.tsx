@@ -1039,10 +1039,11 @@ export const PerusahaanDashboard: React.FC = () => {
                                   <button
                                     type="button"
                                     onClick={() => void downloadReportEvidence(bUrl, `Bukti_Laporan_${idx + 1}`)}
-                                    className="w-full flex items-center justify-center gap-1.5 p-2 text-[11px] font-semibold text-emerald-300 hover:text-white hover:bg-emerald-500/15 border-t border-slate-800"
+                                    className="w-full flex items-center justify-center gap-1.5 p-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 border-t border-emerald-400/30 transition-colors"
                                     aria-label={`Download file bukti laporan ${idx + 1}`}
+                                    title={`Unduh bukti laporan ${idx + 1}`}
                                   >
-                                    <Download className="w-3.5 h-3.5" />
+                                    <Download className="w-4 h-4" />
                                     Download File
                                   </button>
                                 </div>
