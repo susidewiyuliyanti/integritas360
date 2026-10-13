@@ -1495,6 +1495,7 @@ export const PHRASES: Record<string, string> = {
   "INTEGRITAS360 - Platform Pelaporan Pelanggaran Perusahaan": "INTEGRITAS360 - Corporate Whistleblowing Platform",
   "Platform pelaporan pelanggaran perusahaan dengan sistem anonim dan reward.": "Corporate whistleblowing platform with an anonymous reporting and reward system.",
 
+  "Contoh:": "Example:",
 };
 
 
