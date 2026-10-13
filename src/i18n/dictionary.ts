@@ -1200,6 +1200,19 @@ export const PHRASES: Record<string, string> = {
   'Kasus belum diambil.': "The case has not been taken yet.",
   'Ambil kasus untuk membuka bukti laporan.': "Take the case to unlock report evidence.",
 
+  "Perlu Ditelaah": "Needs Review",
+  "Terbukti Valid": "Verified Valid",
+  "Hak Whistleblower": "Whistleblower Rights",
+  "Terbukti": "Proven",
+  "ID klaim dirahasiakan": "Claim ID is confidential",
+  "Non-Finansial": "Non-Financial",
+  "Jabatan Struktural": "Structural Position",
+  "Estimasi Kerugian / Tipe": "Estimated Loss / Type",
+  "Estimasi Kerugian": "Estimated Loss",
+  "TERBUKTI VALID (Reward Telah Dirilis)": "VERIFIED VALID (Reward Released)",
+  "Anda akan menetapkan bahwa laporan ini": "You are about to mark this report as",
+  "perusahaan": "company",
+  "anonim": "anonymous",
 };
 
 
