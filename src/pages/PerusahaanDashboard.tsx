@@ -46,9 +46,23 @@ import { QrisStaticCard } from '../components/QrisStaticCard';
 import { NowPaymentsModal } from '../components/NowPaymentsModal';
 
  
+const normalizeEvidenceUrl = (item: unknown): string => {
+  if (typeof item === 'string') return item.trim();
+  if (!item || typeof item !== 'object') return '';
+  const file = item as Record<string, unknown>;
+  for (const key of ['dataUrl', 'fileDataUrl', 'url', 'fileUrl', 'downloadUrl', 'src']) {
+    if (typeof file[key] === 'string' && String(file[key]).trim()) return String(file[key]).trim();
+  }
+  return '';
+};
+
 const downloadReportEvidence = async (fileUrl: string, fileName: string) => {
+  if (!fileUrl) {
+    window.alert('URL berkas bukti tidak tersedia dari database. Muat ulang data atau hubungi administrator.');
+    return;
+  }
   try {
-    const response = await fetch(fileUrl);
+    const response = await fetch(fileUrl, { credentials: 'include', cache: 'no-store' });
     if (!response.ok) throw new Error('File tidak dapat diunduh langsung');
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -212,7 +226,9 @@ export const PerusahaanDashboard: React.FC = () => {
             lokasi: d.lokasi || d.location,
             status: d.status || 'baru',
             tokenAkses: '', // Claim ticket identifiers are reserved for reporters and Super Admin.
-            buktiFiles: d.buktiFiles || [],
+            buktiFiles: (Array.isArray(d.buktiFiles) ? d.buktiFiles : [])
+              .map((file: unknown) => normalizeEvidenceUrl(file))
+              .filter((url: string) => Boolean(url)),
             rewardClaimed: Boolean(d.rewardClaimed ?? d.reward_claimed),
             rewardReleased: Boolean(d.rewardReleased ?? d.reward_released),
             auditorName: d.auditorName || d.auditor_name || d.targetAuditorName,
