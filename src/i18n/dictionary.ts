@@ -1345,6 +1345,8 @@ export const PHRASES: Record<string, string> = {
   "0x... (alamat wallet EVM)": "0x... (EVM wallet address)",
   "Contoh: 08123456789 (masukkan jika ingin dapat notif via WhatsApp)": "Example: 08123456789 (enter if you want WhatsApp notifications)",
   "Contoh: 0x5a8b9c... atau tron_tx_id...": "Example: 0x5a8b9c... or tron_tx_id...",
+  "01 • LAPOR": "01 • REPORT",
+  "100% Anonim": "100% Anonymous",
 };
 
 
