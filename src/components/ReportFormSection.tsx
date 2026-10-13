@@ -206,7 +206,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
   const [trackingError, setTrackingError] = useState('');
 
   // Claim Reward State
-  const [claimMethod, setClaimMethod] = useState<'wallet' | 'bank'>('wallet');
+  const [claimMethod, setClaimMethod] = useState<'wallet' | 'bank' | 'ewallet'>('wallet');
   const [claimWallet, setClaimWallet] = useState('');
   const [claimBank, setClaimBank] = useState('BCA');
   const [claimAccount, setClaimAccount] = useState('');
@@ -597,8 +597,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       setClaimError('Masukkan alamat wallet EVM yang valid (0x diikuti 40 karakter heksadesimal).');
       return;
     }
-    if (claimMethod === 'bank' && (!claimAccount.trim() || !claimHolder.trim())) {
-      setClaimError('Lengkapi nomor rekening dan nama pemilik rekening untuk pencairan melalui bank.');
+    if ((claimMethod === 'bank' || claimMethod === 'ewallet') && (!claimAccount.trim() || !claimHolder.trim() || !claimBank.trim())) {
+      setClaimError('Lengkapi penyedia pembayaran, nomor rekening/HP, dan nama pemilik akun.');
       return;
     }
     if (!trackedReport.rewardReleased) {
@@ -624,7 +624,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
             claimReportToken: trackedReport.tokenAkses,
             payoutMethod: claimMethod,
             walletAddress: claimMethod === 'wallet' ? claimWallet.trim() : '',
-            bankDetails: claimMethod === 'bank' ? {
+            bankDetails: claimMethod !== 'wallet' ? {
               bankName: claimBank,
               accountNumber: claimAccount.trim(),
               holderName: claimHolder.trim()
@@ -646,7 +646,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         rewardAmount: rewardNominal,
         rewardClaimMethod: claimMethod,
         rewardClaimWallet: claimMethod === 'wallet' ? claimWallet.trim() : '',
-        rewardClaimBank: claimMethod === 'bank' ? {
+        rewardClaimBank: claimMethod !== 'wallet' ? {
           bankName: claimBank,
           accountNumber: claimAccount.trim(),
           holderName: claimHolder.trim()
@@ -1741,9 +1741,10 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                       <div className="space-y-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1.5">Metode Pencairan Reward</label>
-                          <select value={claimMethod} onChange={(e) => setClaimMethod(e.target.value as 'wallet' | 'bank')} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                          <select value={claimMethod} onChange={(e) => setClaimMethod(e.target.value as 'wallet' | 'bank' | 'ewallet')} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
                             <option value="wallet">Wallet Crypto (EVM)</option>
-                            <option value="bank">Transfer Bank / E-Wallet Indonesia</option>
+                            <option value="ewallet">E-Wallet Indonesia (OVO, DANA, GoPay, dll.)</option>
+                            <option value="bank">Transfer Bank</option>
                           </select>
                         </div>
                         {claimMethod === 'wallet' ? (
@@ -1756,7 +1757,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">
-                            Bank / E-Wallet Tujuan
+                            {claimMethod === 'ewallet' ? 'Pilih E-Wallet Tujuan' : 'Bank Tujuan'}
                           </label>
                           <select
                             value={claimBank}
@@ -1771,20 +1772,24 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                             <option value="BSI">BSI (Bank Syariah Indonesia)</option>
                             <option value="Permata">Bank Permata</option>
                             <option value="Danamon">Bank Danamon</option>
-                            <option value="GoPay">GoPay (E-Wallet)</option>
-                            <option value="OVO">OVO (E-Wallet)</option>
-                            <option value="DANA">DANA (E-Wallet)</option>
+                            {claimMethod === 'ewallet' && <>
+                              <option value="OVO">OVO</option>
+                              <option value="DANA">DANA</option>
+                              <option value="GoPay">GoPay</option>
+                              <option value="ShopeePay">ShopeePay</option>
+                              <option value="LinkAja">LinkAja</option>
+                            </>}
                           </select>
                         </div>
 
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">
-                            Nomor Rekening / No. HP E-Wallet
+                            {claimMethod === 'ewallet' ? 'Nomor HP yang terdaftar di e-wallet' : 'Nomor Rekening'}
                           </label>
                           <input
                             type="text"
                             required
-                            placeholder="Contoh: 1234567890"
+                            placeholder={claimMethod === 'ewallet' ? 'Contoh: 081234567890' : 'Contoh: 1234567890'}
                             value={claimAccount}
                             onChange={(e) => setClaimAccount(e.target.value)}
                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
@@ -1793,12 +1798,12 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
 
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">
-                            Nama Pemilik Rekening
+                            {claimMethod === 'ewallet' ? 'Nama Pemilik Akun E-Wallet' : 'Nama Pemilik Rekening'}
                           </label>
                           <input
                             type="text"
                             required
-                            placeholder="Sesuai buku rekening"
+                            placeholder={claimMethod === 'ewallet' ? 'Sesuai nama akun e-wallet' : 'Sesuai buku rekening'}
                             value={claimHolder}
                             onChange={(e) => setClaimHolder(e.target.value)}
                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
