@@ -1213,6 +1213,17 @@ export const PHRASES: Record<string, string> = {
   "Anda akan menetapkan bahwa laporan ini": "You are about to mark this report as",
   "perusahaan": "company",
   "anonim": "anonymous",
+  "TERBUKTI VALID": "VERIFIED VALID",
+  "Palsu / Hoax": "False / Hoax",
+  "Rincian & Aksi": "Details & Actions",
+  "Finansial / Kerugian": "Financial / Loss",
+  "Pelanggaran Etik / K3": "Ethics / OHS Violations",
+  "Dibatalkan (Hoax)": "Cancelled (Hoax)",
+  "Zero Retaliation (Bebas Intimidasi):": "Zero Retaliation (No Intimidation):",
+  "Penetapan Hoax:": "Hoax Determination:",
+  "Divisi / Departemen": "Division / Department",
+  "Nomor Kontak / WhatsApp": "Contact Number / WhatsApp",
+  "Lokasi / Divisi": "Location / Division",
 };
 
 
@@ -1403,6 +1414,9 @@ export const EN_TO_ID: Record<string, string> = {
   'The case has not been taken yet.': "Kasus belum diambil.",
   'Take the case to unlock report evidence.': "Ambil kasus untuk membuka bukti laporan.",
 
+  "Users & Access": "Pengguna & Akses",
+  "75% Fraud": "75% Kecurangan",
+  "Zero Retaliation": "Nol Toleransi terhadap Intimidasi",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
