@@ -1405,9 +1405,13 @@ export const AdminPerusahaanDashboard: React.FC = () => {
                 )}
 
                 {/* 2. Tetapkan Palsu / Hoax Trigger */}
-                {selectedReport.status !== 'palsu_hoax' &&
-                  selectedReport.status !== 'ditolak' &&
-                  selectedReport.status !== 'terbukti' && (
+                {!selectedReport.rewardReleased &&
+                  !['palsu_hoax', 'ditolak', 'terbukti', 'valid', 'selesai', 'completed', 'closed'].includes(
+                    String(selectedReport.status || '').toLowerCase()
+                  ) &&
+                  !['terbukti', 'valid'].includes(
+                    String(selectedReport.hasilInvestigasi || '').toLowerCase()
+                  ) && (
                     <button
                       disabled={processingAction}
                       onClick={() => {
