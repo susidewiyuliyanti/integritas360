@@ -1481,6 +1481,7 @@ export const PHRASES: Record<string, string> = {
   "Divisi Kepatuhan Internal": "Internal Compliance Division",
   "PT Terkait": "Related Company",
   "Resmi Terverifikasi": "Officially Verified",
+  "Mendaftarkan User...": "Registering User...",
 };
 
 
