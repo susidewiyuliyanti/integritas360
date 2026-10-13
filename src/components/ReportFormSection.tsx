@@ -206,6 +206,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
   const [trackingError, setTrackingError] = useState('');
 
   // Claim Reward State
+  const [claimMethod, setClaimMethod] = useState<'wallet' | 'bank'>('wallet');
+  const [claimWallet, setClaimWallet] = useState('');
   const [claimBank, setClaimBank] = useState('BCA');
   const [claimAccount, setClaimAccount] = useState('');
   const [claimHolder, setClaimHolder] = useState('');
@@ -587,8 +589,16 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
 
   const handleClaimRewardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trackedReport || !trackedReport.id || !trackedReport.tokenAkses || !claimAccount.trim() || !claimHolder.trim()) {
-      setClaimError('Harap lengkapi nomor tiket rahasia, nomor rekening, dan nama pemilik rekening.');
+    if (!trackedReport || !trackedReport.id || !trackedReport.tokenAkses) {
+      setClaimError('Tiket laporan tidak valid. Masukkan kembali nomor tiket rahasia.');
+      return;
+    }
+    if (claimMethod === 'wallet' && !/^0x[a-fA-F0-9]{40}$/.test(claimWallet.trim())) {
+      setClaimError('Masukkan alamat wallet EVM yang valid (0x diikuti 40 karakter heksadesimal).');
+      return;
+    }
+    if (claimMethod === 'bank' && (!claimAccount.trim() || !claimHolder.trim())) {
+      setClaimError('Lengkapi nomor rekening dan nama pemilik rekening untuk pencairan melalui bank.');
       return;
     }
     if (!trackedReport.rewardReleased) {
@@ -612,11 +622,13 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
           data: {
             reportId: trackedReport.id,
             claimReportToken: trackedReport.tokenAkses,
-            bankDetails: {
+            payoutMethod: claimMethod,
+            walletAddress: claimMethod === 'wallet' ? claimWallet.trim() : '',
+            bankDetails: claimMethod === 'bank' ? {
               bankName: claimBank,
               accountNumber: claimAccount.trim(),
               holderName: claimHolder.trim()
-            },
+            } : null,
             whatsapp: claimWhatsapp.trim() || trackedReport.whatsappPelapor || ''
           }
         })
@@ -632,11 +644,13 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         rewardClaimed: true,
         rewardClaimStatus: 'pending',
         rewardAmount: rewardNominal,
-        rewardClaimBank: {
+        rewardClaimMethod: claimMethod,
+        rewardClaimWallet: claimMethod === 'wallet' ? claimWallet.trim() : '',
+        rewardClaimBank: claimMethod === 'bank' ? {
           bankName: claimBank,
           accountNumber: claimAccount.trim(),
           holderName: claimHolder.trim()
-        },
+        } : undefined,
         whatsappPelapor: claimWhatsapp.trim() || prev.whatsappPelapor || '',
         rewardClaimWhatsapp: claimWhatsapp.trim() || prev.whatsappPelapor || ''
       }) : null);
@@ -1705,7 +1719,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                   )}
 
                   {/* Formulir Pengajuan Klaim Reward jika belum diklaim */}
-                  {!trackedReport.rewardClaimStatus && (
+                  {(!trackedReport.rewardClaimStatus || ['none', 'ditolak'].includes(String(trackedReport.rewardClaimStatus).toLowerCase())) && !trackedReport.rewardClaimed && (
                     <form onSubmit={handleClaimRewardSubmit} className="space-y-3.5 pt-2 border-t border-slate-800">
                       {claimSuccess && (
                         <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-start gap-2.5">
@@ -1724,7 +1738,22 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                         </div>
                       )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1.5">Metode Pencairan Reward</label>
+                          <select value={claimMethod} onChange={(e) => setClaimMethod(e.target.value as 'wallet' | 'bank')} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                            <option value="wallet">Wallet Crypto (EVM)</option>
+                            <option value="bank">Transfer Bank / E-Wallet Indonesia</option>
+                          </select>
+                        </div>
+                        {claimMethod === 'wallet' ? (
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-300 mb-1">Alamat Wallet Tujuan</label>
+                            <input type="text" required value={claimWallet} onChange={(e) => setClaimWallet(e.target.value.trim())} placeholder="0x... (alamat wallet EVM)" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
+                            <p className="text-[11px] text-slate-400 mt-1">Pastikan jaringan dan alamat wallet benar. Kesalahan alamat dapat menyebabkan dana tidak dapat dipulihkan.</p>
+                          </div>
+                        ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">
                             Bank / E-Wallet Tujuan
@@ -1775,6 +1804,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                           />
                         </div>
+                        </div>
+                        )}
                       </div>
 
                       <div>
