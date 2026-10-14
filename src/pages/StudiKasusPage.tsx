@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigation } from '../context/NavigationContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   Receipt,
   Coins,
@@ -141,6 +142,7 @@ const CASE_STUDIES: CaseStudy[] = [
 
 export const StudiKasusPage: React.FC = () => {
   const { navigate } = useNavigation();
+  const { language } = useLanguage();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const toggleExpand = (id: number) => {
@@ -330,7 +332,7 @@ export const StudiKasusPage: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <a
-              href="https://wa.me/6287879625033?text=Halo%20Admin%20Integritas360%2C%20saya%20tertarik%20mendaftarkan%20perusahaan"
+              href={`https://wa.me/6287879625033?text=${encodeURIComponent(language === "en" ? "Hello Integritas360 Admin, I am interested in registering a company." : "Halo Admin Integritas360, saya tertarik mendaftarkan perusahaan")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-500/25 flex items-center gap-2 transition-all cursor-pointer"
