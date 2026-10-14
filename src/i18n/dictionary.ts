@@ -1772,6 +1772,7 @@ export const PHRASES: Record<string, string> = {
   "admin@ptabc.com": "admin@company.com",
   "Contoh: Siti Rahmawati": "Example: Siti Rahmawati",
   "finance@ptabc.com": "finance@company.com",
+
 };
 
 
@@ -2324,6 +2325,8 @@ export const EN_TO_ID: Record<string, string> = {
   "Method:": "Metode:",
   "WhatsApp Notifications:": "Notifikasi WhatsApp:",
   "Notes:": "Catatan:",
+  "Revenue hari ini": "Pendapatan hari ini",
+  "Conversion rate": "Tingkat konversi",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
