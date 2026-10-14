@@ -2,9 +2,11 @@ import React from 'react';
 import { useNavigation } from '../context/NavigationContext';
 import { ShieldCheck, ArrowRight, MessageCircle, Building2, LockKeyhole } from 'lucide-react';
 import { BrandLogo } from '../components/BrandLogo';
+import { useLanguage } from '../context/LanguageContext';
 
 export const RegisterPage: React.FC = () => {
   const { navigate } = useNavigation();
+  const { language } = useLanguage();
 
   return (
     <div className="min-h-screen bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
@@ -57,7 +59,7 @@ export const RegisterPage: React.FC = () => {
             </button>
 
             <a
-              href="https://wa.me/6287879625033?text=Halo%20Super%20Admin%20Integritas360%2C%20saya%20ingin%20mendaftarkan%20perusahaan%20kami"
+              href={`https://wa.me/6287879625033?text=${encodeURIComponent(language === "en" ? "Hello Integritas360 Super Admin, I would like to register our company." : "Halo Super Admin Integritas360, saya ingin mendaftarkan perusahaan kami")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-2.5 px-4 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
