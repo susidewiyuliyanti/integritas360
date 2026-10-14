@@ -1772,6 +1772,14 @@ export const PHRASES: Record<string, string> = {
   "admin@ptabc.com": "admin@company.com",
   "Contoh: Siti Rahmawati": "Example: Siti Rahmawati",
   "finance@ptabc.com": "finance@company.com",
+  "Mark-up Pengadaan Barang": "Procurement Price Markup",
+  "Membuat 3 berkas penawaran harga fiktif agar seolah-olah lolos lelang harga terendah.": "Creating three fictitious price quotations to make it appear that the lowest-bid tender requirements were met.",
+  "Gratifikasi & Suap Proyek": "Project Kickbacks & Bribery",
+  "Mengklaim seluruh struk bensin, hotel keluarga, dan restoran mewah sebagai \"Biaya Entertain Klien Operasional\".": "Claiming all fuel receipts, family hotel stays, and luxury restaurant bills as “Operational Client Entertainment Expenses”.",
+  "Investor & Owner salah mengambil keputusan ekspansi berisiko fatal, arus kas riil defisit.": "Investors and owners make dangerously risky expansion decisions while actual cash flow is in deficit.",
+  "Konflik Kepentingan Rekrutmen": "Recruitment Conflicts of Interest",
+  "Kinerja divisi menurun drastis, timbul kecemburuan sosial antar karyawan, turnover staf berbakat tinggi.": "Department performance declines sharply, resentment grows among employees, and talented staff turnover increases.",
+  "Pelecehan & Intimidasi di Tempat Kerja": "Workplace Harassment & Intimidation",
 
 };
 
