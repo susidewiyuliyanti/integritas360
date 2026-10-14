@@ -1855,6 +1855,21 @@ export const PHRASES: Record<string, string> = {
   "Custom": "Kustom",
   "Welcome": "Selamat Datang",
   "Perusahaan:": "Company:",
+  "Contoh: Penguncian saldo penjaminan saat audit investigasi dugaan pelanggaran...": "Example: Locking guarantee funds during a misconduct investigation audit...",
+  "Contoh: Perusahaan@2025": "Example: Company@2025",
+  "Bank (BCA/Mandiri)": "Bank (BCA/Mandiri)",
+  "Contoh: PT Sumber Alam Makmur": "Example: PT Sumber Alam Makmur",
+  "Contoh: SAM": "Example: SAM",
+  "info@ptperusahaan.com": "info@company.com",
+  "021-xxxxxxxx": "021-xxxxxxxx",
+  "Jl. Jend. Sudirman Kav. 52, Gedung Sentra Mulia Lt. 10, Jakarta Selatan": "Jl. Jend. Sudirman Kav. 52, Sentra Mulia Building, 10th Floor, South Jakarta",
+  "Contoh: Budi Santoso, S.H.": "Example: Budi Santoso, LL.B.",
+  "Contoh: Direktur Kepatuhan & Legal": "Example: Compliance & Legal Director",
+  "budi@perusahaan.com": "budi@company.com",
+  "Contoh: Budi Santoso": "Example: Budi Santoso",
+  "admin@ptabc.com": "admin@company.com",
+  "Contoh: Siti Rahmawati": "Example: Siti Rahmawati",
+  "finance@ptabc.com": "finance@company.com",
 };
 
 
