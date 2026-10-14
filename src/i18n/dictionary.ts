@@ -1823,6 +1823,16 @@ export const PHRASES: Record<string, string> = {
   "REJECTED": "Rejected",
   "PENDING": "Pending",
 
+  "1Reporter Scans Company QR Code": "1. Reporter Scans the Company QR Code",
+  "2Sign In ke Dashboard PT & Admin": "2. Sign In to the Company and Admin Dashboards",
+  "3Investigation Menyeluruh": "3. Thorough Investigation",
+  "4Keputusan: Proven vs Hoax": "4. Decision: Proven vs. Hoax",
+  "Reporter membuat anonymous report lewat QR code poster resmi tanpa perlu login identitas diri.": "The reporter submits an anonymous report using the official poster QR code without needing to sign in or reveal their identity.",
+  "Reports terenkripsi langsung sign In bersamaan ke Dashboard Direksi PT & Dashboard Company Admin.": "Encrypted reports are sent directly to both the Company Board of Directors Dashboard and the Company Admin Dashboard.",
+  "COMPANY ADMIN & Direksi melakukan telaah bukti, audit dokumen, dan wawancara internal independen.": "The Company Admin and Board of Directors review evidence, audit documents, and conduct independent internal interviews.",
+  "Jika Proven the reward is released immediately. If Unproven is closed as a hoax.": "If the report is proven, the reward is released immediately. If it is unproven, the case is closed as a hoax.",
+  "Investigation Menyeluruh": "Thorough Investigation",
+  "Keputusan: Proven vs Hoax": "Decision: Proven vs. Hoax",
 };
 
 
@@ -2435,6 +2445,16 @@ export const EN_TO_ID: Record<string, string> = {
   "APPROVED": "Disetujui",
   "REJECTED": "Ditolak",
   "PENDING": "Menunggu",
+  "1. Reporter Scans the Company QR Code": "1. Pelapor Memindai QR Code Perusahaan",
+  "2. Sign In to the Company and Admin Dashboards": "2. Masuk ke Dashboard Direksi Perusahaan dan Admin",
+  "3. Thorough Investigation": "3. Investigasi Menyeluruh",
+  "4. Decision: Proven vs. Hoax": "4. Keputusan: Terbukti vs. Hoax",
+  "The reporter submits an anonymous report using the official poster QR code without needing to sign in or reveal their identity.": "Pelapor mengirim laporan anonim melalui QR code pada poster resmi tanpa perlu masuk atau mengungkapkan identitas.",
+  "Encrypted reports are sent directly to both the Company Board of Directors Dashboard and the Company Admin Dashboard.": "Laporan terenkripsi dikirim langsung ke Dashboard Direksi Perusahaan dan Dashboard Admin Perusahaan.",
+  "The Company Admin and Board of Directors review evidence, audit documents, and conduct independent internal interviews.": "Admin Perusahaan dan Direksi menelaah bukti, mengaudit dokumen, dan melakukan wawancara internal secara independen.",
+  "If the report is proven, the reward is released immediately. If it is unproven, the case is closed as a hoax.": "Jika laporan terbukti, reward langsung dirilis. Jika tidak terbukti, kasus ditutup sebagai laporan hoax.",
+  "Thorough Investigation": "Investigasi Menyeluruh",
+  "Decision: Proven vs. Hoax": "Keputusan: Terbukti vs. Hoax",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
