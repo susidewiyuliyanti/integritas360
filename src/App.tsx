@@ -14,10 +14,11 @@ import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { ProfilePage } from './pages/ProfilePage';
 import { StudiKasusPage } from './pages/StudiKasusPage';
 import { MessageCircle } from 'lucide-react';
-import { LanguageProvider } from './context/LanguageContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
 const RouterView: React.FC = () => {
   const { path } = useNavigation();
+  const { language } = useLanguage();
 
   let content: React.ReactNode = <LandingPage />;
 
@@ -57,10 +58,10 @@ const RouterView: React.FC = () => {
       {/* Floating WhatsApp Contact Button */}
       <aside aria-label="Bantuan WhatsApp" className="fixed bottom-5 right-5 z-40">
         <a
-          href="https://wa.me/6287879625033?text=Halo%20Admin%20Integritas360%2C%20saya%20ingin%20berkonsultasi"
+          href={`https://wa.me/6287879625033?text=${encodeURIComponent(language === "en" ? "Hello Integritas360 Admin, I would like to consult." : "Halo Admin Integritas360, saya ingin berkonsultasi")}`}
           target="_blank"
           rel="noopener noreferrer"
-          title="Hubungi Kami via WhatsApp: 087879625033"
+          title={language === "en" ? "Contact us via WhatsApp: 087879625033" : "Hubungi Kami via WhatsApp: 087879625033"}
           className="flex items-center gap-2.5 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-2xl shadow-emerald-600/40 border border-emerald-400/40 transition-all hover:scale-105 active:scale-95 group cursor-pointer"
         >
           <MessageCircle className="w-5 h-5 text-white animate-pulse" />
