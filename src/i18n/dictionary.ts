@@ -1780,6 +1780,11 @@ export const PHRASES: Record<string, string> = {
   "Konflik Kepentingan Rekrutmen": "Recruitment Conflicts of Interest",
   "Kinerja divisi menurun drastis, timbul kecemburuan sosial antar karyawan, turnover staf berbakat tinggi.": "Department performance declines sharply, resentment grows among employees, and talented staff turnover increases.",
   "Pelecehan & Intimidasi di Tempat Kerja": "Workplace Harassment & Intimidation",
+  ". Ubah kata sandi dari halaman ini. Kata sandi disimpan dalam bentuk hash, bukan teks biasa.": ". Change your password from this page. Passwords are stored as hashes, not plain text.",
+  ". Penetapan sanksi terhadap karyawan pelanggar serta rilis reward harus diselesaikan dalam kurun waktu ": ". Disciplinary action against violating employees and reward release must be completed within ",
+  "✅ Valid Terverifikasi": "✅ Verified as Valid",
+  "Standar default adalah ": "The default standard is ",
+  " per laporan/kasus. Saat kasus dinyatakan valid dan dirilis, saldo lock perusahaan akan otomatis dipotong sebesar biaya ini dan masuk ke saldo Anda.": " per report/case. When a case is validated and released, the company’s locked balance will automatically be deducted by this fee, and the amount will be added to your balance.",
 
 };
 
