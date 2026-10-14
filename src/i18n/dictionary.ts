@@ -1845,6 +1845,16 @@ export const PHRASES: Record<string, string> = {
   "0x... (alamat wallet EVM)": "0x... (EVM wallet address)",
   "Contoh: 08123456789 (masukkan jika ingin dapat notif via WhatsApp)": "Example: 08123456789 (enter if you want WhatsApp notifications)",
   "Menu": "Menu",
+  "Nama Pemilik Akun E-Wallet": "E-Wallet Account Holder Name",
+  "Sesuai nama akun e-wallet": "Must match the e-wallet account name",
+  "Contoh: Bukti transfer terbukti hasil manipulasi grafis, oknum yang dituduh tidak berada di lokasi, dan verifikasi fisik gudang menunjukkan stok utuh.": "Example: The transfer proof was confirmed to be graphically manipulated, the accused person was not at the location, and a physical warehouse inspection confirmed the stock was intact.",
+  "Contoh: 1234567890": "Example: 1234567890",
+  "Contoh: 0812-xxxx-xxxx": "Example: 0812-xxxx-xxxx",
+  "Contoh: 081234567890": "Example: 081234567890",
+  "Deposit Reminder": "Pengingat Deposit",
+  "Custom": "Kustom",
+  "Welcome": "Selamat Datang",
+  "Perusahaan:": "Company:",
 };
 
 
@@ -2386,6 +2396,17 @@ export const EN_TO_ID: Record<string, string> = {
   "The default rate is": "Standar default adalah",
   "The company QR directs reporters to the official company portal. Each report generates a report code": "QR perusahaan mengarahkan pelapor ke portal resmi perusahaan. Setiap laporan menghasilkan kode laporan",
   "for company processing and a confidential ID code kept by the reporter to claim the reward.": "untuk proses perusahaan dan kode ID rahasia yang disimpan oleh pelapor untuk klaim reward.",
+  "Deposit Reminder": "Pengingat Deposit",
+  "Custom": "Kustom",
+  "Menu": "Menu",
+  "Search tenants...": "Cari tenant...",
+  "Full name": "Nama lengkap",
+  "Company:": "Perusahaan:",
+  "Department:": "Divisi:",
+  "Quick Rate Options:": "Pilihan Cepat Tarif:",
+  "Method:": "Metode:",
+  "WhatsApp Notifications:": "Notifikasi WhatsApp:",
+  "Notes:": "Catatan:",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
