@@ -1998,6 +1998,19 @@ export const PHRASES: Record<string, string> = {
   'Keuangan (Finance)': 'Finance (Keuangan)',
   'SDM (Human Resources)': 'HR (Personalia)',
   'Alur resmi:': 'Official process:',
+  'Pelapor Scan QR PT': 'Reporter Scans the Company QR Code',
+  'Pelapor membuat laporan anonim lewat QR code poster resmi tanpa perlu login identitas diri.': 'The reporter submits an anonymous report using the official poster QR code without needing to sign in or reveal their identity.',
+  'Masuk ke Dashboard PT & Admin': 'Sign In to the Company and Admin Dashboards',
+  'Laporan terenkripsi langsung masuk bersamaan ke Dashboard Direksi PT & Dashboard Admin Perusahaan.': 'Encrypted reports are sent directly to both the Company Board of Directors Dashboard and the Company Admin Dashboard.',
+  'Admin PT & Direksi melakukan telaah bukti, audit dokumen, dan wawancara internal independen.': 'The Company Admin and Board of Directors review evidence, audit documents, and conduct independent internal interviews.',
+  'Keputusan: Terbukti vs Hoax': 'Decision: Proven vs. Hoax',
+  ' maka reward langsung dirilis. Jika ': ' then the reward is released immediately. If ',
+  ' ditutup sebagai Hoax.': ' is closed as a hoax.',
+  'Status: 1x24 Jam reward akan masuk ke rekening/wallet pelapor': 'Status: The reward will reach the reporter\'s account or wallet within 24 hours',
+  'Permintaan klaim Anda telah diverifikasi oleh sistem. Dana reward sebesar': 'Your claim request has been verified by the system. The reward amount of',
+  'dalam proses pengiriman dan dijamin masuk ke rekening/e-wallet Anda dalam maksimal 1x24 jam.': 'is being transferred and is guaranteed to reach your bank account or e-wallet within 24 hours.',
+  'Anda tidak menyertakan nomor WhatsApp. Silakan cek mutasi rekening/e-wallet Anda secara berkala dalam 1x24 jam.': 'You did not provide a WhatsApp number. Please check your bank or e-wallet transactions regularly over the next 24 hours.',
+  'Menyetujui': 'Approve',
 };
 
 
@@ -2896,6 +2909,20 @@ export const EN_TO_ID: Record<string, string> = {
   'Official process:': 'Alur resmi:',
   'Withdraw': 'Penarikan',
   'Saving...': 'Menyimpan...',
+  'Reporter Scans the Company QR Code': 'Pelapor Scan QR PT',
+  'The reporter submits an anonymous report using the official poster QR code without needing to sign in or reveal their identity.': 'Pelapor membuat laporan anonim lewat QR code poster resmi tanpa perlu login identitas diri.',
+  'Sign In to the Company and Admin Dashboards': 'Masuk ke Dashboard PT & Admin',
+  'Encrypted reports are sent directly to both the Company Board of Directors Dashboard and the Company Admin Dashboard.': 'Laporan terenkripsi langsung masuk bersamaan ke Dashboard Direksi PT & Dashboard Admin Perusahaan.',
+  'The Company Admin and Board of Directors review evidence, audit documents, and conduct independent internal interviews.': 'Admin PT & Direksi melakukan telaah bukti, audit dokumen, dan wawancara internal independen.',
+  'Decision: Proven vs. Hoax': 'Keputusan: Terbukti vs Hoax',
+  ' then the reward is released immediately. If ': ' maka reward langsung dirilis. Jika ',
+  ' is closed as a hoax.': ' ditutup sebagai Hoax.',
+  'Status: The reward will reach the reporter\'s account or wallet within 24 hours': 'Status: 1x24 Jam reward akan masuk ke rekening/wallet pelapor',
+  'Your claim request has been verified by the system. The reward amount of': 'Permintaan klaim Anda telah diverifikasi oleh sistem. Dana reward sebesar',
+  'is being transferred and is guaranteed to reach your bank account or e-wallet within 24 hours.': 'dalam proses pengiriman dan dijamin masuk ke rekening/e-wallet Anda dalam maksimal 1x24 jam.',
+  'You did not provide a WhatsApp number. Please check your bank or e-wallet transactions regularly over the next 24 hours.': 'Anda tidak menyertakan nomor WhatsApp. Silakan cek mutasi rekening/e-wallet Anda secara berkala dalam 1x24 jam.',
+  'WhatsApp Notifications Active: You will receive an automatic notification at': 'Notifikasi WhatsApp Aktif: Anda akan menerima pemberitahuan otomatis di',
+  'Awaiting Administrator Verification': 'Menunggu verifikasi Administrator',
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
