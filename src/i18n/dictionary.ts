@@ -2024,6 +2024,13 @@ export const PHRASES: Record<string, string> = {
   'Metode:': 'Method:',
   'Bank:': 'Bank:',
   'Notifikasi WhatsApp:': 'WhatsApp Notifications:',
+  'Deposits & Mutasi': 'Deposits & Transactions',
+  'Legalitas / Docs': 'Legal Documents',
+  'Role / Peran': 'Role',
+  'Finance (Keuangan)': 'Finance',
+  'HR (Personalia)': 'HR',
+  'Aktivitas (Action)': 'Activity (Action)',
+  'PROSPECT': 'PROSPECT',
 };
 
 
@@ -2947,6 +2954,14 @@ export const EN_TO_ID: Record<string, string> = {
   'Method:': 'Metode:',
   'Bank:': 'Bank:',
   'WhatsApp Notifications:': 'Notifikasi WhatsApp:',
+  'Deposits & Mutasi': 'Deposit & Transaksi',
+  'Legalitas / Docs': 'Dokumen Legalitas',
+  'Peran (Role)': 'Peran',
+  'SUSPENDED (Ditangguhkan)': 'Ditangguhkan',
+  'Company User (Staf Internal)': 'Pengguna Perusahaan (Staf Internal)',
+  'INVITED (Undangan)': 'Diundang',
+  'Peran / Role': 'Peran',
+  'PROSPECT': 'Prospek',
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
