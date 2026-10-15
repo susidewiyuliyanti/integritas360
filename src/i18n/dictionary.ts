@@ -2011,6 +2011,19 @@ export const PHRASES: Record<string, string> = {
   'dalam proses pengiriman dan dijamin masuk ke rekening/e-wallet Anda dalam maksimal 1x24 jam.': 'is being transferred and is guaranteed to reach your bank account or e-wallet within 24 hours.',
   'Anda tidak menyertakan nomor WhatsApp. Silakan cek mutasi rekening/e-wallet Anda secara berkala dalam 1x24 jam.': 'You did not provide a WhatsApp number. Please check your bank or e-wallet transactions regularly over the next 24 hours.',
   'Menyetujui': 'Approve',
+  '01 • LAPOR': '01 • REPORT',
+  'QRIS Nasional': 'National QRIS',
+  'NOWPayments (Kripto)': 'NOWPayments (Crypto)',
+  'Pengguna & Akses': 'Users & Access',
+  'ID klaim dirahasiakan': 'Claim ID is confidential',
+  'Estimasi Kerugian': 'Estimated Loss',
+  'TERBUKTI VALID': 'PROVEN VALID',
+  'Deposit & Transaksi': 'Deposits & Transactions',
+  'Dokumen Legalitas': 'Legal Documents',
+  'Catatan:': 'Notes:',
+  'Metode:': 'Method:',
+  'Bank:': 'Bank:',
+  'Notifikasi WhatsApp:': 'WhatsApp Notifications:',
 };
 
 
@@ -2923,6 +2936,17 @@ export const EN_TO_ID: Record<string, string> = {
   'You did not provide a WhatsApp number. Please check your bank or e-wallet transactions regularly over the next 24 hours.': 'Anda tidak menyertakan nomor WhatsApp. Silakan cek mutasi rekening/e-wallet Anda secara berkala dalam 1x24 jam.',
   'WhatsApp Notifications Active: You will receive an automatic notification at': 'Notifikasi WhatsApp Aktif: Anda akan menerima pemberitahuan otomatis di',
   'Awaiting Administrator Verification': 'Menunggu verifikasi Administrator',
+  '01 • REPORT': '01 • LAPOR',
+  'National QRIS': 'QRIS Nasional',
+  'NOWPayments (Crypto)': 'NOWPayments (Kripto)',
+  'Users & Access': 'Pengguna & Akses',
+  'Claim ID is confidential': 'ID klaim dirahasiakan',
+  'Estimated Loss': 'Estimasi Kerugian',
+  'PROVEN VALID': 'TERBUKTI VALID',
+  'Notes:': 'Catatan:',
+  'Method:': 'Metode:',
+  'Bank:': 'Bank:',
+  'WhatsApp Notifications:': 'Notifikasi WhatsApp:',
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
