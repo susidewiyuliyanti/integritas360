@@ -1769,7 +1769,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                   )}
 
                   {/* Formulir Pengajuan Klaim Reward jika belum diklaim */}
-                  {(!trackedReport.rewardClaimStatus || ['none', 'ditolak'].includes(String(trackedReport.rewardClaimStatus).toLowerCase())) && !trackedReport.rewardClaimed && (
+                  {(!trackedReport.rewardClaimStatus || ['none', 'ditolak', 'siap_diklaim', 'available', 'available_to_claim'].includes(String(trackedReport.rewardClaimStatus).toLowerCase())) && !trackedReport.rewardClaimed && (
                     <form onSubmit={handleClaimRewardSubmit} className="space-y-3.5 pt-2 border-t border-slate-800">
                       {claimSuccess && (
                         <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 flex items-start gap-2.5">
