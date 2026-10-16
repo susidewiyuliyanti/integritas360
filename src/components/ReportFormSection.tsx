@@ -470,7 +470,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         companyId: selectedCompanyId || 'general',
         companyName: targetCompany,
         judul: judul.trim(),
-        kategori,
+        kategori: kategoriFinal,
         tipePelanggaran,
         estimasiKerugian: tipePelanggaran === 'finansial' ? cleanKerugian : 0,
         rewardMinAmount: minReward,
