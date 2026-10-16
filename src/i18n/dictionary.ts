@@ -2097,6 +2097,8 @@ export const PHRASES: Record<string, string> = {
   'Salin Tautan': 'Copy Link',
   'Navigasi utama': 'Main navigation',
   'Contoh: 0x5a8b9c... atau tron_tx_id...': 'Example: 0x5a8b9c... or tron_tx_id...',
+  'Bantuan WhatsApp': 'WhatsApp Help',
+  'Contoh: Siti Rahmawati': 'Example: Siti Rahmawati',
 };
 
 
