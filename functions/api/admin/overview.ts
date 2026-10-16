@@ -63,11 +63,28 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const id = String(body.id || '').trim();
     const action = String(body.action || '').toLowerCase();
     const reason = String(body.reason || '').trim();
-    const validActions = ['approve-deposit','reject-deposit','approve-withdrawal','reject-withdrawal'];
+    const validActions = ['approve-deposit','reject-deposit','approve-withdrawal','reject-withdrawal','complete-claim_reward'];
     if (!id || !validActions.includes(action)) return json({ error: 'Permintaan tidak valid.' }, 400);
     const tx = await env.DB.prepare('SELECT * FROM transactions WHERE id=? LIMIT 1').bind(id).first<any>();
     if (!tx) return json({ error: 'Transaksi tidak ditemukan di database utama.' }, 404);
     const type = String(tx.type || '').toLowerCase();
+    if (action === 'complete-claim_reward') {
+      if (type !== 'claim_reward') return json({ error: 'Aksi ini hanya untuk klaim reward pelapor.' }, 400);
+      if (String(tx.status || '').toLowerCase() !== 'pending') return json({ error: 'Klaim reward sudah diproses sebelumnya.' }, 409);
+      const reportId = String(tx.report_id || '');
+      if (!reportId) return json({ error: 'ID laporan klaim tidak ditemukan.' }, 409);
+      let claimMeta:any = {}; try { claimMeta = JSON.parse(tx.metadata_json || '{}'); } catch {}
+      const operationId = 'claimpaid_' + crypto.randomUUID();
+      const nextMeta = { ...claimMeta, processedAt: new Date().toISOString(), processedBy: actor.email, paymentStatus: 'transferred_by_platform_admin', paymentOperationId: operationId, adminPaymentNote: 'Admin platform mengonfirmasi transfer manual' };
+      const result = await env.DB.prepare(`UPDATE transactions SET status='selesai',metadata_json=? WHERE id=? AND type='claim_reward' AND status='pending'`).bind(JSON.stringify(nextMeta),id).run();
+      if (!Number(result.meta?.changes || 0)) return json({ error: 'Klaim sudah diproses oleh admin lain.' }, 409);
+      await env.DB.batch([
+        env.DB.prepare(`UPDATE reports SET reward_claim_status='selesai', reward_claimed=1, updated_at=CURRENT_TIMESTAMP WHERE id=? AND reward_claim_status='pending'`).bind(reportId),
+        env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
+          .bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,tx.company_id,'REPORT_REWARD_TRANSFERRED','report_reward_claim',reportId,JSON.stringify({transactionId:id,amount:Number(tx.amount||0),operationId}))
+      ]);
+      return json({ok:true,id,status:'selesai',paymentStatus:'transferred_by_platform_admin'});
+    }
     const isDeposit = action.endsWith('-deposit') && type === 'deposit';
     const isWithdrawal = action.endsWith('-withdrawal') && type === 'withdrawal';
     if (!isDeposit && !isWithdrawal) return json({ error: 'Aksi tidak sesuai dengan jenis transaksi.' }, 400);
