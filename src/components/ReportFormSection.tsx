@@ -35,8 +35,21 @@ export const FINANCIAL_CATEGORIES = [
   'Kecurangan Finansial & Fraud',
   'Korupsi & Penyuapan (Bribery)',
   'Penggelapan Aset & Kas Perusahaan',
-  'Manipulasi Pembukuan & Faktur Fiktif',
+  'Manipulasi Laporan Keuangan & Pembukuan',
+  'Faktur Fiktif, Tagihan Ganda & Biaya Palsu',
   'Mark-up Anggaran Pengadaan Barang/Jasa',
+  'Kolusi Tender & Pengaturan Pemenang Vendor',
+  'Kickback, Komisi Ilegal & Gratifikasi',
+  'Pengadaan Fiktif & Konflik Kepentingan Vendor',
+  'Penyalahgunaan Dana Operasional / Kas Kecil',
+  'Fraud Gaji, Lembur & Karyawan Fiktif',
+  'Penggelapan Pendapatan & Manipulasi Penjualan',
+  'Penghindaran Pajak & Manipulasi Dokumen Pajak',
+  'Pencucian Uang & Transaksi Mencurigakan',
+  'Penyalahgunaan Aset, Inventaris & Persediaan',
+  'Klaim Pengeluaran / Reimbursement Palsu',
+  'Penipuan Pembayaran, Rekening & Transfer',
+  'Manipulasi Anggaran Proyek & Progres Pekerjaan',
   'Benturan Kepentingan Berdampak Finansial'
 ];
 
@@ -47,8 +60,16 @@ export const ETHICAL_CATEGORIES = [
   'Pelanggaran K3 & Keselamatan Kerja',
   'Pelanggaran Standar Lingkungan Hidup',
   'Kebocoran Data Rahasia Perusahaan',
-  'Nepotisme & Perlakuan Tidak Adil'
+  'Nepotisme & Perlakuan Tidak Adil',
+  'Pemalsuan Dokumen & Penyalahgunaan Tanda Tangan',
+  'Penyalahgunaan Data Pribadi / Akses Sistem',
+  'Pembalasan terhadap Pelapor (Retaliasi)',
+  'Pemaksaan, Ancaman & Penyalahgunaan Kekuasaan',
+  'Pelanggaran Kebijakan Internal / SOP',
+  'Penyembunyian Bukti atau Penghalangan Investigasi'
 ];
+
+const CUSTOM_CATEGORY = '__custom_category__';
 
 interface CompanyOption {
   uid: string;
@@ -176,6 +197,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
   const [tipePelanggaran, setTipePelanggaran] = useState<'finansial' | 'etik'>('finansial');
   const [estimasiKerugian, setEstimasiKerugian] = useState<string>('');
   const [kategori, setKategori] = useState('Kecurangan Finansial & Fraud');
+  const [kategoriCustom, setKategoriCustom] = useState('');
   const [judul, setJudul] = useState('');
   const [deskripsi, setDeskripsi] = useState('');
   const [tanggalKejadian, setTanggalKejadian] = useState('');
@@ -421,6 +443,12 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       return;
     }
 
+    if (kategori === CUSTOM_CATEGORY && !kategoriCustom.trim()) {
+      setSubmitError('Mohon isi kategori pelanggaran khusus yang ingin dilaporkan.');
+      return;
+    }
+
+    const kategoriFinal = kategori === CUSTOM_CATEGORY ? kategoriCustom.trim() : kategori;
     const cleanKerugian = Number(estimasiKerugian.replace(/\D/g, '')) || 0;
     if (tipePelanggaran === 'finansial' && cleanKerugian <= 0) {
       setSubmitError('Untuk pelanggaran finansial, mohon isi estimasi nilai kerugian perusahaan (minimal Rp 100.000).');
@@ -1169,7 +1197,10 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                 </label>
                 <select
                   value={kategori}
-                  onChange={(e) => setKategori(e.target.value)}
+                  onChange={(e) => {
+                    setKategori(e.target.value);
+                    if (e.target.value !== CUSTOM_CATEGORY) setKategoriCustom('');
+                  }}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-medium"
                 >
                   {(tipePelanggaran === 'finansial' ? FINANCIAL_CATEGORIES : ETHICAL_CATEGORIES).map((cat) => (
@@ -1178,6 +1209,25 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                     </option>
                   ))}
                 </select>
+                {kategori === CUSTOM_CATEGORY && (
+                  <div className="mt-3 space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-300">
+                      Kategori Pelanggaran Khusus *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={160}
+                      value={kategoriCustom}
+                      onChange={(e) => setKategoriCustom(e.target.value)}
+                      placeholder="Tuliskan kategori fraud atau pelanggaran perusahaan"
+                      className="w-full bg-slate-950 border border-amber-500/50 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                    />
+                    <p className="text-[10px] text-slate-400">
+                      Kategori yang Anda tulis akan disimpan bersama laporan untuk ditinjau.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
