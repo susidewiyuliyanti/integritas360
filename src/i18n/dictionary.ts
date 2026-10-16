@@ -2099,6 +2099,28 @@ export const PHRASES: Record<string, string> = {
   'Contoh: 0x5a8b9c... atau tron_tx_id...': 'Example: 0x5a8b9c... or tron_tx_id...',
   'Bantuan WhatsApp': 'WhatsApp Help',
   'Contoh: Siti Rahmawati': 'Example: Siti Rahmawati',
+  'Panduan Kepatuhan Penempelan Poster Whistleblowing': "Whistleblowing Poster Placement Compliance Guide",
+  'Pindai QRIS Statis Resmi (NMID: ID1026539516033)': "Scan the Official Static QRIS (NMID: ID1026539516033)",
+  'Mekanisme Penjaminan Integritas & Kepatuhan': "Integrity & Compliance Assurance Mechanism",
+  'Nomor NIK KTP / NPWP Pribadi': "Personal ID Card / Tax ID Number",
+  'Format: JPG, PNG, atau PDF (maks. 5MB).': "Format: JPG, PNG, or PDF (max. 5 MB).",
+  'Formulir di bawah ini adalah': "The form below is",
+  'Jenis Pelanggaran *': "Type of Violation *",
+  'Fraud, korupsi, mark-up anggaran, manipulasi kas, suap & penggelapan aset.': "Fraud, corruption, budget markups, cash manipulation, bribery & asset embezzlement.",
+  'Pelecehan, intimidasi, diskriminasi, penyalahgunaan wewenang & pelanggaran SOP/K3.': "Harassment, intimidation, discrimination, abuse of authority & SOP/OHS violations.",
+  'Judul Ringkas Aduan *': "Brief Report Title *",
+  'Uraian Kronologis & Modus Pelanggaran *': "Chronology & Details of the Violation *",
+  'Mengompresi file...': "Compressing file...",
+  'Mengirim Berkas Terenkripsi...': "Sending Encrypted Files...",
+  'Mengirim Permintaan...': "Sending Request...",
+  'Kronologi Lengkap Pengaduan:': "Full Report Chronology:",
+  'Min. Rp 100.000': "Minimum Rp 100,000",
+  'Poster Whistleblowing Resmi': "Official Whistleblowing Poster",
+  'Untuk:': "For:",
+  '• Format Siap Cetak A3/A4': "• Print-ready A3/A4 format",
+  'Preview Canvas 1080 × 1920': "Canvas Preview 1080 × 1920",
+  'Saya Memahami': "I Understand",
+  'Resmi PT': "Official Company",
 };
 
 
@@ -3069,6 +3091,9 @@ export const EN_TO_ID: Record<string, string> = {
   'Print HD Poster': 'Cetak Poster HD',
   'Example: 150000000 (without periods or commas)': 'Contoh: 150000000 (tanpa titik/koma)',
   'Example: 0x5a8b9c... or tron_tx_id...': 'Contoh: 0x5a8b9c... atau tron_tx_id...',
+  'ISO 37002 Compliant': "Sesuai ISO 37002",
+  'PIC Position (Jabatan PIC)': "Jabatan PIC",
+  'Deposit Crypto Gateway (NOWPayments)': "Gerbang Deposit Kripto (NOWPayments)",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
