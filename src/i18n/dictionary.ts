@@ -2121,6 +2121,15 @@ export const PHRASES: Record<string, string> = {
   'Preview Canvas 1080 × 1920': "Canvas Preview 1080 × 1920",
   'Saya Memahami': "I Understand",
   'Resmi PT': "Official Company",
+  'Total Akumulasi Saldo Auditor:': "Total Auditor Balance:",
+  'Auditor Aktif': "Active Auditors",
+  'Rugi:': "Loss:",
+  'Entitas Terlapor:': "Reported Entity:",
+  'Jaringan:': "Network:",
+  'Peran:': "Role:",
+  'Regulasi: Min 2%': "Regulation: Min. 2%",
+  'No. Telepon / WA': "Phone / WhatsApp Number",
+  'Jumlah Aktivitas Tercatat': "Recorded Activities",
 };
 
 
@@ -3094,6 +3103,13 @@ export const EN_TO_ID: Record<string, string> = {
   'ISO 37002 Compliant': "Sesuai ISO 37002",
   'PIC Position (Jabatan PIC)': "Jabatan PIC",
   'Deposit Crypto Gateway (NOWPayments)': "Gerbang Deposit Kripto (NOWPayments)",
+  'Total Auditor Balance:': "Total Saldo Auditor:",
+  'Active Auditors': "Auditor Aktif",
+  'Phone / WhatsApp Number': "Nomor Telepon / WhatsApp",
+  'Recorded Activities': "Aktivitas Tercatat",
+  'Network:': "Jaringan:",
+  'Reported Entity:': "Entitas Terlapor:",
+  'Loss:': "Kerugian:",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
