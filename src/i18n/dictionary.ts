@@ -2129,6 +2129,7 @@ export const PHRASES: Record<string, string> = {
   'Jumlah Aktivitas Tercatat': "Recorded Activities",
   'Cetak poster ini dengan ukuran A3 atau A4 dan tempelkan di area strategis seperti papan pengumuman kantor, kantin, loker karyawan, dan area pabrik untuk memenuhi regulasi kepatuhan.': "Print this poster in A3 or A4 size and place it in strategic areas such as office notice boards, the cafeteria, employee lockers, and factory areas to meet compliance regulations.",
   'Gunakan email dan password akun yang diterbitkan Admin.': "Use the email and password for the account issued by the Admin.",
+
 };
 
 
