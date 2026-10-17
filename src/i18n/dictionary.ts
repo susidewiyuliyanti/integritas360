@@ -2165,6 +2165,10 @@ export const PHRASES: Record<string, string> = {
   'Resmi Terverifikasi': "Officially Verified",
   'QR Code Standar': "Standard QR Code",
   'Pembayaran Nasional': "National Payments",
+  'within 24 hours': "dalam 1x24 jam",
+  'Account:': "Rekening:",
+  'Terms & Conditions': "Syarat & Ketentuan",
+  'Retry QR Generation': "Coba Lagi Membuat QR",
 };
 
 
@@ -3173,6 +3177,7 @@ export const EN_TO_ID: Record<string, string> = {
   'Officially Verified': "Resmi Terverifikasi",
   'Standard QR Code': "QR Code Standar",
   'National Payments': "Pembayaran Nasional",
+  '1x24 jam': "within 24 hours",
 };
 
 // Fallback per-kata, hanya diterapkan pada teks pendek (<= 48 karakter, <= 6 kata).
