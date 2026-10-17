@@ -105,8 +105,11 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     if(String(report.status||'').toLowerCase()!=='valid') return json({error:'Reward hanya dapat dirilis setelah laporan berstatus VALID.'},409);
     if(meta.rewardReleased===true || meta.rewardReleased===1) return json({error:'Reward untuk laporan ini sudah diproses.'},409);
     const category=String(meta.tipePelanggaran||report.violation_type||'').toLowerCase();
-    const minimum=category==='finansial' ? Math.round(Number(report.estimated_loss||0)*0.02) : 100000;
-    if(requested<minimum) return json({error:'Nominal reward di bawah ketentuan minimum.',minimum},400);
+    const isFinancial=category.includes('finansial') || category.includes('financial') || Number(report.estimated_loss||0)>0;
+    const verifiedLoss=Number(report.estimated_loss||0);
+    if(isFinancial && verifiedLoss<=0) return json({error:'Nilai kerugian finansial terverifikasi wajib diisi sebelum reward dapat dirilis.'},400);
+    const minimum=isFinancial ? Math.ceil(verifiedLoss*0.10) : 100000;
+    if(requested<minimum) return json({error:isFinancial?'Reward kasus finansial minimal 10% dari kerugian terverifikasi.':'Nominal reward di bawah ketentuan minimum.',minimum},400);
     const company=await env.DB.prepare('SELECT deposit_balance FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
     if(!company) return json({error:'Data perusahaan tidak ditemukan.'},404);
     if(Number(company.deposit_balance||0)<requested) return json({error:'Saldo perusahaan tidak mencukupi untuk reward ini.',balance:Number(company.deposit_balance||0),required:requested},409);
@@ -157,9 +160,12 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     const report=await env.DB.prepare('SELECT * FROM reports WHERE id=? AND company_id=? LIMIT 1').bind(id,companyId).first<any>();
     if(!report) return json({error:'Laporan tidak ditemukan pada tenant ini.'},404);
     if(String(report.status||'').toLowerCase()!=='valid') return json({error:'Reward hanya dapat diatur setelah laporan berstatus VALID.'},409);
-    const isFinancial=String(report.violation_type||'').toLowerCase().includes('finansial') || Number(report.estimated_loss||0)>0;
-    const minimum=isFinancial?Math.ceil(Number(report.estimated_loss||0)*0.02):100000;
-    if(amount<minimum) return json({error:isFinancial?'Reward kasus finansial minimal 2% dari estimasi kerugian.':'Reward kasus etik minimal Rp 100.000.'},400);
+    const violationType=String(report.violation_type||'').toLowerCase();
+    const isFinancial=violationType.includes('finansial') || violationType.includes('financial') || Number(report.estimated_loss||0)>0;
+    const verifiedLoss=Number(report.estimated_loss||0);
+    if(isFinancial && verifiedLoss<=0) return json({error:'Nilai kerugian finansial terverifikasi wajib diisi sebelum reward ditetapkan.'},400);
+    const minimum=isFinancial?Math.ceil(verifiedLoss*0.10):100000;
+    if(amount<minimum) return json({error:isFinancial?'Reward kasus finansial minimal 10% dari kerugian terverifikasi.':'Reward kasus etik minimal Rp 100.000.',minimum},400);
     let current:any={}; try{current=JSON.parse(report.metadata_json||'{}')}catch{}
     const next={...current,rewardAmount:amount,rewardStatusPerusahaan:'disetujui'};
     await env.DB.prepare('UPDATE reports SET reward_amount=?,metadata_json=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?')
