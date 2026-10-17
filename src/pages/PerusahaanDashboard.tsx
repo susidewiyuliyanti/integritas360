@@ -462,9 +462,7 @@ export const PerusahaanDashboard: React.FC = () => {
     const minReward = report.tipePelanggaran === 'finansial'
       ? Math.ceil(kerugian * 0.10)
       : Math.max(100000, Number(companyProfile?.kebijakanReward?.rewardKasusEtik || 100000));
-    const nominalReward = report.rewardAmount !== undefined && report.rewardAmount > 0
-      ? report.rewardAmount
-      : (report.rewardMinAmount && report.rewardMinAmount >= 100000 ? report.rewardMinAmount : minReward);
+    const nominalReward = Math.max(Number(report.rewardAmount || report.rewardMinAmount || 0), minReward);
 
     try {
       setActionLoadingId(report.id);
