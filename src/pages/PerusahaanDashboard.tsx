@@ -507,7 +507,7 @@ export const PerusahaanDashboard: React.FC = () => {
     if (!report.id) return;
     const cleanAmount = Number(rewardInputVal.replace(/\D/g, '')) || 0;
 
-    if (report.tipePelanggaran === 'finansial') {
+    if (String(report.tipePelanggaran || '').toLowerCase().includes('finansial') || String(report.tipePelanggaran || '').toLowerCase().includes('financial') || Number(report.estimasiKerugian || 0) > 0) {
       const min10Percent = Math.ceil((report.estimasiKerugian || 0) * 0.10);
       if (cleanAmount < min10Percent) {
         setActionFeedback({
@@ -890,8 +890,8 @@ export const PerusahaanDashboard: React.FC = () => {
           ) : (
             <div className="space-y-5">
               {filteredReports.map((report) => {
-                const isFinansial = report.tipePelanggaran === 'finansial';
                 const kerugian = Number(report.estimasiKerugian || 0);
+                const isFinansial = String(report.tipePelanggaran || '').toLowerCase().includes('finansial') || String(report.tipePelanggaran || '').toLowerCase().includes('financial') || kerugian > 0;
                 const min10Persen = Math.ceil(kerugian * 0.10);
                 const currentReward = report.rewardAmount !== undefined ? report.rewardAmount : (isFinansial ? min10Persen : 5000000);
   const auditorFee = Number(report.biayaAuditor || 150000);
