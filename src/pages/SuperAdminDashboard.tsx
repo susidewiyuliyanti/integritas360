@@ -175,15 +175,15 @@ export const SuperAdminDashboard: React.FC = () => {
     ['sales-email','Sales Email',Mail],
   ] as const;
 
-  return <div className="min-h-screen bg-slate-950 text-slate-100">
-    <header className="border-b border-slate-800 bg-slate-900/90">
+  return <div className="superadmin-dashboard-v18 min-h-screen bg-slate-950 text-slate-100">
+    <header className="superadmin-v18-header border-b border-slate-800 bg-slate-900/90">
       <div className="max-w-7xl mx-auto px-4 py-5 flex flex-wrap gap-4 items-center justify-between">
         <div className="flex items-center gap-3"><div className="rounded-xl bg-amber-500/15 p-3 text-amber-400"><ShieldAlert className="w-6 h-6"/></div><div><h1 className="text-xl font-extrabold">INTEGRITAS360 · Super Admin</h1><p className="text-xs text-slate-400">Control plane SaaS — data lintas tenant</p></div></div>
         <div className="flex items-center gap-2"><span className="text-xs text-slate-400 hidden sm:inline">{user.email}</span><button onClick={() => void load()} className="rounded-lg border border-slate-700 px-3 py-2 text-sm flex gap-2 items-center hover:bg-slate-800"><RefreshCw className={`w-4 h-4 ${busy?'animate-spin':''}`}/>Refresh</button><button onClick={async()=>{await logout();navigate('/login');}} className="rounded-lg border border-slate-700 px-3 py-2 text-sm flex gap-2 items-center hover:bg-slate-800"><LogOut className="w-4 h-4"/>Keluar</button></div>
       </div>
     </header>
-    <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <nav className="flex gap-2 overflow-x-auto pb-1">{tabs.map(([id,label,Icon])=><button key={id} onClick={()=>setTab(id)} className={`shrink-0 rounded-xl px-4 py-3 text-sm font-semibold flex gap-2 items-center border ${tab===id?'bg-amber-500 text-slate-950 border-amber-400':'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}><Icon className="w-4 h-4"/>{label}</button>)}</nav>
+    <main className="superadmin-v18-main max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <nav className="superadmin-v18-nav flex gap-2 overflow-x-auto pb-1">{tabs.map(([id,label,Icon])=><button key={id} onClick={()=>setTab(id)} className={`shrink-0 rounded-xl px-4 py-3 text-sm font-semibold flex gap-2 items-center border ${tab===id?'bg-amber-500 text-slate-950 border-amber-400':'bg-slate-900 text-slate-300 border-slate-800 hover:bg-slate-800'}`}><Icon className="w-4 h-4"/>{label}</button>)}</nav>
       {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}<p className="text-xs text-red-200/70 mt-1">Dashboard ini menunggu endpoint admin yang terautentikasi; tidak menggunakan endpoint publik lintas tenant.</p></div>}
       {tab !== 'overview' && <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cari nama tenant, ID, kode laporan, transaksi..." className="w-full rounded-xl border border-slate-800 bg-slate-900 pl-10 pr-4 py-3 text-sm outline-none focus:border-amber-500"/></div>}
       {tab==='overview' && <>
