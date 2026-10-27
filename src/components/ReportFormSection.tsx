@@ -641,7 +641,11 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       });
       const latestResult = await latestResponse.json().catch(() => ({}));
       const latestD1Report = Array.isArray(latestResult?.items) ? latestResult.items[0] : null;
-      const currentReport = latestResponse.ok && latestD1Report ? {
+      if (!latestResponse.ok || !latestD1Report) {
+        setClaimError('Data laporan terbaru tidak berhasil dibaca dari database. Silakan muat ulang pengecekan laporan menggunakan Kode ID pelapor, lalu coba kembali.');
+        return;
+      }
+      const currentReport = {
         ...trackedReport,
         ...latestD1Report,
         id: String(latestD1Report.id || trackedReport.id),
@@ -649,8 +653,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         rewardAmount: Number(latestD1Report.rewardAmount ?? latestD1Report.reward_amount ?? trackedReport.rewardAmount ?? 0),
         rewardClaimStatus: latestD1Report.rewardClaimStatus || latestD1Report.reward_claim_status || trackedReport.rewardClaimStatus || 'none',
         rewardClaimed: Boolean(latestD1Report.rewardClaimed ?? latestD1Report.reward_claimed ?? trackedReport.rewardClaimed),
-        rewardReleased: latestD1Report.rewardReleased === true || latestD1Report.rewardReleased === 1 || latestD1Report.rewardReleased === 'true' || latestD1Report.reward_released === true || latestD1Report.reward_released === 1 || latestD1Report.reward_released === 'true'
-      } as WhistleblowingReport : trackedReport;
+        rewardReleased: latestD1Report.rewardReleased === true || latestD1Report.rewardReleased === 1 || String(latestD1Report.rewardReleased).toLowerCase() === 'true' || latestD1Report.reward_released === true || latestD1Report.reward_released === 1 || String(latestD1Report.reward_released).toLowerCase() === 'true'
+      } as WhistleblowingReport;
       setTrackedReport(currentReport);
 
       if (!currentReport.rewardReleased) {
