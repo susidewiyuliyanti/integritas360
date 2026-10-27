@@ -629,18 +629,39 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       setClaimError('Lengkapi penyedia pembayaran, nomor rekening/HP, dan nama pemilik akun.');
       return;
     }
-    if (!trackedReport.rewardReleased) {
-      setClaimError('Reward belum dirilis. Tombol klaim hanya tersedia setelah reward benar-benar dirilis.');
-      return;
-    }
-    if (trackedReport.rewardClaimed || (trackedReport.rewardClaimStatus && !['none', 'ditolak'].includes(String(trackedReport.rewardClaimStatus).toLowerCase()))) {
-      setClaimError('Klaim reward untuk laporan ini sudah diajukan atau selesai diproses.');
-      return;
-    }
-
     try {
       setClaimingReward(true);
       setClaimError('');
+
+      // Always refresh the canonical D1 report before checking release state.
+      // The reporter may have opened this page before the company released the reward.
+      const latestResponse = await fetch('/api/public/data?collection=reports&whereField=tokenAkses&whereValue=' + encodeURIComponent(trackedReport.tokenAkses), {
+        credentials: 'omit',
+        cache: 'no-store'
+      });
+      const latestResult = await latestResponse.json().catch(() => ({}));
+      const latestD1Report = Array.isArray(latestResult?.items) ? latestResult.items[0] : null;
+      const currentReport = latestResponse.ok && latestD1Report ? {
+        ...trackedReport,
+        ...latestD1Report,
+        id: String(latestD1Report.id || trackedReport.id),
+        tokenAkses: String(latestD1Report.tokenAkses || trackedReport.tokenAkses),
+        rewardAmount: Number(latestD1Report.rewardAmount ?? latestD1Report.reward_amount ?? trackedReport.rewardAmount ?? 0),
+        rewardClaimStatus: latestD1Report.rewardClaimStatus || latestD1Report.reward_claim_status || trackedReport.rewardClaimStatus || 'none',
+        rewardClaimed: Boolean(latestD1Report.rewardClaimed ?? latestD1Report.reward_claimed ?? trackedReport.rewardClaimed),
+        rewardReleased: latestD1Report.rewardReleased === true || latestD1Report.rewardReleased === 1 || latestD1Report.rewardReleased === 'true' || latestD1Report.reward_released === true || latestD1Report.reward_released === 1 || latestD1Report.reward_released === 'true'
+      } as WhistleblowingReport : trackedReport;
+      setTrackedReport(currentReport);
+
+      if (!currentReport.rewardReleased) {
+        setClaimError('Status rilis reward belum tersinkron dari database. Muat ulang pengecekan laporan; jika dashboard perusahaan sudah menunjukkan “Reward Berhasil Dirilis”, hubungi admin untuk pemeriksaan data D1.');
+        return;
+      }
+      if (currentReport.rewardClaimed || (currentReport.rewardClaimStatus && !['none', 'ditolak', 'siap_diklaim', 'available', 'available_to_claim'].includes(String(currentReport.rewardClaimStatus).toLowerCase()))) {
+        setClaimError('Klaim reward untuk laporan ini sudah diajukan atau selesai diproses.');
+        return;
+      }
+
       const response = await fetch('/api/public/data', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -648,8 +669,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         body: JSON.stringify({
           operation: 'create-claim',
           data: {
-            reportId: trackedReport.id,
-            claimReportToken: trackedReport.tokenAkses,
+            reportId: currentReport.id,
+            claimReportToken: currentReport.tokenAkses,
             payoutMethod: claimMethod,
             walletAddress: claimMethod === 'wallet' ? claimWallet.trim() : '',
             bankDetails: claimMethod !== 'wallet' ? {
@@ -666,7 +687,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         throw new Error(result?.error || 'Klaim reward gagal diajukan.');
       }
 
-      const rewardNominal = Number(result.amount || trackedReport.rewardAmount || trackedReport.rewardMinAmount || 0);
+      const rewardNominal = Number(result.amount || currentReport.rewardAmount || currentReport.rewardMinAmount || 0);
       setTrackedReport((prev) => prev ? ({
         ...prev,
         rewardClaimed: true,
