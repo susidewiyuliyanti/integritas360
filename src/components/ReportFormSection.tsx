@@ -657,10 +657,9 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       } as WhistleblowingReport;
       setTrackedReport(currentReport);
 
-      if (!currentReport.rewardReleased) {
-        setClaimError('Status rilis reward belum tersinkron dari database. Muat ulang pengecekan laporan; jika dashboard perusahaan sudah menunjukkan “Reward Berhasil Dirilis”, hubungi admin untuk pemeriksaan data D1.');
-        return;
-      }
+      // Do not block a claim based only on a possibly stale client-side release flag.
+      // The create-claim API checks the canonical D1 report and release ledger and
+      // returns the authoritative reason if the reward is not eligible.
       if (currentReport.rewardClaimed || (currentReport.rewardClaimStatus && !['none', 'ditolak', 'siap_diklaim', 'available', 'available_to_claim'].includes(String(currentReport.rewardClaimStatus).toLowerCase()))) {
         setClaimError('Klaim reward untuk laporan ini sudah diajukan atau selesai diproses.');
         return;
