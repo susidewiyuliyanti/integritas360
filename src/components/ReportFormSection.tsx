@@ -1678,7 +1678,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
               </div>
 
               {/* KLAIM HANYA DIBUKA SETELAH REWARD BENAR-BENAR DIRILIS */}
-              {Boolean(trackedReport.rewardReleased) && (
+              {(Boolean(trackedReport.rewardReleased) || ['valid', 'selesai'].includes(String(trackedReport.status || '').toLowerCase())) && (
                 <div className="rounded-2xl border-2 border-amber-500/50 bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 p-5 sm:p-6 shadow-2xl space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
