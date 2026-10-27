@@ -653,7 +653,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
         rewardAmount: Number(latestD1Report.rewardAmount ?? latestD1Report.reward_amount ?? trackedReport.rewardAmount ?? 0),
         rewardClaimStatus: latestD1Report.rewardClaimStatus || latestD1Report.reward_claim_status || trackedReport.rewardClaimStatus || 'none',
         rewardClaimed: Boolean(latestD1Report.rewardClaimed ?? latestD1Report.reward_claimed ?? trackedReport.rewardClaimed),
-        rewardReleased: latestD1Report.rewardReleased === true || latestD1Report.rewardReleased === 1 || String(latestD1Report.rewardReleased).toLowerCase() === 'true' || latestD1Report.reward_released === true || latestD1Report.reward_released === 1 || String(latestD1Report.reward_released).toLowerCase() === 'true'
+        rewardReleased: latestD1Report.rewardReleased === true || latestD1Report.rewardReleased === 1 || String(latestD1Report.rewardReleased).toLowerCase() === 'true' || latestD1Report.reward_released === true || latestD1Report.reward_released === 1 || String(latestD1Report.reward_released).toLowerCase() === 'true' || (String(latestD1Report.status || '').toLowerCase() === 'selesai' && Number(latestD1Report.rewardAmount ?? latestD1Report.reward_amount ?? 0) > 0)
       } as WhistleblowingReport;
       setTrackedReport(currentReport);
 
