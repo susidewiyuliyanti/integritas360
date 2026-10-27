@@ -276,8 +276,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         ORDER BY created_at DESC LIMIT 1`).bind(report.id).first<any>();
       // Mirror the company dashboard's canonical D1 release fields. Legacy
       // records may lack release metadata even though the release update succeeded.
-      const completedRelease = String(report.status || '').toLowerCase() === 'selesai' && Number(report.reward_amount || 0) > 0;
-      const rewardIsReleased = reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 || reportMeta.rewardReleased === 'true' || Boolean(releaseTx) || completedRelease;
+      const normalizedStatus = String(report.status || '').trim().toLowerCase();
+      const normalizedRewardFlag = String(reportMeta.rewardReleased ?? '').trim().toLowerCase();
+      const rewardAmountFromD1 = Number(report.reward_amount || reportMeta.rewardAmount || releaseTx?.amount || 0);
+      // A completed company release can be represented by any durable release marker:
+      // explicit flag, release ledger entry, completed report row, or the company
+      // approval/operation metadata paired with a positive reward amount.
+      const completedRelease = normalizedStatus === 'selesai' && rewardAmountFromD1 > 0;
+      const approvedReleaseMetadata =
+        ['disetujui', 'approved'].includes(String(reportMeta.rewardStatusPerusahaan || '').trim().toLowerCase()) &&
+        rewardAmountFromD1 > 0 &&
+        Boolean(reportMeta.rewardReleaseOperationId || reportMeta.rewardReleasedAt || reportMeta.rewardReleaseType);
+      const rewardIsReleased = ['true', '1', 'yes'].includes(normalizedRewardFlag) ||
+        reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 ||
+        Boolean(releaseTx) || completedRelease || approvedReleaseMetadata;
       if (!['valid', 'selesai'].includes(String(report.status || '').toLowerCase()) || !rewardIsReleased) {
         return json({ error: 'Reward belum dirilis. Klaim tersedia setelah laporan VALID dan reward dirilis.' }, 409);
       }
@@ -319,7 +331,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
           WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status) IN ('valid','selesai')
             AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
-            AND (json_extract(metadata_json,'$.rewardReleased') IN (1,'true') OR EXISTS (SELECT 1 FROM transactions rr WHERE rr.report_id=reports.id AND rr.type='reward_release' AND lower(rr.status)='selesai') OR (lower(status)='selesai' AND COALESCE(reward_amount,0)>0))
+            AND (json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
+              OR EXISTS (SELECT 1 FROM transactions rr WHERE rr.report_id=reports.id AND rr.type='reward_release' AND lower(rr.status)='selesai')
+              OR (lower(status)='selesai' AND COALESCE(reward_amount,0)>0)
+              OR (lower(COALESCE(json_extract(metadata_json,'$.rewardStatusPerusahaan'),'')) IN ('disetujui','approved')
+                AND COALESCE(reward_amount, json_extract(metadata_json,'$.rewardAmount'),0)>0
+                AND (json_extract(metadata_json,'$.rewardReleaseOperationId') IS NOT NULL OR json_extract(metadata_json,'$.rewardReleasedAt') IS NOT NULL OR json_extract(metadata_json,'$.rewardReleaseType') IS NOT NULL)))
             AND NOT EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
           .bind(txId, companyId, companyId, rewardAmount, report.id, claimMeta, report.id, companyId),
         env.DB.prepare(`UPDATE reports SET reward_claim_status='pending', reward_claimed=1, payout_wallet=?, updated_at=CURRENT_TIMESTAMP
@@ -327,7 +344,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
           AND (json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
             OR EXISTS (SELECT 1 FROM transactions rr WHERE rr.report_id=reports.id AND rr.type='reward_release' AND lower(rr.status)='selesai')
-            OR (lower(status)='selesai' AND COALESCE(reward_amount,0)>0))
+            OR (lower(status)='selesai' AND COALESCE(reward_amount,0)>0)
+            OR (lower(COALESCE(json_extract(metadata_json,'$.rewardStatusPerusahaan'),'')) IN ('disetujui','approved')
+              AND COALESCE(reward_amount, json_extract(metadata_json,'$.rewardAmount'),0)>0
+              AND (json_extract(metadata_json,'$.rewardReleaseOperationId') IS NOT NULL OR json_extract(metadata_json,'$.rewardReleasedAt') IS NOT NULL OR json_extract(metadata_json,'$.rewardReleaseType') IS NOT NULL)))
           AND EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
           .bind(payoutDestination, report.id, companyId)
       ]);
