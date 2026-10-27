@@ -3,7 +3,7 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 type Env = { DB: D1Database };
 
 const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store, no-cache, must-revalidate', pragma: 'no-cache', expires: '0' } });
 
 const id = (prefix: string) => prefix + '_' + crypto.randomUUID();
 async function tenantSession(request: Request, db: D1Database) {
@@ -114,7 +114,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     if (collection === 'reports') {
       if (whereField === 'tokenAkses' && whereValue) {
-        const row = await env.DB.prepare('SELECT * FROM reports WHERE reporter_code = ? LIMIT 1').bind(whereValue).first<any>();
+        const row = await env.DB.prepare('SELECT * FROM reports WHERE upper(trim(reporter_code)) = upper(trim(?)) LIMIT 1').bind(whereValue).first<any>();
         return json({ items: row ? [mergeReport(row)] : [] });
       }
       if (companyIdParam) {
