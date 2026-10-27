@@ -115,7 +115,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     if (collection === 'reports') {
       if (whereField === 'tokenAkses' && whereValue) {
         const row = await env.DB.prepare('SELECT * FROM reports WHERE upper(trim(reporter_code)) = upper(trim(?)) LIMIT 1').bind(whereValue).first<any>();
-        return json({ items: row ? [mergeReport(row)] : [] });
+        if (!row) return json({ items: [] });
+        const report = mergeReport(row);
+        // D1's reward_release transaction is the durable ledger confirmation.
+        // Older records may have a completed release transaction while metadata_json
+        // is missing or stale, so derive the public release flag from both sources.
+        const releaseTx = await env.DB.prepare(`SELECT id, amount, status FROM transactions
+          WHERE report_id = ? AND type = 'reward_release' AND lower(status) = 'selesai'
+          ORDER BY created_at DESC LIMIT 1`).bind(row.id).first<any>();
+        if (releaseTx) {
+          report.rewardReleased = true;
+          report.rewardAmount = Number(row.reward_amount || releaseTx.amount || report.rewardAmount || 0);
+          report.rewardStatusPerusahaan = 'disetujui';
+        }
+        return json({ items: [report] });
       }
       if (companyIdParam) {
         const companyId = await resolveCompanyId(env.DB, companyIdParam);
@@ -253,13 +266,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
       let reportMeta:any = {};
       try { reportMeta = JSON.parse(report.metadata_json || '{}'); } catch {}
-      if (!['valid', 'selesai'].includes(String(report.status || '').toLowerCase()) || !(reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 || reportMeta.rewardReleased === 'true')) {
+      const releaseTx = await env.DB.prepare(`SELECT id, amount FROM transactions
+        WHERE report_id = ? AND type = 'reward_release' AND lower(status) = 'selesai'
+        ORDER BY created_at DESC LIMIT 1`).bind(report.id).first<any>();
+      const rewardIsReleased = reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 || reportMeta.rewardReleased === 'true' || Boolean(releaseTx);
+      if (!['valid', 'selesai'].includes(String(report.status || '').toLowerCase()) || !rewardIsReleased) {
         return json({ error: 'Reward belum dirilis. Klaim tersedia setelah laporan VALID dan reward dirilis.' }, 409);
       }
       if (Number(report.reward_claimed || 0) === 1 || ['pending','selesai','diproses'].includes(String(report.reward_claim_status || '').toLowerCase())) {
         return json({ error: 'Klaim reward untuk laporan ini sudah diajukan.' }, 409);
       }
-      const rewardAmount = Number(report.reward_amount || reportMeta.rewardAmount || 0);
+      const rewardAmount = Number(report.reward_amount || reportMeta.rewardAmount || releaseTx?.amount || 0);
       if (!Number.isFinite(rewardAmount) || rewardAmount <= 0) return json({ error: 'Nominal reward belum tersedia.' }, 409);
       const payoutMethod = String(data.payoutMethod || 'bank').toLowerCase();
       if (!['wallet', 'bank', 'ewallet'].includes(payoutMethod)) return json({ error: 'Metode pencairan tidak didukung.' }, 400);
@@ -294,7 +311,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
           WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status) IN ('valid','selesai')
             AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
-            AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
+            AND (json_extract(metadata_json,'$.rewardReleased') IN (1,'true') OR EXISTS (SELECT 1 FROM transactions rr WHERE rr.report_id=reports.id AND rr.type='reward_release' AND lower(rr.status)='selesai'))
             AND NOT EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
           .bind(txId, companyId, companyId, rewardAmount, report.id, claimMeta, report.id, companyId),
         env.DB.prepare(`UPDATE reports SET reward_claim_status='pending', reward_claimed=1, payout_wallet=?, updated_at=CURRENT_TIMESTAMP
