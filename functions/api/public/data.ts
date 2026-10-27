@@ -123,10 +123,14 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         const releaseTx = await env.DB.prepare(`SELECT id, amount, status FROM transactions
           WHERE report_id = ? AND type = 'reward_release' AND lower(status) = 'selesai'
           ORDER BY created_at DESC LIMIT 1`).bind(row.id).first<any>();
-        if (releaseTx) {
+        const completedRelease = Boolean(releaseTx) ||
+          (String(row.status || '').toLowerCase() === 'selesai' &&
+           Number(row.reward_amount || 0) > 0 &&
+           (report.rewardStatusPerusahaan === 'disetujui' || Boolean(report.rewardReleaseOperationId) || Boolean(report.rewardReleasedAt)));
+        if (completedRelease) {
           report.rewardReleased = true;
-          report.rewardAmount = Number(row.reward_amount || releaseTx.amount || report.rewardAmount || 0);
-          report.rewardStatusPerusahaan = 'disetujui';
+          report.rewardAmount = Number(row.reward_amount || releaseTx?.amount || report.rewardAmount || 0);
+          report.rewardStatusPerusahaan = report.rewardStatusPerusahaan || 'disetujui';
         }
         return json({ items: [report] });
       }
@@ -269,7 +273,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const releaseTx = await env.DB.prepare(`SELECT id, amount FROM transactions
         WHERE report_id = ? AND type = 'reward_release' AND lower(status) = 'selesai'
         ORDER BY created_at DESC LIMIT 1`).bind(report.id).first<any>();
-      const rewardIsReleased = reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 || reportMeta.rewardReleased === 'true' || Boolean(releaseTx);
+      const completedRelease = String(report.status || '').toLowerCase() === 'selesai' && Number(report.reward_amount || 0) > 0 &&
+        (reportMeta.rewardStatusPerusahaan === 'disetujui' || Boolean(reportMeta.rewardReleaseOperationId) || Boolean(reportMeta.rewardReleasedAt));
+      const rewardIsReleased = reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 || reportMeta.rewardReleased === 'true' || Boolean(releaseTx) || completedRelease;
       if (!['valid', 'selesai'].includes(String(report.status || '').toLowerCase()) || !rewardIsReleased) {
         return json({ error: 'Reward belum dirilis. Klaim tersedia setelah laporan VALID dan reward dirilis.' }, 409);
       }
@@ -311,7 +317,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
           WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status) IN ('valid','selesai')
             AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
-            AND (json_extract(metadata_json,'$.rewardReleased') IN (1,'true') OR EXISTS (SELECT 1 FROM transactions rr WHERE rr.report_id=reports.id AND rr.type='reward_release' AND lower(rr.status)='selesai'))
+            AND (json_extract(metadata_json,'$.rewardReleased') IN (1,'true') OR EXISTS (SELECT 1 FROM transactions rr WHERE rr.report_id=reports.id AND rr.type='reward_release' AND lower(rr.status)='selesai') OR (lower(status)='selesai' AND COALESCE(reward_amount,0)>0 AND (json_extract(metadata_json,'$.rewardStatusPerusahaan')='disetujui' OR json_extract(metadata_json,'$.rewardReleaseOperationId') IS NOT NULL OR json_extract(metadata_json,'$.rewardReleasedAt') IS NOT NULL)))
             AND NOT EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
           .bind(txId, companyId, companyId, rewardAmount, report.id, claimMeta, report.id, companyId),
         env.DB.prepare(`UPDATE reports SET reward_claim_status='pending', reward_claimed=1, payout_wallet=?, updated_at=CURRENT_TIMESTAMP
