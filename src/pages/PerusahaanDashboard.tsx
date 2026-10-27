@@ -595,8 +595,8 @@ export const PerusahaanDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="tenant-dashboard-v18 min-h-screen bg-slate-950 text-slate-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="tenant-dashboard-content max-w-7xl mx-auto space-y-6">
         {tenantLoadError && (
           <div role="alert" className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100">
             <div className="font-bold">Data belum berhasil dimuat dari database</div>
