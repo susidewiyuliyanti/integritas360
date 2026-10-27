@@ -253,7 +253,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
       let reportMeta:any = {};
       try { reportMeta = JSON.parse(report.metadata_json || '{}'); } catch {}
-      if (String(report.status || '').toLowerCase() !== 'selesai' || !(reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1)) {
+      if (!['valid', 'selesai'].includes(String(report.status || '').toLowerCase()) || !(reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 || reportMeta.rewardReleased === 'true')) {
         return json({ error: 'Reward belum dirilis. Klaim tersedia setelah laporan VALID dan reward dirilis.' }, 409);
       }
       if (Number(report.reward_claimed || 0) === 1 || ['pending','selesai','diproses'].includes(String(report.reward_claim_status || '').toLowerCase())) {
@@ -292,13 +292,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const results = await env.DB.batch([
         env.DB.prepare(`INSERT INTO transactions (id, user_id, company_id, type, amount, status, report_id, metadata_json)
           SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
-          WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status)='selesai'
+          WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status) IN ('valid','selesai')
             AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
             AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
             AND NOT EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
           .bind(txId, companyId, companyId, rewardAmount, report.id, claimMeta, report.id, companyId),
         env.DB.prepare(`UPDATE reports SET reward_claim_status='pending', reward_claimed=1, payout_wallet=?, updated_at=CURRENT_TIMESTAMP
-          WHERE id=? AND company_id=? AND lower(status)='selesai' AND COALESCE(reward_claimed,0)=0
+          WHERE id=? AND company_id=? AND lower(status) IN ('valid','selesai') AND COALESCE(reward_claimed,0)=0
           AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
           AND json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
           AND EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
