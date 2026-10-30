@@ -110,7 +110,7 @@ export const CompanyUsersView: React.FC<CompanyUsersViewProps> = ({
                 email: ud.email || '',
                 phone: ud.telepon || '',
                 role: (ud.role === 'admin_perusahaan' ? 'company_admin' : ud.role) || 'company_user',
-                status: (ud.statusAkun === 'aktif' && !ud.isLocked ? 'ACTIVE' : 'SUSPENDED') as any,
+                status: ((String(ud.status || '').toUpperCase() === 'ACTIVE' || String(ud.statusAkun || '').toLowerCase() === 'aktif' || (!ud.statusAkun && ud.isLocked !== true)) && ud.isLocked !== true ? 'ACTIVE' : 'SUSPENDED') as any,
                 created_at: ud.created_at || ud.createdAt || new Date().toISOString()
               });
             }
