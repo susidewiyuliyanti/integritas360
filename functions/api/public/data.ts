@@ -329,23 +329,39 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const txId = id('tx');
       const companyId = report.company_id;
       const claimMeta = JSON.stringify({ ...data, payoutMethod, walletAddress: payoutMethod === 'wallet' ? walletAddress : '', amount: rewardAmount, reportId: report.id, rewardReleased: true });
-      const results = await env.DB.batch([
-        env.DB.prepare(`INSERT INTO transactions (id, user_id, company_id, type, amount, status, report_id, metadata_json)
-          SELECT ?, ?, ?, 'claim_reward', ?, 'pending', ?, ?
-          WHERE EXISTS (SELECT 1 FROM reports WHERE id=? AND company_id=? AND lower(status) IN ('valid','selesai')
-            AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
-            AND COALESCE(reward_amount, json_extract(metadata_json,'$.rewardAmount'),0)>0
-            AND NOT EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
-          .bind(txId, companyId, companyId, rewardAmount, report.id, claimMeta, report.id, companyId),
-        env.DB.prepare(`UPDATE reports SET reward_claim_status='pending', reward_claimed=1, payout_wallet=?, updated_at=CURRENT_TIMESTAMP
-          WHERE id=? AND company_id=? AND lower(status) IN ('valid','selesai') AND COALESCE(reward_claimed,0)=0
-          AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
-          AND COALESCE(reward_amount, json_extract(metadata_json,'$.rewardAmount'),0)>0
-          AND EXISTS (SELECT 1 FROM transactions t WHERE t.report_id=reports.id AND t.type='claim_reward'))`)
-          .bind(payoutDestination, report.id, companyId)
-      ]);
-      const inserted = Number((results?.[0] as any)?.meta?.changes ?? (results?.[0] as any)?.changes ?? 0);
-      if (!inserted) return json({ error: 'Klaim sudah diajukan atau reward belum tersedia.' }, 409);
+      // Keep claim SQL flat and easy to validate; preserve duplicate-claim protection.
+      const insertResult = await env.DB.prepare(`INSERT INTO transactions
+        (id, user_id, company_id, type, amount, status, report_id, metadata_json)
+        SELECT ?, ?, ?, 'claim_reward', ?, 'pending', r.id, ?
+        FROM reports r
+        WHERE r.id = ? AND r.company_id = ?
+          AND lower(r.status) IN ('valid', 'selesai')
+          AND COALESCE(r.reward_amount, json_extract(r.metadata_json, '$.rewardAmount'), 0) > 0
+          AND COALESCE(r.reward_claimed, 0) = 0
+          AND lower(COALESCE(r.reward_claim_status, 'none')) NOT IN ('pending', 'selesai', 'diproses')
+          AND NOT EXISTS (
+            SELECT 1 FROM transactions t
+            WHERE t.report_id = r.id AND t.type = 'claim_reward'
+          )`)
+        .bind(txId, companyId, companyId, rewardAmount, claimMeta, report.id, companyId)
+        .run();
+      const inserted = Number((insertResult as any)?.meta?.changes ?? (insertResult as any)?.changes ?? 0);
+      if (!inserted) return json({ error: 'Klaim sudah diajukan atau reward belum tersedia. Muat ulang halaman dan periksa status laporan.' }, 409);
+
+      const updateResult = await env.DB.prepare(`UPDATE reports
+        SET reward_claim_status = 'pending', reward_claimed = 1, payout_wallet = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND company_id = ?
+          AND lower(status) IN ('valid', 'selesai')
+          AND COALESCE(reward_claimed, 0) = 0
+          AND lower(COALESCE(reward_claim_status, 'none')) NOT IN ('pending', 'selesai', 'diproses')
+          AND COALESCE(reward_amount, json_extract(metadata_json, '$.rewardAmount'), 0) > 0`)
+        .bind(payoutDestination, report.id, companyId)
+        .run();
+      const updated = Number((updateResult as any)?.meta?.changes ?? (updateResult as any)?.changes ?? 0);
+      if (!updated) {
+        await env.DB.prepare("DELETE FROM transactions WHERE id = ? AND type = 'claim_reward' AND status = 'pending'").bind(txId).run();
+        return json({ error: 'Status klaim tidak dapat disimpan. Muat ulang halaman dan coba lagi.' }, 409);
+      }
       return json({ id: txId, amount: rewardAmount, status: 'pending', payoutMethod });
     }
 
