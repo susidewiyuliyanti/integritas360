@@ -67,7 +67,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     if(['admin_perusahaan','company_admin'].includes(requestedRole) && actorRole!=='perusahaan') return json({error:'Akses ditolak. Penambahan Admin Perusahaan hanya dapat dilakukan melalui Dashboard Tenant.'},403);
     if(['admin_perusahaan','company_admin'].includes(requestedRole)){
       const adminCount=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
-      if(Number(adminCount?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk tenant ini sudah tercapai.'},409);
+      if(Number(adminCount?.n||0)>=2) return json({error:'Batas maksimal 2 akun admin untuk tenant ini sudah tercapai.'},409);
     }
     const exists=await env.DB.prepare('SELECT id FROM users WHERE lower(email)=? LIMIT 1').bind(email).first<any>();
     if(exists) return json({error:'Email sudah terdaftar'},409);
@@ -215,7 +215,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
       if(['admin_perusahaan','company_admin'].includes(nextRole) && actorRole!=='perusahaan') return json({error:'Akses ditolak. Hanya Dashboard Tenant yang dapat menetapkan Admin Perusahaan.'},403);
       if(['admin_perusahaan','company_admin'].includes(nextRole) && !['admin_perusahaan','company_admin'].includes(String(target.role||'').toLowerCase())){
         const adminCount=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
-        if(Number(adminCount?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk tenant ini sudah tercapai.'},409);
+        if(Number(adminCount?.n||0)>=2) return json({error:'Batas maksimal 2 akun admin untuk tenant ini sudah tercapai.'},409);
       }
     }
     const profileKeys=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','statusVerifikasiDokumen','catatanVerifikasi','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus','kebijakanReward'];
