@@ -74,15 +74,35 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       const reportId = String(tx.report_id || '');
       if (!reportId) return json({ error: 'ID laporan klaim tidak ditemukan.' }, 409);
       let claimMeta:any = {}; try { claimMeta = JSON.parse(tx.metadata_json || '{}'); } catch {}
+      const amount = Number(tx.amount || 0);
+      const companyId = String(tx.company_id || '');
+      if (!companyId || !Number.isFinite(amount) || amount <= 0) return json({ error: 'Data tenant atau nominal reward tidak valid.' }, 400);
+      // Reward release normally debits the tenant balance before the reporter claims it.
+      // Some older investigation flows marked the claim as released without writing that debit.
+      // If no reward_release ledger exists for this report, debit exactly once here.
+      const priorRelease = await env.DB.prepare(`SELECT id FROM transactions WHERE company_id=? AND report_id=? AND type='reward_release' LIMIT 1`).bind(companyId,reportId).first<any>();
+      if (!priorRelease) {
+        const company = await env.DB.prepare('SELECT deposit_balance FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
+        if (!company || Number(company.deposit_balance || 0) < amount) return json({ error: 'Saldo tenant tidak mencukupi untuk menyelesaikan reward.', balance: Number(company?.deposit_balance || 0), required: amount }, 409);
+      }
       const operationId = 'claimpaid_' + crypto.randomUUID();
       const nextMeta = { ...claimMeta, processedAt: new Date().toISOString(), processedBy: actor.email, paymentStatus: 'transferred_by_platform_admin', paymentOperationId: operationId, adminPaymentNote: 'Admin platform mengonfirmasi transfer manual' };
-      const result = await env.DB.prepare(`UPDATE transactions SET status='selesai',metadata_json=? WHERE id=? AND type='claim_reward' AND status='pending'`).bind(JSON.stringify(nextMeta),id).run();
-      if (!Number(result.meta?.changes || 0)) return json({ error: 'Klaim sudah diproses oleh admin lain.' }, 409);
-      await env.DB.batch([
-        env.DB.prepare(`UPDATE reports SET reward_claim_status='selesai', reward_claimed=1, updated_at=CURRENT_TIMESTAMP WHERE id=? AND reward_claim_status='pending'`).bind(reportId),
+      const statements = [
+        env.DB.prepare(`UPDATE transactions SET status='selesai',metadata_json=? WHERE id=? AND type='claim_reward' AND status='pending'`).bind(JSON.stringify(nextMeta),id),
+        env.DB.prepare(`UPDATE companies SET deposit_balance=COALESCE(deposit_balance,0)-?,updated_at=CURRENT_TIMESTAMP
+          WHERE company_id=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='selesai' AND json_extract(metadata_json,'$.paymentOperationId')=?)
+          AND NOT EXISTS (SELECT 1 FROM transactions WHERE company_id=? AND report_id=? AND type='reward_release')`).bind(amount,companyId,id,operationId,companyId,reportId),
+        env.DB.prepare(`INSERT INTO transactions(id,user_id,company_id,type,amount,status,report_id,metadata_json)
+          SELECT ?,?,?, 'reward_release', ?, 'selesai', ?, ?
+          WHERE EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='selesai' AND json_extract(metadata_json,'$.paymentOperationId')=?)
+          AND NOT EXISTS (SELECT 1 FROM transactions WHERE company_id=? AND report_id=? AND type='reward_release')`)
+          .bind('rewardpay_'+crypto.randomUUID(),tx.user_id,companyId,amount,reportId,JSON.stringify({description:'Debit saldo tenant saat konfirmasi pembayaran reward pelapor',claimTransactionId:id,operationId}),id,operationId,companyId,reportId),
+        env.DB.prepare(`UPDATE reports SET reward_claim_status='selesai', reward_claimed=1, updated_at=CURRENT_TIMESTAMP WHERE id=? AND reward_claim_status IN ('pending','siap_diklaim')`).bind(reportId),
         env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
-          .bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,tx.company_id,'REPORT_REWARD_TRANSFERRED','report_reward_claim',reportId,JSON.stringify({transactionId:id,amount:Number(tx.amount||0),operationId}))
-      ]);
+          .bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,companyId,'REPORT_REWARD_TRANSFERRED','report_reward_claim',reportId,JSON.stringify({transactionId:id,amount,operationId,tenantDebited:!priorRelease}))
+      ];
+      const results = await env.DB.batch(statements);
+      if (!Number(results[0]?.meta?.changes || 0)) return json({ error: 'Klaim sudah diproses oleh admin lain.' }, 409);
       return json({ok:true,id,status:'selesai',paymentStatus:'transferred_by_platform_admin'});
     }
     const isDeposit = action.endsWith('-deposit') && type === 'deposit';
