@@ -63,6 +63,8 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     const requestedRole=String(d.role||'company_user').toLowerCase();
     if(!email||password.length<10) return json({error:'Email wajib valid dan kata sandi minimal 10 karakter'},400);
     if(!['company_user','finance','hr','admin_perusahaan','company_admin'].includes(requestedRole)) return json({error:'Role akun tidak diizinkan.'},400);
+    // Hanya akun pemilik tenant (role perusahaan) yang boleh membuat admin perusahaan.
+    if(['admin_perusahaan','company_admin'].includes(requestedRole) && actorRole!=='perusahaan') return json({error:'Akses ditolak. Penambahan Admin Perusahaan hanya dapat dilakukan melalui Dashboard Tenant.'},403);
     if(['admin_perusahaan','company_admin'].includes(requestedRole)){
       const adminCount=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
       if(Number(adminCount?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk tenant ini sudah tercapai.'},409);
@@ -210,6 +212,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     if(d.role){
       const nextRole=String(d.role).toLowerCase();
       if(!['company_user','finance','hr','admin_perusahaan','company_admin'].includes(nextRole)) return json({error:'Role akun tidak diizinkan.'},400);
+      if(['admin_perusahaan','company_admin'].includes(nextRole) && actorRole!=='perusahaan') return json({error:'Akses ditolak. Hanya Dashboard Tenant yang dapat menetapkan Admin Perusahaan.'},403);
       if(['admin_perusahaan','company_admin'].includes(nextRole) && !['admin_perusahaan','company_admin'].includes(String(target.role||'').toLowerCase())){
         const adminCount=await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE company_id=? AND lower(role) IN ('admin_perusahaan','company_admin')").bind(companyId).first<any>();
         if(Number(adminCount?.n||0)>=3) return json({error:'Batas maksimal 3 akun admin untuk tenant ini sudah tercapai.'},409);
