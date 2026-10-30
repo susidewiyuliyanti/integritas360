@@ -287,11 +287,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         ['disetujui', 'approved'].includes(String(reportMeta.rewardStatusPerusahaan || '').trim().toLowerCase()) &&
         rewardAmountFromD1 > 0 &&
         Boolean(reportMeta.rewardReleaseOperationId || reportMeta.rewardReleasedAt || reportMeta.rewardReleaseType);
+      // A VALID report with a positive assigned reward is claim-eligible.
+      // Payout remains pending for authorized review; duplicate-claim guards remain active.
       const rewardIsReleased = ['true', '1', 'yes'].includes(normalizedRewardFlag) ||
         reportMeta.rewardReleased === true || reportMeta.rewardReleased === 1 ||
-        Boolean(releaseTx) || completedRelease || approvedReleaseMetadata;
-      if (!['valid', 'selesai'].includes(String(report.status || '').toLowerCase()) || !rewardIsReleased) {
-        return json({ error: 'Reward belum dirilis. Klaim tersedia setelah laporan VALID dan reward dirilis.' }, 409);
+        Boolean(releaseTx) || completedRelease || approvedReleaseMetadata ||
+        (normalizedStatus === 'valid' && rewardAmountFromD1 > 0);
+      if (!['valid', 'selesai'].includes(normalizedStatus) || !rewardIsReleased) {
+        return json({ error: 'Reward belum tersedia. Pastikan laporan VALID dan nominal reward sudah ditetapkan.' }, 409);
       }
       if (Number(report.reward_claimed || 0) === 1 || ['pending','selesai','diproses'].includes(String(report.reward_claim_status || '').toLowerCase())) {
         return json({ error: 'Klaim reward untuk laporan ini sudah diajukan.' }, 409);
@@ -333,7 +336,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
             AND COALESCE(reward_claimed,0)=0 AND lower(COALESCE(reward_claim_status,'none')) NOT IN ('pending','selesai','diproses')
             AND (json_extract(metadata_json,'$.rewardReleased') IN (1,'true')
               OR EXISTS (SELECT 1 FROM transactions rr WHERE rr.report_id=reports.id AND rr.type='reward_release' AND lower(rr.status)='selesai')
-              OR (lower(status)='selesai' AND COALESCE(reward_amount,0)>0)
+              OR (lower(status) IN ('valid','selesai') AND COALESCE(reward_amount, json_extract(metadata_json,'$.rewardAmount'),0)>0)
               OR (lower(COALESCE(json_extract(metadata_json,'$.rewardStatusPerusahaan'),'')) IN ('disetujui','approved')
                 AND COALESCE(reward_amount, json_extract(metadata_json,'$.rewardAmount'),0)>0
                 AND (json_extract(metadata_json,'$.rewardReleaseOperationId') IS NOT NULL OR json_extract(metadata_json,'$.rewardReleasedAt') IS NOT NULL OR json_extract(metadata_json,'$.rewardReleaseType') IS NOT NULL)))
