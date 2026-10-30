@@ -83,8 +83,16 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       perusahaanName: canonicalName,
       email: String(user.company_email || user.email || ''),
       status: String(user.company_status || ''),
-      deposit_balance: Number(user.deposit_balance || 0),
-      locked_balance: Number(user.locked_balance || 0),
+      // Every tenant-facing balance alias must be derived from the canonical D1 columns.
+      // This prevents stale profile/metadata JSON from overriding the live account balance.
+      deposit_balance: Number(user.deposit_balance ?? 0),
+      locked_balance: Number(user.locked_balance ?? 0),
+      danaTersedia: Number(user.deposit_balance ?? 0),
+      danaTerkunci: Number(user.locked_balance ?? 0),
+      saldo: Number(user.deposit_balance ?? 0),
+      rewardBalance: Number(user.deposit_balance ?? 0),
+      reward_balance: Number(user.deposit_balance ?? 0),
+      saldoReward: Number(user.deposit_balance ?? 0),
     } : null;
 
     const companyUser = companyId
