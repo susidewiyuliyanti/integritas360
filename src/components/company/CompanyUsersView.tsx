@@ -48,7 +48,7 @@ export const CompanyUsersView: React.FC<CompanyUsersViewProps> = ({
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [role, setRole] = useState<'company_admin' | 'finance' | 'hr' | 'company_user'>('company_user');
+  const [role, setRole] = useState<'finance' | 'hr' | 'company_user'>('company_user');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -177,14 +177,14 @@ export const CompanyUsersView: React.FC<CompanyUsersViewProps> = ({
       await setDoc(doc(db, 'users', authUid), {
         uid: authUid,
         email: cleanEmail,
-        role: role === 'company_admin' ? 'admin_perusahaan' : role,
+        role,
         company_id: companyId,
         company_name: companyName,
         namaPT: companyName,
         picName: cleanName,
         perusahaanId: companyId,
         perusahaanName: companyName,
-        jabatan: role === 'company_admin' ? 'Company Admin' : role.toUpperCase(),
+        jabatan: role.toUpperCase(),
         departemen: role === 'finance' ? 'Keuangan' : role === 'hr' ? 'HR / Personalia' : 'Kepatuhan Internal',
         telepon: phone.trim(),
         statusAkun: 'aktif',
@@ -548,7 +548,6 @@ export const CompanyUsersView: React.FC<CompanyUsersViewProps> = ({
                     <option value="company_user">Company User</option>
                     <option value="finance">Finance (Keuangan)</option>
                     <option value="hr">HR (Personalia)</option>
-                    <option value="company_admin">Company Admin</option>
                   </select>
                 </div>
               </div>
