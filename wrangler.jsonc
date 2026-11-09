@@ -10,5 +10,11 @@
       "database_id": "0c97aee4-abc2-4a67-9c66-297769a1a74d",
       "migrations_dir": "migrations"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "COMPANY_PROFILES",
+      "bucket_name": "integritas360-company-profiles"
+    }
   ]
 }
