@@ -34,7 +34,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         .bind(userId,email,hash,salt,companyId,picName,JSON.stringify({picName})),
       env.DB.prepare("INSERT INTO company_users (id,user_id,company_id,role,status,is_primary_company_account) VALUES (?,?,?,'perusahaan','PENDING',1)")
         .bind(randomId('cu'),userId,companyId),
-      env.DB.prepare("INSERT INTO audit_logs (id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,'public','?','TENANT_REGISTRATION_SUBMITTED','tenant_registration',?,?)")
+      env.DB.prepare("INSERT INTO audit_logs (id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,'public',?,'TENANT_REGISTRATION_SUBMITTED','tenant_registration',?,?)")
         .bind(randomId('audit'),userId,email,companyId,companyId,JSON.stringify({picName,fileName:file.name,contentType:file.type,objectKey}))
     ]);
     return json({ok:true,message:'Pendaftaran berhasil dikirim dan menunggu verifikasi Super Admin.',status:'PENDING'});
