@@ -20,6 +20,7 @@ export const SuperAdminDashboard: React.FC = () => {
   const { navigate } = useNavigation();
   const [tab, setTab] = useState<'overview'|'tenants'|'reports'|'transactions'|'audit'|'security'|'ai-sales'|'sales-email'>('overview');
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [pendingApplications, setPendingApplications] = useState<Company[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -98,6 +99,7 @@ export const SuperAdminDashboard: React.FC = () => {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'Gagal memuat data Super Admin.');
       setCompanies(Array.isArray(data.companies) ? data.companies : []);
+      setPendingApplications(Array.isArray(data.pendingApplications) ? data.pendingApplications : []);
       setReports(Array.isArray(data.reports) ? data.reports : []);
       setTransactions(Array.isArray(data.transactions) ? data.transactions : []);
       setAuditLogs(Array.isArray(data.auditLogs) ? data.auditLogs : []);
@@ -187,6 +189,11 @@ export const SuperAdminDashboard: React.FC = () => {
       {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}<p className="text-xs text-red-200/70 mt-1">Dashboard ini menunggu endpoint admin yang terautentikasi; tidak menggunakan endpoint publik lintas tenant.</p></div>}
       {tab !== 'overview' && <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cari nama tenant, ID, kode laporan, transaksi..." className="w-full rounded-xl border border-slate-800 bg-slate-900 pl-10 pr-4 py-3 text-sm outline-none focus:border-amber-500"/></div>}
       {tab==='overview' && <>
+        <section className="rounded-2xl border border-amber-500/30 bg-slate-900 p-5 space-y-3">
+          <div className="flex items-center justify-between gap-3"><div><h2 className="font-bold text-white">Pendaftaran Tenant Menunggu Verifikasi</h2><p className="text-xs text-slate-400">Dokumen profil perusahaan tersimpan privat di R2.</p></div><span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs font-bold text-amber-300">{pendingApplications.length} Pending</span></div>
+          {pendingApplications.length===0?<p className="text-sm text-slate-500">Tidak ada pendaftaran yang menunggu persetujuan.</p>:pendingApplications.map(app=><div key={app.company_id} className="rounded-xl border border-slate-800 bg-slate-950 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"><div><p className="font-semibold text-white">{app.picName||app.full_name||'PIC belum tersedia'}</p><p className="text-xs text-slate-400">{app.email} · {date(app.created_at)}</p><p className="text-[11px] text-slate-500">Dokumen: {app.companyProfileFileName||'Tersimpan di R2'}</p></div><div className="flex gap-2"><button disabled={approvalBusyId===app.company_id} onClick={async()=>{setApprovalBusyId(app.company_id);setApprovalNotice(null);try{const res=await fetch('/api/admin/overview',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:app.company_id,action:'approve-registration'})});const d=await res.json().catch(()=>({}));if(!res.ok||!d.ok)throw new Error(d.error||'Persetujuan gagal');setApprovalNotice({type:'success',message:'Pendaftaran tenant disetujui.'});await load();}catch(e){setApprovalNotice({type:'error',message:e instanceof Error?e.message:'Gagal menyetujui pendaftaran.'});}finally{setApprovalBusyId(null);}}} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Setujui</button><button disabled={approvalBusyId===app.company_id} onClick={async()=>{const reason=window.prompt('Alasan penolakan:')?.trim();if(!reason)return;setApprovalBusyId(app.company_id);try{const res=await fetch('/api/admin/overview',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:app.company_id,action:'reject-registration',reason})});const d=await res.json().catch(()=>({}));if(!res.ok||!d.ok)throw new Error(d.error||'Penolakan gagal');setApprovalNotice({type:'success',message:'Pendaftaran tenant ditolak.'});await load();}catch(e){setApprovalNotice({type:'error',message:e instanceof Error?e.message:'Gagal menolak pendaftaran.'});}finally{setApprovalBusyId(null);}}} className="rounded-lg border border-red-500/40 px-3 py-2 text-xs font-bold text-red-300 disabled:opacity-50">Tolak</button></div></div>)}
+          {approvalNotice&&<p className={approvalNotice.type==='success'?'text-xs text-emerald-300':'text-xs text-red-300'}>{approvalNotice.message}</p>}
+        </section>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[[Building2,'Total Tenant',companies.length],[Wallet,'Saldo Tersedia',money(totalAvailable)],[Wallet,'Saldo Terkunci',money(totalLocked)],[FileText,'Laporan Aktif',openReports],[History,'Transaksi Pending',pendingTx]] .map(([Icon,label,value]:any)=><div key={label} className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><div className="flex items-center justify-between text-slate-400 text-sm"><span>{label}</span><Icon className="w-5 h-5 text-amber-400"/></div><div className="mt-3 text-2xl font-extrabold break-words">{value}</div></div>)}
         </div>
