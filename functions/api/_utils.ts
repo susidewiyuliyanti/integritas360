@@ -1,4 +1,4 @@
-export interface Env { DB: D1Database; SESSION_TTL_SECONDS?: string; BOOTSTRAP_TOKEN?: string; }
+export interface Env { DB: D1Database; COMPANY_PROFILES: R2Bucket; SESSION_TTL_SECONDS?: string; BOOTSTRAP_TOKEN?: string; }
 export function json(data: unknown, status=200, headers: Record<string,string>={}) { return new Response(JSON.stringify(data), {status, headers:{'content-type':'application/json; charset=utf-8',...headers}}); }
 export function cookie(name:string,value:string,maxAge:number,secure=true) { return name+'='+encodeURIComponent(value)+'; Path=/; HttpOnly; SameSite=Lax; Max-Age='+maxAge+(secure?'; Secure':''); }
 export function getCookie(request:Request,name:string) { const raw=request.headers.get('Cookie')||''; const item=raw.split(';').map(v=>v.trim()).find(v=>v.startsWith(name+'=')); return item?decodeURIComponent(item.slice(name.length+1)):null; }
