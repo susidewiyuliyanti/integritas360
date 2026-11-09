@@ -15,11 +15,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     if (!user) return json({ error: 'Unauthorized' }, 401);
     if (String(user.role || '').toLowerCase() !== 'owner') return json({ error: 'Forbidden' }, 403);
 
-    const [companies, reports, transactions, auditLogs] = await Promise.all([
+    const [companies, reports, transactions, auditLogs, pendingApplications] = await Promise.all([
       env.DB.prepare('SELECT * FROM companies ORDER BY created_at DESC LIMIT 1000').all<any>(),
       env.DB.prepare('SELECT * FROM reports ORDER BY created_at DESC LIMIT 2000').all<any>(),
       env.DB.prepare('SELECT * FROM transactions ORDER BY created_at DESC LIMIT 3000').all<any>(),
       env.DB.prepare('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 1000').all<any>(),
+      env.DB.prepare("SELECT c.id,c.company_id,c.company_name,c.email,c.created_at,c.profile_json,u.id AS user_id,u.full_name FROM companies c LEFT JOIN users u ON u.company_id=c.company_id AND u.role='perusahaan' WHERE c.status='PENDING' ORDER BY c.created_at ASC").all<any>(),
     ]);
 
     const companyRows = (companies.results || []).map((c:any) => {
@@ -43,7 +44,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       return { ...meta, ...a, metadata: meta };
     });
 
-    return json({ ok: true, viewer: { id: user.id, email: user.email, role: user.role }, companies: companyRows, reports: reportRows, transactions: txRows, auditLogs: auditRows });
+    return json({ ok: true, viewer: { id: user.id, email: user.email, role: user.role }, companies: companyRows, reports: reportRows, transactions: txRows, auditLogs: auditRows, pendingApplications: (pendingApplications.results || []).map((a:any)=>{ let profile:any={}; try{profile=JSON.parse(a.profile_json||'{}')}catch{} return {...a,...profile}; }) });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Gagal memuat ringkasan admin' }, 500);
   }
@@ -63,8 +64,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const id = String(body.id || '').trim();
     const action = String(body.action || '').toLowerCase();
     const reason = String(body.reason || '').trim();
-    const validActions = ['approve-deposit','reject-deposit','approve-withdrawal','reject-withdrawal','complete-claim_reward'];
+    const validActions = ['approve-registration','reject-registration','approve-deposit','reject-deposit','approve-withdrawal','reject-withdrawal','complete-claim_reward'];
     if (!id || !validActions.includes(action)) return json({ error: 'Permintaan tidak valid.' }, 400);
+    if (action === 'approve-registration' || action === 'reject-registration') {
+      const application = await env.DB.prepare("SELECT c.company_id,c.status,u.id AS user_id,u.email FROM companies c JOIN users u ON u.company_id=c.company_id AND u.role='perusahaan' WHERE c.id=? OR c.company_id=? LIMIT 1").bind(id,id).first<any>();
+      if (!application || application.status !== 'PENDING') return json({error:'Pendaftaran tidak ditemukan atau sudah diproses.'},404);
+      const nextStatus = action === 'approve-registration' ? 'ACTIVE' : 'REJECTED';
+      const note = reason || (nextStatus === 'ACTIVE' ? 'Disetujui Super Admin' : 'Ditolak Super Admin');
+      await env.DB.batch([
+        env.DB.prepare("UPDATE companies SET status=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=? AND status='PENDING'").bind(nextStatus,application.company_id),
+        env.DB.prepare("UPDATE users SET status=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=? AND role='perusahaan' AND status='PENDING'").bind(nextStatus,application.company_id),
+        env.DB.prepare("UPDATE company_users SET status=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=? AND status='PENDING'").bind(nextStatus,application.company_id),
+        env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)').bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,application.company_id,nextStatus==='ACTIVE'?'TENANT_REGISTRATION_APPROVED':'TENANT_REGISTRATION_REJECTED','tenant_registration',application.company_id,JSON.stringify({reason:note,email:application.email}))
+      ]);
+      return json({ok:true,status:nextStatus,company_id:application.company_id});
+    }
     const tx = await env.DB.prepare('SELECT * FROM transactions WHERE id=? LIMIT 1').bind(id).first<any>();
     if (!tx) return json({ error: 'Transaksi tidak ditemukan di database utama.' }, 404);
     const type = String(tx.type || '').toLowerCase();
