@@ -192,20 +192,10 @@ export const LoginPage: React.FC = () => {
 
         </div>
 
-        {/* Hubungi Kami WhatsApp (Tombol Daftar di-hide sementara) */}
         <div className="text-center text-xs text-slate-400 space-y-2">
-          <p>Belum memiliki akun atau ingin mendaftar?</p>
-          <a
-            href="https://wa.me/6287879625033?text=Halo%20Admin%20Integritas360%2C%20saya%20ingin%20mendaftar%20atau%20konsultasi%20layanan"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 font-bold text-xs transition-all shadow-md shadow-emerald-600/10 cursor-pointer"
-          >
-            <MessageCircle className="w-4 h-4 text-emerald-400" />
-            <span>Hubungi Kami</span>
-          </a>
+          <p>Belum memiliki akun perusahaan?</p>
+          <button onClick={() => navigate('/register')} className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs">Daftarkan Perusahaan</button>
         </div>
-
 
         {/* Password Reset Modal */}
         {resetModalOpen && (
