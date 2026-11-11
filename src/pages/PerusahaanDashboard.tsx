@@ -284,6 +284,14 @@ export const PerusahaanDashboard: React.FC = () => {
   // Canonical tenant funds come from the companies row (D1 deposit_balance).
   const saldoTerbuka = Number((companyProfile as any)?.deposit_balance ?? companyProfile?.danaTersedia ?? companyProfile?.saldo ?? 0);
   const danaTersedia = saldoTerbuka;
+  // Nilai aset perusahaan bersifat opsional pada profil tenant; tampilkan 0 bila belum diisi.
+  const totalAsetRaw = (companyProfile as any)?.totalAset
+    ?? (companyProfile as any)?.total_aset
+    ?? (companyProfile as any)?.nilaiAset
+    ?? (companyProfile as any)?.asset_total
+    ?? 0;
+  const totalAsetParsed = Number(totalAsetRaw);
+  const totalAset = Number.isFinite(totalAsetParsed) && totalAsetParsed >= 0 ? totalAsetParsed : 0;
 
   // HANDLER: DEPOSIT SALDO (QRIS & BANK) - Menunggu Verifikasi Administrator
   const handleDepositSubmit = async (e: React.FormEvent) => {
