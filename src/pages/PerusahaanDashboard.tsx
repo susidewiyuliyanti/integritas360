@@ -124,14 +124,24 @@ export const PerusahaanDashboard: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Route protection
+  // Route protection: wait for the D1 session before rendering protected tenant UI.
+  // This prevents a transient empty/blank dashboard while /api/auth/me is resolving.
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate('/login');
-      } else if (role === 'auditor') {
-        navigate('/auditor');
-      }
+    if (authLoading) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (role === 'owner') {
+      navigate('/admin');
+      return;
+    }
+    if (role === 'auditor') {
+      navigate('/auditor');
+      return;
+    }
+    if (role === 'company_admin' || role === 'admin_perusahaan') {
+      navigate('/admin-perusahaan');
     }
   }, [user, authLoading, role, navigate]);
 
@@ -249,6 +259,26 @@ export const PerusahaanDashboard: React.FC = () => {
     const timer = window.setInterval(() => { void loadCanonicalTenantData(); }, 10000);
     return () => { active = false; window.clearInterval(timer); };
   }, [user?.id, user?.uid, user?.email, user?.role, authLoading, effectiveCompanyId]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-200" role="status" aria-live="polite">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+        <p className="text-sm font-semibold">Memverifikasi sesi dan memuat dashboard perusahaan...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 p-6 text-center text-slate-200">
+        <AlertCircle className="w-8 h-8 text-amber-400" />
+        <h2 className="text-lg font-bold">Sesi login tidak ditemukan</h2>
+        <p className="text-sm text-slate-400">Silakan masuk kembali untuk membuka dashboard perusahaan.</p>
+        <button onClick={() => navigate('/login')} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950">Kembali ke Login</button>
+      </div>
+    );
+  }
 
   const namaPT = companyProfile?.namaPT || 'PT Anda';
   // Canonical tenant funds come from the companies row (D1 deposit_balance).
