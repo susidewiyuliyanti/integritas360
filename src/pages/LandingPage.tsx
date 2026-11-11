@@ -122,6 +122,34 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      <section className="py-14 sm:py-16 border-b border-slate-800/80 bg-slate-900/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
+              <BookOpen className="w-3.5 h-3.5" />
+              Kenali Integritas360
+            </div>
+            <h2 className="mt-4 text-2xl sm:text-3xl font-extrabold text-white">Lihat Integritas360 dalam Video</h2>
+            <p className="mt-3 text-sm text-slate-400">
+              Kenali solusi pelaporan pelanggaran perusahaan melalui video singkat berikut.
+            </p>
+          </div>
+          <div className="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-slate-700 bg-black shadow-2xl shadow-amber-500/10">
+            <div className="aspect-[9/16] w-full">
+              <iframe
+                className="h-full w-full"
+                src="https://www.youtube.com/embed/EeAsDYhcctY"
+                title="Video pengenalan Integritas360"
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-800/80">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
