@@ -321,3 +321,122 @@ table {
   .superadmin-v18-main { padding: .65rem !important; }
   .tenant-dashboard-v18 .tenant-dashboard-content { padding: .5rem; }
 }
+
+/* Integritas360 dark mode — visual theme only; preserves layout and behavior */
+.tenant-dashboard-v18,
+.superadmin-dashboard-v18 {
+  color-scheme: dark;
+  --v18-ink: #e8edf5;
+  --v18-muted: #a8b4c6;
+  --v18-purple: #d6b66f;
+  --v18-lilac: #263449;
+  --v18-pink: #202d40;
+  color: var(--v18-ink) !important;
+  background: #101a2a !important;
+}
+.tenant-dashboard-v18 .tenant-dashboard-content,
+.superadmin-dashboard-v18 .superadmin-v18-main {
+  color: #e8edf5 !important;
+}
+.tenant-dashboard-v18 section,
+.tenant-dashboard-v18 article,
+.tenant-dashboard-v18 .rounded-2xl.border,
+.tenant-dashboard-v18 .rounded-xl.border,
+.superadmin-dashboard-v18 .rounded-2xl.border,
+.superadmin-dashboard-v18 section.rounded-2xl,
+.superadmin-dashboard-v18 .rounded-xl.border {
+  color: #e8edf5 !important;
+  background-color: #1b293d !important;
+  border-color: #34445a !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .22) !important;
+}
+.tenant-dashboard-v18 .bg-white,
+.tenant-dashboard-v18 .bg-slate-50,
+.tenant-dashboard-v18 .bg-slate-100,
+.superadmin-dashboard-v18 .bg-white,
+.superadmin-dashboard-v18 .bg-slate-50,
+.superadmin-dashboard-v18 .bg-slate-100 {
+  background-color: #1b293d !important;
+}
+.tenant-dashboard-v18 .bg-slate-950,
+.tenant-dashboard-v18 .bg-slate-900,
+.tenant-dashboard-v18 .bg-slate-900\/90,
+.tenant-dashboard-v18 .bg-slate-950\/90,
+.tenant-dashboard-v18 .bg-slate-950\/80,
+.superadmin-dashboard-v18 .bg-slate-950,
+.superadmin-dashboard-v18 .bg-slate-900,
+.superadmin-dashboard-v18 .bg-slate-800,
+.superadmin-dashboard-v18 .bg-slate-800\/70,
+.superadmin-dashboard-v18 .bg-slate-950\/60 {
+  background-color: #142136 !important;
+}
+.tenant-dashboard-v18 .text-white,
+.tenant-dashboard-v18 .text-slate-950,
+.tenant-dashboard-v18 .text-slate-900,
+.tenant-dashboard-v18 .text-slate-800,
+.tenant-dashboard-v18 .text-slate-700,
+.tenant-dashboard-v18 .text-slate-600,
+.superadmin-dashboard-v18 .text-white,
+.superadmin-dashboard-v18 .text-slate-950,
+.superadmin-dashboard-v18 .text-slate-900,
+.superadmin-dashboard-v18 .text-slate-800,
+.superadmin-dashboard-v18 .text-slate-700,
+.superadmin-dashboard-v18 .text-slate-600 {
+  color: #e8edf5 !important;
+}
+.tenant-dashboard-v18 .text-slate-300,
+.tenant-dashboard-v18 .text-slate-400,
+.tenant-dashboard-v18 .text-slate-500,
+.superadmin-dashboard-v18 .text-slate-300,
+.superadmin-dashboard-v18 .text-slate-400,
+.superadmin-dashboard-v18 .text-slate-500 {
+  color: #a8b4c6 !important;
+}
+.tenant-dashboard-v18 input,
+.tenant-dashboard-v18 select,
+.tenant-dashboard-v18 textarea,
+.superadmin-dashboard-v18 input,
+.superadmin-dashboard-v18 select,
+.superadmin-dashboard-v18 textarea {
+  color: #f1f5f9 !important;
+  background: #111d2e !important;
+  border-color: #40516a !important;
+}
+.tenant-dashboard-v18 input::placeholder,
+.tenant-dashboard-v18 textarea::placeholder,
+.superadmin-dashboard-v18 input::placeholder,
+.superadmin-dashboard-v18 textarea::placeholder {
+  color: #8291a7 !important;
+}
+.tenant-dashboard-v18 table thead,
+.superadmin-dashboard-v18 table thead {
+  color: #f1f5f9 !important;
+  background: #26364c !important;
+}
+.tenant-dashboard-v18 table tbody tr,
+.superadmin-dashboard-v18 table tbody tr {
+  border-color: #34445a !important;
+}
+.tenant-dashboard-v18 .border-slate-900,
+.tenant-dashboard-v18 .border-slate-800,
+.tenant-dashboard-v18 .border-slate-700,
+.superadmin-dashboard-v18 .border-slate-900,
+.superadmin-dashboard-v18 .border-slate-800,
+.superadmin-dashboard-v18 .border-slate-700 {
+  border-color: #34445a !important;
+}
+.superadmin-v18-header {
+  background: #0b1422 !important;
+  border-right: 1px solid #26364c !important;
+}
+.superadmin-v18-nav {
+  scrollbar-color: #40516a #142136;
+}
+.superadmin-v18-nav button:hover,
+.superadmin-v18-nav button[class*="bg-amber-500"] {
+  background: #594a2b !important;
+  color: #fff4d6 !important;
+}
+@media (max-width: 900px) {
+  .superadmin-v18-nav { background: #101a2a !important; }
+}
