@@ -616,3 +616,74 @@ table td { line-height: 1.5; }
     transition-duration: .01ms !important;
   }
 }
+
+/* Global text contrast normalization — consistent readable dark theme across all routes. */
+:root {
+  color-scheme: dark;
+  --i360-text-strong: #f8fafc;
+  --i360-text-body: #e2e8f0;
+  --i360-text-muted: #bdc9d9;
+  --i360-input-bg: #142136;
+  --i360-input-border: #52657f;
+}
+html, body, #root {
+  color: var(--i360-text-body);
+  background-color: #101a2a;
+}
+body, main, section, article, aside, nav, header, footer {
+  color: inherit;
+}
+/* Muted utility colors were too dim on navy surfaces. */
+:where(.text-slate-400, .text-slate-500, .text-slate-600,
+       .text-gray-400, .text-gray-500, .text-gray-600,
+       .text-zinc-400, .text-zinc-500, .text-neutral-400, .text-neutral-500) {
+  color: var(--i360-text-muted) !important;
+}
+:where(.text-slate-300, .text-gray-300, .text-zinc-300,
+       .text-neutral-300) {
+  color: #d6e0ec !important;
+}
+:where(h1, h2, h3, h4, h5, h6, legend, th) {
+  color: var(--i360-text-strong);
+}
+:where(p, li, td, dd, dt, label) {
+  color: inherit;
+}
+:where(input, select, textarea) {
+  color: #f8fafc !important;
+  background-color: var(--i360-input-bg) !important;
+  border-color: var(--i360-input-border) !important;
+  caret-color: #f8fafc;
+}
+:where(input, textarea)::placeholder {
+  color: #b5c2d3 !important;
+  opacity: 1 !important;
+}
+:where(select option) {
+  color: #f8fafc;
+  background-color: #142136;
+}
+:where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+  color: #c2ccda !important;
+  opacity: .82;
+}
+:where(table thead th) {
+  color: #f8fafc !important;
+}
+:where(table tbody td) {
+  color: #e2e8f0;
+}
+:where(a:not([class*="text-"])) {
+  color: #f2cf86;
+}
+:where(a:not([class*="text-"]):hover) {
+  color: #ffe2a8;
+}
+:where(.tenant-dashboard-v18, .superadmin-dashboard-v18) {
+  color: #e2e8f0 !important;
+}
+:where(.tenant-dashboard-v18, .superadmin-dashboard-v18)
+  :where(.text-slate-400, .text-slate-500, .text-slate-600,
+         .text-gray-400, .text-gray-500, .text-gray-600) {
+  color: #bdc9d9 !important;
+}
