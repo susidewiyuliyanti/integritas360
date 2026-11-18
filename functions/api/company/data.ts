@@ -32,7 +32,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
   if(op==='save-company-profile'){
     const actorRole=String(actor.role||'').toLowerCase();
     const d=body.data||{};
-    const allowed=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','statusVerifikasiDokumen','catatanVerifikasi','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus','kebijakanReward'];
+    const allowed=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus','kebijakanReward'];
     const profile:any={};
     for(const key of allowed) if(d[key]!==undefined) profile[key]=d[key];
     if(actorRole==='auditor'){
@@ -217,7 +217,7 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
         if(Number(adminCount?.n||0)>=2) return json({error:'Batas maksimal 2 akun admin untuk tenant ini sudah tercapai.'},409);
       }
     }
-    const profileKeys=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','statusVerifikasiDokumen','catatanVerifikasi','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus','kebijakanReward'];
+    const profileKeys=['namaPT','alamat','deskripsi','telepon','npwp','picName','rekeningBank','sektor','photoURL','dokumenUrl','dokumenNama','nomorLisensi','gelarProfesi','spesialisasiAudit','biayaJasaPerKasus','kebijakanReward'];
     const profilePatch:any={};
     for(const key of profileKeys) if(d[key]!==undefined) profilePatch[key]=d[key];
     if(Object.keys(profilePatch).length){
