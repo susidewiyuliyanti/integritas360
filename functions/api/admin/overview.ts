@@ -67,12 +67,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const validActions = ['approve-registration','reject-registration','approve-deposit','reject-deposit','approve-withdrawal','reject-withdrawal','complete-claim_reward'];
     if (!id || !validActions.includes(action)) return json({ error: 'Permintaan tidak valid.' }, 400);
     if (action === 'approve-registration' || action === 'reject-registration') {
-      const application = await env.DB.prepare("SELECT c.company_id,c.status,u.id AS user_id,u.email FROM companies c JOIN users u ON u.company_id=c.company_id AND u.role='perusahaan' WHERE c.id=? OR c.company_id=? LIMIT 1").bind(id,id).first<any>();
+      const application = await env.DB.prepare("SELECT c.company_id,c.status,c.profile_json,u.id AS user_id,u.email FROM companies c JOIN users ON u.company_id=c.company_id AND u.role='perusahaan' WHERE c.id=? OR c.company_id=? LIMIT 1").bind(id,id).first<any>();
       if (!application || application.status !== 'PENDING') return json({error:'Pendaftaran tidak ditemukan atau sudah diproses.'},404);
       const nextStatus = action === 'approve-registration' ? 'ACTIVE' : 'REJECTED';
       const note = reason || (nextStatus === 'ACTIVE' ? 'Disetujui Super Admin' : 'Ditolak Super Admin');
+      let companyProfile:any = {};
+      try { companyProfile = JSON.parse(application.profile_json || '{}'); } catch {}
+      if (nextStatus === 'ACTIVE') {
+        companyProfile.statusVerifikasiDokumen = 'terverifikasi';
+        companyProfile.catatanVerifikasi = note;
+        companyProfile.verifikasiOleh = actor.email;
+        companyProfile.verifikasiPada = new Date().toISOString();
+      }
       await env.DB.batch([
-        env.DB.prepare("UPDATE companies SET status=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=? AND status='PENDING'").bind(nextStatus,application.company_id),
+        env.DB.prepare("UPDATE companies SET status=?,profile_json=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=? AND status='PENDING'").bind(nextStatus,JSON.stringify(companyProfile),application.company_id),
         env.DB.prepare("UPDATE users SET status=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=? AND role='perusahaan' AND status='PENDING'").bind(nextStatus,application.company_id),
         env.DB.prepare("UPDATE company_users SET status=?,updated_at=CURRENT_TIMESTAMP WHERE company_id=? AND status='PENDING'").bind(nextStatus,application.company_id),
         env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)').bind('audit_'+crypto.randomUUID(),actor.id,actor.email,actor.role,application.company_id,nextStatus==='ACTIVE'?'TENANT_REGISTRATION_APPROVED':'TENANT_REGISTRATION_REJECTED','tenant_registration',application.company_id,JSON.stringify({reason:note,email:application.email}))
