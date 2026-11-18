@@ -24,6 +24,40 @@ interface AuthContextType {
   refreshCompanyData?: () => Promise<void>;
 }
 
+const SESSION_HINT_KEY = 'i360_session_user';
+
+const readSessionHint = (): SessionUser | null => {
+  try {
+    const raw = localStorage.getItem(SESSION_HINT_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw);
+    if (!value || typeof value.id !== 'string' || typeof value.email !== 'string' || typeof value.role !== 'string') return null;
+    return value as SessionUser;
+  } catch {
+    return null;
+  }
+};
+
+const saveSessionHint = (value: SessionUser | null) => {
+  try {
+    if (value) {
+      // This is only a UI bootstrap hint, never an authentication credential.
+      // Every protected API continues to validate the HttpOnly D1 session cookie.
+      localStorage.setItem(SESSION_HINT_KEY, JSON.stringify({
+        id: value.id,
+        email: value.email,
+        role: value.role,
+        company_id: value.company_id || null,
+        status: value.status || 'ACTIVE',
+      }));
+    } else {
+      localStorage.removeItem(SESSION_HINT_KEY);
+    }
+  } catch {
+    // Storage may be disabled; server-cookie authentication still works.
+  }
+};
+
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
@@ -56,48 +90,74 @@ const toProfile = (u: SessionUser): UserProfile => ({
 } as UserProfile);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(() => readSessionHint());
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    const hint = readSessionHint();
+    return hint ? toProfile(hint) : null;
+  });
   const [company, setCompany] = useState<Company | null>(null);
   const [companyUser, setCompanyUser] = useState<CompanyUser | null>(null);
   const [isCompanySuspended, setIsCompanySuspended] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const clearLocalSession = () => {
+    saveSessionHint(null);
+    setUser(null);
+    setProfile(null);
+    setCompany(null);
+    setCompanyUser(null);
+    setIsCompanySuspended(false);
+  };
+
   const loadSession = async () => {
+    let response: Response;
     try {
-      const response = await fetch('/api/auth/me', {
+      response = await fetch('/api/auth/me', {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',
+        headers: { 'cache-control': 'no-cache' },
       });
+    } catch (error) {
+      // A temporary network failure must not erase the signed-in dashboard state.
+      // Keep the non-secret UI hint; protected requests remain secured by the server.
+      console.warn('Cloudflare session check temporarily unavailable:', error);
+      setLoading(false);
+      return;
+    }
 
-      if (!response.ok) {
-        setUser(null);
-        setProfile(null);
-        setCompany(null);
-        setCompanyUser(null);
-        setIsCompanySuspended(false);
-        return;
-      }
+    if (response.status === 401 || response.status === 403) {
+      clearLocalSession();
+      setLoading(false);
+      return;
+    }
 
+    if (!response.ok) {
+      // 5xx/edge errors are not proof that the user's session has ended.
+      console.warn('Cloudflare session check returned:', response.status);
+      setLoading(false);
+      return;
+    }
+
+    try {
       const data = await response.json();
       if (!data?.ok || !data?.user) {
-        setUser(null);
+        clearLocalSession();
+        setLoading(false);
         return;
       }
 
       const sessionUser = data.user as SessionUser;
+      saveSessionHint(sessionUser);
       setUser(sessionUser);
 
-      // Gabungkan data auth dan company sebelum set profile sekali —
-      // menghindari penimpaan berkali-kali yang menyebabkan re-render inkonsisten.
       let finalProfile = toProfile(sessionUser);
-
       if (sessionUser.company_id) {
         try {
           const companyResponse = await fetch('/api/company/me', {
             credentials: 'include',
             cache: 'no-store',
+            headers: { 'cache-control': 'no-cache' },
           });
           if (companyResponse.ok) {
             const companyData = await companyResponse.json();
@@ -105,33 +165,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setCompany(companyData.company as Company);
               setIsCompanySuspended(companyData.company.status === 'SUSPENDED');
             }
-            if (companyData?.companyUser) {
-              setCompanyUser(companyData.companyUser as CompanyUser);
-            }
-            if (companyData?.profile) {
-              finalProfile = { ...finalProfile, ...companyData.profile };
-            }
+            if (companyData?.companyUser) setCompanyUser(companyData.companyUser as CompanyUser);
+            if (companyData?.profile) finalProfile = { ...finalProfile, ...companyData.profile };
           }
-        } catch {
-          // Company API is optional during the auth migration.
+        } catch (error) {
+          console.warn('Tenant profile refresh temporarily unavailable:', error);
         }
       }
-
       setProfile(finalProfile);
     } catch (error) {
-      console.warn('Cloudflare session check failed:', error);
-      setUser(null);
-      setProfile(null);
-      setCompany(null);
-      setCompanyUser(null);
-      setIsCompanySuspended(false);
+      // A malformed/transient response should not force a logout.
+      console.warn('Cloudflare session response could not be processed:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadSession();
+    void loadSession();
   }, []);
 
   const logout = async () => {
@@ -141,11 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         credentials: 'include',
       });
     } finally {
-      setUser(null);
-      setProfile(null);
-      setCompany(null);
-      setCompanyUser(null);
-      setIsCompanySuspended(false);
+      clearLocalSession();
     }
   };
 
