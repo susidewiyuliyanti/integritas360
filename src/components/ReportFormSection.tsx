@@ -76,6 +76,8 @@ interface CompanyOption {
   namaPT: string;
   sektor?: string;
   danaTersedia?: number;
+  persenFinansial?: number;
+  rewardKasusEtik?: number;
 }
 
 interface AuditorOption {
@@ -455,7 +457,9 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
       return;
     }
 
-    const minReward = tipePelanggaran === 'finansial' ? Math.round(cleanKerugian * 0.02) : 100000;
+    const tenantFinancialPercent = Math.min(100, Math.max(0.1, Number(targetCompanyData?.persenFinansial ?? 10)));
+    const tenantEthicalReward = Math.max(1, Number(targetCompanyData?.rewardKasusEtik ?? 100000));
+    const minReward = tipePelanggaran === 'finansial' ? Math.ceil(cleanKerugian * tenantFinancialPercent / 100) : tenantEthicalReward;
     const chosenAuditor = auditors.find((a) => a.uid === selectedAuditorId);
 
     try {
@@ -1123,7 +1127,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                   </p>
                   <div className="pt-1">
                     <span className="inline-block text-[10px] font-semibold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                      Reward: Minimal 2% dari Estimasi Nilai Kerugian
+                      Reward: ${Number(targetCompanyData?.persenFinansial ?? 10)}% sesuai kebijakan tenant
                     </span>
                   </div>
                 </div>
@@ -1163,13 +1167,13 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                   </p>
                   <div className="pt-1">
                     <span className="inline-block text-[10px] font-semibold text-purple-300 bg-purple-500/20 border border-purple-500/40 px-2 py-0.5 rounded-full">
-                      Reward: Ditentukan oleh Perusahaan
+                      Reward Tenant: Rp {Number(targetCompanyData?.rewardKasusEtik ?? 100000).toLocaleString('id-ID')}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Sub-form Khusus Finansial: Estimasi Kerugian Finansial & Kalkulasi Minimal 2% */}
+              {/* Sub-form finansial: kalkulasi reward mengikuti kebijakan tenant */}
               {tipePelanggaran === 'finansial' && (
                 <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/30 space-y-2">
                   <div className="flex items-center justify-between">
@@ -1177,7 +1181,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                       Estimasi Nilai Kerugian Finansial Perusahaan (Rp) *
                     </label>
                     <span className="text-[10px] text-amber-400 font-medium">
-                      Aturan: Reward Minimal 2%
+                      Aturan Tenant: ${Number(targetCompanyData?.persenFinansial ?? 10)}%
                     </span>
                   </div>
                   <input
@@ -1194,7 +1198,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                         Estimasi Kerugian: <strong>Rp {Number(estimasiKerugian).toLocaleString('id-ID')}</strong>
                       </span>
                       <span className="text-amber-400 font-bold font-mono text-[11px] bg-amber-500/20 px-2 py-0.5 rounded">
-                        Minimal Reward Pelapor (2%): Rp {Math.round(Number(estimasiKerugian) * 0.02).toLocaleString('id-ID')}
+                        Estimasi Reward ({Number(targetCompanyData?.persenFinansial ?? 10)}%): Rp {Math.ceil(Number(estimasiKerugian) * Number(targetCompanyData?.persenFinansial ?? 10) / 100).toLocaleString('id-ID')}
                       </span>
                     </div>
                   )}
@@ -1695,7 +1699,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                       Estimasi Kerugian Perusahaan: <strong className="text-white">Rp {Number(trackedReport.estimasiKerugian || 0).toLocaleString('id-ID')}</strong>
                     </div>
                     <div className="text-amber-400 font-medium">
-                      Ketentuan Reward Minimal (2%): <strong>Rp {Number(trackedReport.rewardMinAmount || Math.round((trackedReport.estimasiKerugian || 0) * 0.02)).toLocaleString('id-ID')}</strong>
+                      Reward sesuai kebijakan tenant: <strong>Rp {Number(trackedReport.rewardMinAmount || 0).toLocaleString('id-ID')}</strong>
                     </div>
                   </div>
                 )}
@@ -1715,8 +1719,8 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                         </h4>
                         <p className="text-[11px] text-amber-300/90 font-medium">
                           {trackedReport.tipePelanggaran === 'finansial'
-                            ? 'Reward dihitung minimal 2% dari estimasi nilai kerugian finansial.'
-                            : 'Reward pelanggaran etik (minimal Rp 100.000, disesuaikan dengan kebijakan perusahaan).'}
+                            ? 'Nominal reward mengikuti kebijakan tenant dan ditetapkan saat laporan dibuat.'
+                            : 'Nominal reward kasus etik mengikuti kebijakan tenant dan ditetapkan saat laporan dibuat.'}
                         </p>
                       </div>
                     </div>
