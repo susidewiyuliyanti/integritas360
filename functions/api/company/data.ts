@@ -110,8 +110,8 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     const isFinancial=category.includes('finansial') || category.includes('financial') || Number(report.estimated_loss||0)>0;
     const verifiedLoss=Number(report.estimated_loss||0);
     if(isFinancial && verifiedLoss<=0) return json({error:'Nilai kerugian finansial terverifikasi wajib diisi sebelum reward dapat dirilis.'},400);
-    const minimum=isFinancial ? Math.ceil(verifiedLoss*0.10) : 100000;
-    if(requested<minimum) return json({error:isFinancial?'Reward kasus finansial minimal 10% dari kerugian terverifikasi.':'Nominal reward di bawah ketentuan minimum.',minimum},400);
+    // Nominal reward mengikuti kebijakan tenant yang dikonfigurasi pada profil perusahaan.
+    // Server hanya memastikan nilai positif; tidak ada minimum global Integritas360.
     const company=await env.DB.prepare('SELECT deposit_balance FROM companies WHERE company_id=? LIMIT 1').bind(companyId).first<any>();
     if(!company) return json({error:'Data perusahaan tidak ditemukan.'},404);
     if(Number(company.deposit_balance||0)<requested) return json({error:'Saldo perusahaan tidak mencukupi untuk reward ini.',balance:Number(company.deposit_balance||0),required:requested},409);
@@ -166,14 +166,13 @@ export const onRequestPost=async({request,env}:{request:Request,env:Env})=>{
     const isFinancial=violationType.includes('finansial') || violationType.includes('financial') || Number(report.estimated_loss||0)>0;
     const verifiedLoss=Number(report.estimated_loss||0);
     if(isFinancial && verifiedLoss<=0) return json({error:'Nilai kerugian finansial terverifikasi wajib diisi sebelum reward ditetapkan.'},400);
-    const minimum=isFinancial?Math.ceil(verifiedLoss*0.10):100000;
-    if(amount<minimum) return json({error:isFinancial?'Reward kasus finansial minimal 10% dari kerugian terverifikasi.':'Reward kasus etik minimal Rp 100.000.',minimum},400);
+    // Perusahaan dapat menyesuaikan reward per laporan sesuai kebijakan tenant.
     let current:any={}; try{current=JSON.parse(report.metadata_json||'{}')}catch{}
     const next={...current,rewardAmount:amount,rewardStatusPerusahaan:'disetujui'};
     await env.DB.prepare('UPDATE reports SET reward_amount=?,metadata_json=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND company_id=?')
       .bind(amount,JSON.stringify(next),id,companyId).run();
     await env.DB.prepare('INSERT INTO audit_logs(id,actor_user_id,actor_email,actor_role,company_id,action,entity_type,entity_id,metadata_json) VALUES(?,?,?,?,?,?,?,?,?)')
-      .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'REPORT_REWARD_UPDATED','report',id,JSON.stringify({rewardAmount:amount,minimum})).run();
+      .bind(randomId('audit'),actor.id,actor.email,actor.role,companyId,'REPORT_REWARD_UPDATED','report',id,JSON.stringify({rewardAmount:amount,isFinancial,verifiedLoss})).run();
     return json({ok:true,id,rewardAmount:amount,rewardStatusPerusahaan:'disetujui'});
   }
   if(op==='update-report'){
