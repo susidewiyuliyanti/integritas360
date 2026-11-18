@@ -87,6 +87,7 @@ export const PerusahaanDashboard: React.FC = () => {
   // menimpa datanya dari dua sumber berbeda (/api/auth.me lalu /api/company/me).
   const [companyProfile, setCompanyProfile] = useState<UserProfile | null>(null);
   const [reports, setReports] = useState<WhistleblowingReport[]>([]);
+  const [tenantTransactions, setTenantTransactions] = useState<any[]>([]);
   const [dataReady, setDataReady] = useState(false);
   const [tenantLoadError, setTenantLoadError] = useState<string | null>(null);
   const [isPosterModalOpen, setIsPosterModalOpen] = useState(false);
@@ -107,6 +108,20 @@ export const PerusahaanDashboard: React.FC = () => {
   const [depositMethod, setDepositMethod] = useState('QRIS Statis Nasional (INTEGRITAS360)');
   const [paymentProof, setPaymentProof] = useState<{ name: string; type: string; dataUrl: string } | null>(null);
   const [processingDeposit, setProcessingDeposit] = useState(false);
+  const refreshTenantTransactions = async () => {
+    try {
+      const response = await fetch('/api/company/data?resource=transactions', {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'cache-control': 'no-cache' }
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.error || 'Riwayat transaksi gagal dimuat.');
+      setTenantTransactions(Array.isArray(result.items) ? result.items : []);
+    } catch (error) {
+      console.error('Gagal memuat riwayat transaksi tenant:', error);
+    }
+  };
   const autoRewardAttempts = useRef<Set<string>>(new Set());
 
   // Modal Kebijakan Reward (Etik & Finansial min 10%)
@@ -174,6 +189,7 @@ export const PerusahaanDashboard: React.FC = () => {
         // contain a stale legacy tenant ID after refresh; rejecting a valid D1
         // session here made the dashboard look empty even when the records existed.
         const canonicalId = String(company.company_id);
+        await refreshTenantTransactions();
         const balance = Number(company.deposit_balance ?? 0);
         const locked = Number(company.locked_balance ?? 0);
         const rewardPolicy = company.kebijakanReward || profile.kebijakanReward || {
@@ -305,6 +321,7 @@ export const PerusahaanDashboard: React.FC = () => {
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan deposit ke database.');
 
+      await refreshTenantTransactions();
       setShowDepositModal(false);
       setPaymentProof(null);
       setActionFeedback({
@@ -361,6 +378,7 @@ export const PerusahaanDashboard: React.FC = () => {
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal menyimpan konfirmasi deposit ke database.');
 
+      await refreshTenantTransactions();
       setShowNowPaymentsModal(false);
       setShowDepositModal(false);
       setPaymentProof(null);
@@ -796,6 +814,66 @@ export const PerusahaanDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Tenant deposit / withdrawal history with downloadable original payment evidence. */}
+        <section className="mt-5 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-lg space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-amber-400" />
+                Riwayat Transaksi & Bukti Pembayaran
+              </h3>
+              <p className="mt-1 text-xs text-slate-400">Bukti deposit yang diunggah tersimpan pada transaksi tenant dan dapat diunduh kembali.</p>
+            </div>
+            <button type="button" onClick={() => void refreshTenantTransactions()} className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700">
+              <RefreshCw className="h-3.5 w-3.5" /> Muat Ulang
+            </button>
+          </div>
+          {tenantTransactions.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-slate-700 p-4 text-center text-xs text-slate-400">Belum ada transaksi deposit atau penarikan.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs">
+                <thead className="bg-slate-800 text-slate-200">
+                  <tr>
+                    <th className="p-3 text-left">Tanggal</th>
+                    <th className="p-3 text-left">Jenis</th>
+                    <th className="p-3 text-left">Metode</th>
+                    <th className="p-3 text-right">Nominal</th>
+                    <th className="p-3 text-left">Status</th>
+                    <th className="p-3 text-left">Bukti Pembayaran</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenantTransactions.map((tx:any) => (
+                    <tr key={tx.id} className="border-t border-slate-800">
+                      <td className="p-3 whitespace-nowrap text-slate-300">{tx.created_at ? new Date(tx.created_at).toLocaleString('id-ID') : '-'}</td>
+                      <td className="p-3 font-semibold text-slate-200">{tx.type === 'deposit' ? 'Deposit' : 'Penarikan'}</td>
+                      <td className="p-3 text-slate-300">{tx.method || '-'}</td>
+                      <td className="p-3 whitespace-nowrap text-right font-mono font-bold text-white">Rp {Number(tx.amount || 0).toLocaleString('id-ID')}</td>
+                      <td className="p-3"><span className={String(tx.status).toLowerCase() === 'selesai' ? 'font-semibold text-emerald-300' : String(tx.status).toLowerCase() === 'pending' ? 'font-semibold text-amber-300' : 'font-semibold text-slate-300'}>{tx.status || '-'}</span></td>
+                      <td className="p-3">
+                        {tx.type === 'deposit' && tx.paymentProofDataUrl ? (
+                          <a
+                            href={tx.paymentProofDataUrl}
+                            download={tx.paymentProofName || ('bukti-deposit-' + tx.id)}
+                            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 font-semibold text-emerald-300 hover:bg-emerald-500/20"
+                            title="Unduh bukti pembayaran deposit"
+                          >
+                            <Download className="h-3.5 w-3.5" /> Unduh Bukti
+                          </a>
+                        ) : (
+                          <span className="text-slate-500">Tidak ada lampiran</span>
+                        )}
+                        {tx.paymentProofName && <div className="mt-1 max-w-48 break-all text-[10px] text-slate-400">{tx.paymentProofName}</div>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         {/* Executive KPI Stats Bar (4 Columns) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
