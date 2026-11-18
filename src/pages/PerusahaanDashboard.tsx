@@ -646,15 +646,15 @@ export const PerusahaanDashboard: React.FC = () => {
                     <Building2 className="w-3.5 h-3.5" />
                     perusahaan
                   </div>
-                  {companyProfile?.statusVerifikasiDokumen === 'terverifikasi' ? (
+                  {String(companyProfile?.status || '').toUpperCase() === 'ACTIVE' ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Kepatuhan Terverifikasi ISO 37002
+                      Status Kepatuhan: Aktif
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
                       <Clock className="w-3.5 h-3.5" />
-                      Status Kepatuhan: Review
+                      Status Kepatuhan: Tinjau
                     </span>
                   )}
                 </div>
