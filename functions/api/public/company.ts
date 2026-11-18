@@ -55,6 +55,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
         company_name: companyName,
         deposit_balance: Number(row.deposit_balance || 0),
         sector: String(profile.sektor || profile.sector || metadata.sektor || metadata.sector || 'Kepatuhan & Integritas'),
+        kebijakanReward: {
+          persenFinansial: Math.min(100, Math.max(0.1, Number(profile.kebijakanReward?.persenFinansial ?? 10))),
+          rewardKasusEtik: Math.max(1, Number(profile.kebijakanReward?.rewardKasusEtik ?? 100000))
+        },
         status: String(row.status || 'ACTIVE')
       }
     });
