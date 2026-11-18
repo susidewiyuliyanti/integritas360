@@ -179,7 +179,7 @@ export const PerusahaanDashboard: React.FC = () => {
         const rewardPolicy = company.kebijakanReward || profile.kebijakanReward || {
           rewardKasusEtik: 100000,
           persenFinansial: 2,
-          minPersenFinansial: 2
+          minPersenFinansial: 0
         };
         if (active) {
           setCompanyProfile({
@@ -208,7 +208,7 @@ export const PerusahaanDashboard: React.FC = () => {
             kebijakanReward: rewardPolicy
           } as UserProfile);
           setPolicyEtikNominal(Number(rewardPolicy.rewardKasusEtik || 100000));
-          setPolicyFinansialPersen(Math.max(10, Number(rewardPolicy.persenFinansial || 10)));
+          setPolicyFinansialPersen(Math.min(100, Math.max(0.1, Number(rewardPolicy.persenFinansial ?? 10))));
         }
 
         const reportsResponse = await fetch('/api/public/data?collection=reports&companyId=' + encodeURIComponent(canonicalId), {
@@ -378,16 +378,16 @@ export const PerusahaanDashboard: React.FC = () => {
     }
   };
 
-  // HANDLER: SIMPAN KEBIJAKAN REWARD PERUSAHAAN (ETIK & FINANSIAL MIN 10%)
+  // HANDLER: SIMPAN KEBIJAKAN REWARD KHUSUS TENANT
   const handleSaveRewardPolicy = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (policyFinansialPersen < 10) {
-      alert('Ketentuan wajib: Persentase reward kasus finansial minimal adalah 10% dari nilai kerugian terverifikasi.');
+    if (!Number.isFinite(policyFinansialPersen) || policyFinansialPersen <= 0 || policyFinansialPersen > 100) {
+      alert('Persentase reward finansial harus lebih dari 0% dan maksimal 100%.');
       return;
     }
-    if (policyEtikNominal < 100000) {
-      alert('Ketentuan: Reward kasus pelanggaran etik minimal adalah Rp 100.000 (dapat disesuaikan dengan kebijakan perusahaan).');
+    if (!Number.isFinite(policyEtikNominal) || policyEtikNominal <= 0) {
+      alert('Nominal reward kasus etik harus lebih besar dari Rp 0.');
       return;
     }
 
@@ -413,7 +413,7 @@ export const PerusahaanDashboard: React.FC = () => {
       setShowRewardPolicyModal(false);
       setActionFeedback({
         type: 'success',
-        message: `Kebijakan reward berhasil diperbarui (Kasus Etik: Rp ${Number(policyEtikNominal).toLocaleString('id-ID')} - min Rp 100.000, Kasus Finansial: ${policyFinansialPersen}% - min 10%).`
+        message: `Kebijakan reward tenant berhasil diperbarui (Kasus Etik: Rp ${Number(policyEtikNominal).toLocaleString('id-ID')}, Kasus Finansial: ${policyFinansialPersen}% dari kerugian terverifikasi).`
       });
     } catch (err: any) {
       alert('Gagal menyimpan kebijakan reward: ' + err.message);
@@ -477,10 +477,11 @@ export const PerusahaanDashboard: React.FC = () => {
     if (isAuto && autoRewardAttempts.current.has(attemptKey)) return;
     if (isAuto) autoRewardAttempts.current.add(attemptKey);
     const kerugian = Number(report.estimasiKerugian || 0);
-    const minReward = report.tipePelanggaran === 'finansial'
-      ? Math.ceil(kerugian * 0.10)
-      : Math.max(100000, Number(companyProfile?.kebijakanReward?.rewardKasusEtik || 100000));
-    const nominalReward = Math.max(Number(report.rewardAmount || report.rewardMinAmount || 0), minReward);
+    const rewardPolicy = companyProfile?.kebijakanReward || {};
+    const configuredReward = report.tipePelanggaran === 'finansial'
+      ? Math.ceil(kerugian * (Number(rewardPolicy.persenFinansial ?? 10) / 100))
+      : Number(rewardPolicy.rewardKasusEtik ?? 100000);
+    const nominalReward = Number(report.rewardAmount || report.rewardMinAmount || configuredReward);
 
     try {
       setActionLoadingId(report.id);
@@ -543,23 +544,9 @@ export const PerusahaanDashboard: React.FC = () => {
     if (!report.id) return;
     const cleanAmount = Number(rewardInputVal.replace(/\D/g, '')) || 0;
 
-    if (String(report.tipePelanggaran || '').toLowerCase().includes('finansial') || String(report.tipePelanggaran || '').toLowerCase().includes('financial') || Number(report.estimasiKerugian || 0) > 0) {
-      const min10Percent = Math.ceil((report.estimasiKerugian || 0) * 0.10);
-      if (cleanAmount < min10Percent) {
-        setActionFeedback({
-          type: 'error',
-          message: `Untuk pelanggaran finansial, reward minimal adalah 10% dari kerugian terverifikasi (minimal Rp ${min10Percent.toLocaleString('id-ID')}).`
-        });
-        return;
-      }
-    } else {
-      if (cleanAmount < 100000) {
-        setActionFeedback({
-          type: 'error',
-          message: 'Untuk pelanggaran etik, reward minimal adalah Rp 100.000 dan dapat disesuaikan dengan kebijakan perusahaan.'
-        });
-        return;
-      }
+    if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
+      setActionFeedback({ type: 'error', message: 'Nominal reward harus lebih besar dari Rp 0.' });
+      return;
     }
 
     try {
@@ -928,8 +915,11 @@ export const PerusahaanDashboard: React.FC = () => {
               {filteredReports.map((report) => {
                 const kerugian = Number(report.estimasiKerugian || 0);
                 const isFinansial = String(report.tipePelanggaran || '').toLowerCase().includes('finansial') || String(report.tipePelanggaran || '').toLowerCase().includes('financial') || kerugian > 0;
-                const min10Persen = Math.ceil(kerugian * 0.10);
-                const currentReward = report.rewardAmount !== undefined ? report.rewardAmount : (isFinansial ? min10Persen : 5000000);
+                const rewardPolicy = companyProfile?.kebijakanReward || {};
+                const configuredReward = isFinansial
+                  ? Math.ceil(kerugian * (Number(rewardPolicy.persenFinansial ?? 10) / 100))
+                  : Number(rewardPolicy.rewardKasusEtik ?? 100000);
+                const currentReward = report.rewardAmount !== undefined ? report.rewardAmount : configuredReward;
   const auditorFee = Number(report.biayaAuditor || 150000);
 
                 const isNeedsTake = report.companyCaseStatus === 'menunggu_ambil' || (report.status === 'valid' && !report.takenAt);
@@ -1116,7 +1106,7 @@ export const PerusahaanDashboard: React.FC = () => {
                                 Rp {kerugian.toLocaleString('id-ID')}
                               </div>
                               <div className="text-[11px] text-amber-400/90">
-                                Aturan reward: Minimal 10% dari kerugian terverifikasi = <strong>Rp {min10Persen.toLocaleString('id-ID')}</strong>
+                                Kebijakan tenant: {Number(rewardPolicy.persenFinansial ?? 10)}% dari kerugian terverifikasi = <strong>Rp {configuredReward.toLocaleString('id-ID')}</strong>
                               </div>
                             </div>
                           )}
@@ -1506,7 +1496,7 @@ export const PerusahaanDashboard: React.FC = () => {
         isProcessing={processingDeposit}
       />
 
-      {/* MODAL 3: KEBIJAKAN BESARAN REWARD (ETIK & FINANSIAL MIN 10%) */}
+      {/* MODAL 3: KEBIJAKAN BESARAN REWARD PER TENANT */}
       {showRewardPolicyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
           <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 text-slate-100">
@@ -1536,13 +1526,13 @@ export const PerusahaanDashboard: React.FC = () => {
                   1. Besaran Reward Kasus Pelanggaran Etik (Nominal Tetap)
                 </label>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Diberikan kepada pelapor atas kasus non-finansial (pelecehan, gratifikasi etik, konflik kepentingan, dll). Minimal Rp 100.000 dan dapat disesuaikan dengan kebijakan perusahaan.
+                  Diberikan kepada pelapor atas kasus non-finansial (pelecehan, gratifikasi etik, konflik kepentingan, dll). Nominal ditentukan secara mandiri oleh masing-masing tenant.
                 </p>
                 <div className="relative mt-1">
                   <span className="absolute left-3.5 top-2.5 text-xs text-slate-400 font-mono">Rp</span>
                   <input
                     type="number"
-                    min={100000}
+                    min={1}
                     step={50000}
                     required
                     value={policyEtikNominal}
@@ -1551,11 +1541,11 @@ export const PerusahaanDashboard: React.FC = () => {
                   />
                 </div>
                 <p className="text-[10px] text-slate-500">
-                  * Minimal Rp 100.000, dapat disesuaikan lebih tinggi sesuai ketentuan kebijakan perusahaan.
+                  * Tenant bebas menentukan nominal reward sesuai kebijakan internal.
                 </p>
               </div>
 
-              {/* Kasus Finansial (Min 10%) */}
+              {/* Kasus Finansial: persentase ditentukan tenant */}
               <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-500/30 space-y-2">
                 <label className="block text-xs font-bold text-amber-300 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
@@ -1563,21 +1553,21 @@ export const PerusahaanDashboard: React.FC = () => {
                     2. Besaran Reward Kasus Finansial (% Kerugian)
                   </span>
                   <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold">
-                    Ketentuan: Min 10%
+                    Kebijakan Tenant
                   </span>
                 </label>
                 <p className="text-[11px] text-amber-200/80 leading-relaxed">
-                  Diberikan dari persentase total estimasi kerugian finansial yang berhasil diselamatkan. Ketentuan Integritas360 menetapkan <strong>minimal 10%</strong> dari kerugian terverifikasi.
+                  Diberikan berdasarkan persentase kerugian finansial terverifikasi yang ditetapkan sendiri oleh tenant.
                 </p>
                 <div className="flex items-center gap-3 mt-1">
                   <input
                     type="number"
-                    min={10}
-                    max={20}
+                    min={0.1}
+                    max={100}
                     step={0.5}
                     required
                     value={policyFinansialPersen}
-                    onChange={(e) => setPolicyFinansialPersen(Math.max(10, Number(e.target.value)))}
+                    onChange={(e) => setPolicyFinansialPersen(Number(e.target.value))}
                     className="w-32 bg-slate-900 border border-amber-500/50 rounded-xl px-3.5 py-2.5 text-base font-mono font-bold text-amber-300 focus:outline-none focus:border-amber-400"
                   />
                   <span className="text-sm font-bold text-slate-300">% dari Estimasi Kerugian</span>
