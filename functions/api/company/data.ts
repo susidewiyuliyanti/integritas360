@@ -18,6 +18,19 @@ export const onRequestGet=async({request,env}:{request:Request,env:Env})=>{
   const url=new URL(request.url);
   const companyId=u.company_id || url.searchParams.get('companyId');
   if(!companyId || companyId!==u.company_id) return json({error:'Company tenant required'},403);
+  if(url.searchParams.get('resource')==='transactions'){
+    const rows=await env.DB.prepare(`SELECT id,type,amount,status,method,tx_hash,metadata_json,created_at,updated_at
+      FROM transactions WHERE company_id=? AND type IN ('deposit','withdrawal') ORDER BY created_at DESC LIMIT 100`).bind(companyId).all<any>();
+    const items=(rows.results||[]).map((r:any)=>{
+      let metadata:any={}; try{metadata=JSON.parse(r.metadata_json||'{}')}catch{}
+      return {id:r.id,type:r.type,amount:Number(r.amount||0),status:r.status,method:r.method||metadata.method||'',tx_hash:r.tx_hash||metadata.txHash||'',created_at:r.created_at,updated_at:r.updated_at,
+        paymentProofName:metadata.paymentProofName||metadata.buktiKonfirmasi?.fileName||'',
+        paymentProofType:metadata.paymentProofType||metadata.buktiKonfirmasi?.mimeType||'',
+        paymentProofDataUrl:metadata.paymentProofDataUrl||metadata.buktiKonfirmasi?.dataUrl||'',
+        keterangan:metadata.keterangan||''};
+    });
+    return json({items});
+  }
   const rows=await env.DB.prepare('SELECT u.*,cu.role as company_user_role,cu.status as company_user_status FROM users u LEFT JOIN company_users cu ON cu.user_id=u.id WHERE u.company_id=? ORDER BY u.created_at DESC').bind(companyId).all<any>();
   return json({items:rows.results.map((r:any)=>safe({...r,role:r.company_user_role||r.role,status:r.company_user_status||r.status}))});
 };
