@@ -440,3 +440,179 @@ table {
 @media (max-width: 900px) {
   .superadmin-v18-nav { background: #101a2a !important; }
 }
+
+
+/* Friendly readability + mobile-first refinement (visual-only; no business logic changes) */
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --i360-bg: #101a2a;
+  --i360-surface: #1b293d;
+  --i360-surface-raised: #22334b;
+  --i360-border: #3a4b63;
+  --i360-text: #f1f5fb;
+  --i360-muted: #b4c0d1;
+  --i360-accent: #e3bd70;
+}
+html, body, #root {
+  background-color: var(--i360-bg);
+  color: var(--i360-text);
+  font-family: inherit;
+}
+body {
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: .005em;
+}
+p, label, small, figcaption {
+  line-height: 1.65;
+}
+p { color: inherit; }
+a { text-underline-offset: 3px; }
+:where(input, select, textarea) {
+  min-height: 44px;
+  border-radius: 11px;
+  color: var(--i360-text);
+  background: #142136;
+  border: 1px solid #465872;
+  padding: .7rem .85rem;
+}
+:where(input, select, textarea)::placeholder { color: #a2b0c3; opacity: 1; }
+:where(input, select, textarea):focus-visible,
+:where(button, a):focus-visible {
+  outline: 3px solid rgba(227,189,112,.75);
+  outline-offset: 2px;
+}
+:where(button) {
+  min-height: 42px;
+  font-weight: 600;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+:where(button):active { transform: translateY(1px); }
+:where(.text-slate-400, .text-slate-500, .text-gray-400, .text-gray-500) {
+  color: #b4c0d1 !important;
+}
+:where(.text-slate-300, .text-gray-300) { color: #cbd5e1 !important; }
+:where(.border-slate-800, .border-slate-700, .border-gray-700) {
+  border-color: var(--i360-border) !important;
+}
+:where(.rounded-2xl.border, .rounded-xl.border) {
+  border-color: var(--i360-border);
+}
+table th {
+  font-weight: 700;
+  color: #f1f5fb;
+}
+table td { line-height: 1.5; }
+::selection { background: #e3bd70; color: #17243b; }
+
+/* Dashboard surfaces remain consistent with the established navy + gold identity. */
+.tenant-dashboard-v18,
+.superadmin-dashboard-v18 {
+  color: var(--i360-text);
+}
+.tenant-dashboard-v18 .tenant-dashboard-content,
+.superadmin-v18-main {
+  width: 100%;
+  min-width: 0;
+}
+.tenant-dashboard-v18 :where(h1,h2,h3,h4),
+.superadmin-dashboard-v18 :where(h1,h2,h3,h4) {
+  color: #f8fafc;
+  line-height: 1.3;
+}
+.tenant-dashboard-v18 :where(.text-slate-400,.text-slate-500),
+.superadmin-dashboard-v18 :where(.text-slate-400,.text-slate-500) {
+  color: #b4c0d1 !important;
+}
+
+/* Phone and small-tablet layout: prevent horizontal page overflow and improve touch targets. */
+@media (max-width: 767px) {
+  body { font-size: 14px; }
+  #root { min-height: 100dvh; }
+  main { padding-left: 0; padding-right: 0; }
+  main > * { max-width: 100%; min-width: 0; }
+  :where(button, [role="button"], input, select, textarea) { min-height: 44px; }
+  :where(input, select, textarea) { font-size: 16px; }
+  .tenant-dashboard-v18,
+  .superadmin-dashboard-v18 { min-height: 100dvh; }
+  .tenant-dashboard-v18 .tenant-dashboard-content {
+    padding: .65rem !important;
+    border-radius: 16px;
+  }
+  .superadmin-v18-header {
+    padding: .75rem !important;
+    border-radius: 0 0 16px 16px;
+  }
+  .superadmin-v18-header > div > div:last-child {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: .5rem;
+    padding-bottom: .35rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .superadmin-v18-header > div > div:last-child > * { flex: 0 0 auto; }
+  .superadmin-v18-main { padding: .75rem !important; }
+  .superadmin-v18-nav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    gap: .4rem !important;
+    padding: .55rem .25rem;
+    border-bottom: 1px solid #34445a;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .superadmin-v18-nav button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 44px;
+    padding: .65rem .8rem !important;
+  }
+  .tenant-dashboard-v18 :where(.grid),
+  .superadmin-dashboard-v18 :where(.grid) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .tenant-dashboard-v18 :where(.flex),
+  .superadmin-dashboard-v18 :where(.flex) {
+    min-width: 0;
+  }
+  .tenant-dashboard-v18 :where(.rounded-2xl, .rounded-xl),
+  .superadmin-dashboard-v18 :where(.rounded-2xl, .rounded-xl) {
+    max-width: 100%;
+  }
+  table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  [aria-label="Bantuan WhatsApp"] {
+    right: max(.75rem, env(safe-area-inset-right));
+    bottom: max(.75rem, env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 380px) {
+  .superadmin-v18-main { padding: .5rem !important; }
+  .tenant-dashboard-v18 .tenant-dashboard-content { padding: .4rem !important; }
+  .superadmin-v18-header h1 { font-size: .9rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
