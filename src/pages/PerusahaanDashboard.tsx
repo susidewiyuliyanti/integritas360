@@ -260,26 +260,6 @@ export const PerusahaanDashboard: React.FC = () => {
     return () => { active = false; window.clearInterval(timer); };
   }, [user?.id, user?.uid, user?.email, user?.role, authLoading, effectiveCompanyId]);
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-200" role="status" aria-live="polite">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-        <p className="text-sm font-semibold">Memverifikasi sesi dan memuat dashboard perusahaan...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 p-6 text-center text-slate-200">
-        <AlertCircle className="w-8 h-8 text-amber-400" />
-        <h2 className="text-lg font-bold">Sesi login tidak ditemukan</h2>
-        <p className="text-sm text-slate-400">Silakan masuk kembali untuk membuka dashboard perusahaan.</p>
-        <button onClick={() => navigate('/login')} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950">Kembali ke Login</button>
-      </div>
-    );
-  }
-
   const namaPT = companyProfile?.namaPT || 'PT Anda';
   // Canonical tenant funds come from the companies row (D1 deposit_balance).
   const saldoTerbuka = Number((companyProfile as any)?.deposit_balance ?? companyProfile?.danaTersedia ?? companyProfile?.saldo ?? 0);
@@ -537,6 +517,26 @@ export const PerusahaanDashboard: React.FC = () => {
       }
     });
   }, [reports, actionLoadingId, saldoTerbuka]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 text-slate-200" role="status" aria-live="polite">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+        <p className="text-sm font-semibold">Memverifikasi sesi dan memuat dashboard perusahaan...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-3 p-6 text-center text-slate-200">
+        <AlertCircle className="w-8 h-8 text-amber-400" />
+        <h2 className="text-lg font-bold">Sesi login tidak ditemukan</h2>
+        <p className="text-sm text-slate-400">Silakan masuk kembali untuk membuka dashboard perusahaan.</p>
+        <button onClick={() => navigate('/login')} className="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-slate-950">Kembali ke Login</button>
+      </div>
+    );
+  }
 
   // Save Nominal Reward (Optional adjustment by company)
   const handleSaveReward = async (report: WhistleblowingReport) => {
