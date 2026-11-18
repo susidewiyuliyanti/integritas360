@@ -1127,7 +1127,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                   </p>
                   <div className="pt-1">
                     <span className="inline-block text-[10px] font-semibold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full">
-                      Reward: ${Number(targetCompanyData?.persenFinansial ?? 10)}% sesuai kebijakan tenant
+                      Reward: {Number(targetCompanyData?.persenFinansial ?? 10)}% sesuai kebijakan tenant
                     </span>
                   </div>
                 </div>
@@ -1181,7 +1181,7 @@ export const ReportFormSection: React.FC<ReportFormSectionProps> = ({
                       Estimasi Nilai Kerugian Finansial Perusahaan (Rp) *
                     </label>
                     <span className="text-[10px] text-amber-400 font-medium">
-                      Aturan Tenant: ${Number(targetCompanyData?.persenFinansial ?? 10)}%
+                      Aturan Tenant: {Number(targetCompanyData?.persenFinansial ?? 10)}%
                     </span>
                   </div>
                   <input
